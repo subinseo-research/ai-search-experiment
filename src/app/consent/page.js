@@ -181,20 +181,17 @@ export default function ConsentPage() {
             <p className="mt-1">
               If you have questions about your rights as a research participant or wish to report a research-related injury, please contact: 
               <span className="font-mono">example@university.edu</span>.
-               IRB at <span className="font-mono"> irb@umd.edu</span>.
-               For more information regarding participant rights, please visit: https://research.umd.edu/research-resources/research-compliance/institutional-review-board-irb/research-participants 
-               This research has been reviewed according to the University of Maryland, College Park IRB procedures for research involving human subjects. 
+              IRB at <span className="font-mono"> irb@umd.edu</span>.
+              For more information regarding participant rights, please visit: https://research.umd.edu/research-resources/research-compliance/institutional-review-board-irb/research-participants 
+              This research has been reviewed according to the University of Maryland, College Park IRB procedures for research involving human subjects. 
             </p>
           </div>
 
         <hr className="my-10 border-gray-200" />
 
-          <div>
-            <h3 className="text-xl font-semibold">Right to Withdraw and Questions</h3>
-            <p className="mt-1">
-              By clicking 'continue' below, you indicate that you are at least 18 years of age, you have read this consent form or have had it read to you, your questions have been answered to your satisfaction, and you voluntarily agree to participate in this research study.
-            </p>
-          </div>
+          <p className="mt-1">
+            By clicking 'continue' below, you indicate that you are at least 18 years of age, you have read this consent form or have had it read to you, your questions have been answered to your satisfaction, and you voluntarily agree to participate in this research study.
+          </p>
 
           {/* ===== Consent Checkbox ===== */}
           <label
@@ -208,7 +205,7 @@ export default function ConsentPage() {
               checked={checked}
               onChange={(e) => setChecked(e.target.checked)}
             />
-            <span className="text-sm leading-6>
+            <span className="text-sm leading-6">
               I confirm that I am at least 18 years of age, have read this consent form (or had it read to me), my questions have been answered to my satisfaction, and I voluntarily agree to participate in this research study.
             </span>
           </label>
