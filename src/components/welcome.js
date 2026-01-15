@@ -8,7 +8,7 @@ export function WelcomePage({ onNext }) {
           {/* Header */}
           <div className="text-center space-y-3">
             <h1 className="text-[64px] font-bold">
-              👋 Welcome to our Study!
+              Welcome to our study! 
             </h1>
           </div>
 
@@ -24,11 +24,7 @@ export function WelcomePage({ onNext }) {
 
                 <div className="space-y-3 text-muted-foreground">
                   <p>
-                    This study explores how people discover interesting or
-                    unexpected information while searching online. You will
-                    use a search system to explore a topic and reflect on
-                    your search experience. Your participation will help
-                    inform the design of future search tools.
+                    This study explores how people discover interesting or unexpected information while searching online. You will use a search system to explore a topic and reflect on your search experience. Your participation will help inform the design of future search tools.
                   </p>
 
                   <div>

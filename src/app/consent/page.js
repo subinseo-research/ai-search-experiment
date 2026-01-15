@@ -90,13 +90,10 @@ export default function ConsentPage() {
 
           <div className="text-base text-gray-700 space-y-2 leading-relaxed">
             <p>
-              Hello, my name is Subin Seo. I am a master’s student at the
-              University of Maryland, College Park. I am conducting a research
-              project about how people search online.
+              Hello, my name is Subin Seo. I am a master’s student at the University of Maryland, College Park. 
             </p>
             <p>
-              Please read the following information carefully before deciding
-              whether to participate.
+              Please read the following information carefully before deciding whether to participate.
             </p>
           </div>
         </header>
@@ -106,32 +103,38 @@ export default function ConsentPage() {
           <h2 className="text-3xl font-bold tracking-tight">Informed Consent</h2>
         </section>
 
-        {/* ===== Consent Content ===== */}
+        {/* ===== Consent Cont6ent ===== */}
         <section className="space-y-6">
           <div>
             <h3 className="text-xl font-semibold">Study Title</h3>
             <p className="mt-1">
-              Serendipity and Information Seeking in Search Engines vs.
-              Generative AI
+              Search Behavior in Search Engines and Generative AI 
             </p>
           </div>
 
           <div>
             <h3 className="text-xl font-semibold">Purpose of the Study</h3>
             <p className="mt-1">
-              The purpose of this research is to understand how users experience
-              serendipity and problem-solving when using search engines compared
-              to generative AI systems.
+              This research is being conducted by Subin Seo, Dr. Yiwei Xu at the University of Maryland, College Park. We are inviting you to participate in this research project because you are an adult who regularly uses search systems to search information online. We seek to learn more about how people use different types of search systems, specifically conversational AI and traditional web search. This study aims to understand how different search systems shape users’ search behaviors and how this leads to varying search outcomes and user experiences.
             </p>
           </div>
 
           <div>
             <h3 className="text-xl font-semibold">Procedures</h3>
             <p className="mt-1">
-              If you agree to participate, you will complete a short pre-survey,
-              perform an information-seeking task using either a search engine
-              or a generative AI system, and then complete a post-survey about
-              your experience. The study typically takes about 10–20 minutes.
+              The procedures involve participating in an online research study consisting of three parts: pre-survey, search session, and post-survey. The entire study will take approximately 10-12 minutes to complete.
+            </p>
+            <p className="mt-1">
+              In the pre-survey, you will be asked about your familiarity, goal clarity, and the clarity of their search plans related to the assigned search task. 
+            </p>
+            <p className="mt-1">
+              You will then be asked to complete a search task using either a search engine or generative AI. During the search session, you may enter multiple queries (search engine) or prompt (generative AI) to explore the given topic. It should take at least four minutes to complete, and you should submit several queries or prompts during the session.
+            </p>
+            <p className="mt-1">  
+              In the post-survey, you will be asked about your search experience, including any unexpected or interesting information you encountered, your emotional responses, your confidence in understanding the topic, and what you learned from the search.
+            </p>
+            <p className="mt-1">  
+              When you have completed the study, you will be automatically redirected to the linked Prolific page to receive your compensation.
             </p>
           </div>
 
