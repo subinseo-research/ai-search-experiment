@@ -240,7 +240,7 @@ export default function ConsentPage() {
           >
             {isSubmitting ? "Saving consent…" : "Continue"}
           </button>
-        </div> 
+        </div>
 
       </div>
     </main>
