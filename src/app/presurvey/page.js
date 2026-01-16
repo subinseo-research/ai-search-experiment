@@ -273,7 +273,7 @@ export default function PreSurvey() {
 
               <button
                 onClick={() => {
-                  const allQuestions = [...Pretask_Questionnaires, ...selfEfficacyQuestions];
+                  const allQuestions = [...Pretask_Questionnaires];
                   const firstUnanswered = allQuestions.find((q) => responses[q] === undefined);
 
                   if (firstUnanswered && questionRefs.current[firstUnanswered]) {
