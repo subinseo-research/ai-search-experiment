@@ -291,8 +291,8 @@ ${userInput}
       <div className="relative flex flex-1 overflow-hidden">
         {/* Left Panel (same as Step 2) */}
         <div
-          className={`bg-gray-50 sticky top-[56px]
-            h-[calc(100vh-56px)]
+          className={`bg-gray-50 sticky top-0
+            h-full
             transition-all
             ${taskOpen ? "w-[22%]" : "w-[64px]"}
             relative
@@ -332,7 +332,7 @@ ${userInput}
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className="h-full flex items-center justify-center">
           <div className="max-w-2xl w-full text-center space-y-6 px-6">
             <h1 className="text-3xl font-bold">
               Now you will start a search!
@@ -377,8 +377,8 @@ ${userInput}
       <div className="relative flex flex-1 overflow-hidden">
         {/* Left Panel */}
         <div
-          className={`bg-gray-50 sticky top-[56px]
-            h-[calc(100vh-56px)]
+          className={`bg-gray-50 sticky top-0
+            h-full
             transition-all
             ${taskOpen ? "w-[22%]" : "w-[64px]"}
             relative
@@ -554,7 +554,7 @@ ${userInput}
         >
           {/* Title */}
           <div className="p-4 border-b">
-            <h2 className="mt-4 font-semibold mb-4">Scrapbook</h2>
+            <h2 className="mt-2 font-semibold mb-1">Scrapbook</h2>
           </div>
 
           {/* Scrap list (scrollable) */}
