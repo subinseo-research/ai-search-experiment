@@ -179,7 +179,7 @@ export default function PreSurvey() {
         <div className="flex-1 flex justify-center overflow-y-auto">
           <div className="max-w-[900px] w-full px-8 py-12 bg-white">
 
-            <p className="text-base font-medium mt-10 mb-8">
+            <p className="text-lg font-medium mt-10 mb-8">
               On the scales below, indicate how you think about the given topic.
               <br />
               There are no right or wrong answers; we are interested in what you think.  
@@ -198,7 +198,7 @@ export default function PreSurvey() {
                   <p className="font-medium text-[18px]">
                     {idx + 1}. {renderedQuestion}
                   </p>
-                  <div className="flex justify-between text-sm text-gray-600">
+                  <div className="flex justify-between text-base text-gray-600">
                     {Labels.map((label, i) => (
                       <label key={label} className="flex flex-col items-center w-[100px]">
                         <input
