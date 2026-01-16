@@ -48,6 +48,27 @@ export default function Experiment() {
 
   const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
 
+  // scrap
+  const selection = window.getSelection();
+  const selectedText = selection?.toString().trim();
+  const addScrap = ({ title, fullText, source }) => {
+    const selectedText = window.getSelection()?.toString().trim();
+    
+    setScraps((prev) => [
+      ...prev,
+      {
+        title,
+        snippet: selectedText || fullText,
+        source,
+        comment: "",
+      },
+    ]);
+    window.getSelection()?.removeAllRanges();
+  };
+  const handleDeleteScrap = (index) => {
+  setScraps((prev) => prev.filter((_, i) => i !== index));
+  };
+
   /* =========================
      Initial setup
   ========================= */
@@ -476,6 +497,7 @@ ${userInput}
                     onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify(r))}
                     className="bg-white border p-3 mb-3 rounded cursor-grab"
                   >
+                    
                     <h3 className="font-semibold text-blue-700 hover:underline">
                       <a
                         href={r.link}
@@ -523,23 +545,13 @@ ${userInput}
                         {isAssistant && !msg.loading && (
                           <button
                             onClick={() =>
-                              setScraps((prev) => [
-                                ...prev,
-                                {
-                                  title: "ConvSearch",
-                                  snippet: msg.content,
-                                  source: "chat",
-                                  comment: "",
-                                },
-                              ])
+                              addScrap({
+                                title: "ConvSearch",
+                                fullText: msg.content,
+                                source: "chat",
+                              })
                             }
-                            className="
-                              absolute top-2 right-2
-                              text-xs px-2 py-1 rounded
-                              bg-gray-100 hover:bg-gray-200
-                              border cursor-pointer
-                            "
-                            title="Save to scrapbook"
+                            className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
                           >
                             📌 Scrap
                           </button>
@@ -599,8 +611,17 @@ ${userInput}
           {/* Scrap list (scrollable) */}
           <div className="flex-1 p-4 overflow-y-auto">
             {scraps.map((item, i) => (
-              <div key={i} className="bg-white p-3 mb-3 rounded border">
-                <p className="text-sm">{item.snippet}</p>
+              <div key={i} className="bg-white p-3 mb-3 rounded border relative">
+                <button
+                  onClick={() => handleDeleteScrap(i)}
+                  className="absolute top-2 right-2 text-xs text-gray-400 hover:text-red-500"
+                  title="Delete scrap"
+                >
+                  🗑️
+                </button>
+                <ReactMarkdown className="prose prose-sm max-w-none">
+                  {item.snippet}
+                </ReactMarkdown>
                 <textarea
                   className="w-full border mt-2 p-2 text-sm"
                   placeholder="Your notes..."
