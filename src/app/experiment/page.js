@@ -327,10 +327,7 @@ ${userInput}
         </div>
 
         {/* Main Content */}
-        <div
-          className={`flex-1 flex items-center justify-center transition-all
-            ${taskOpen ? "ml-[20%]" : "ml-12"}`}
-        >
+        <div className="flex-1 flex items-center justify-center">
           <div className="max-w-2xl w-full text-center space-y-6 px-6">
             <h1 className="text-3xl font-bold">
               Now you will start a search!
@@ -462,10 +459,7 @@ ${userInput}
 
         {/* Main Area */}
         <div 
-           className={`flex-1 border-r overflow-hidden transition-all duration-300
-            ${taskOpen ? "ml-[20%]" : "ml-12"}
-            mr-[18%]
-          `}
+          className="flex-1 border-r overflow-hidden mr-[18%]"
         >
           {systemType === "WebSearch" ? (
             /* Search Engine UI */
