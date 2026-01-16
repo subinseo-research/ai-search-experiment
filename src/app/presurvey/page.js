@@ -150,11 +150,21 @@ export default function PreSurvey() {
 
       <div className="flex">
         {/* Left panel */}
-        <div className={`border-r bg-gray-50 sticky top-[56px] h-[calc(100vh-56px)]
-          transition-all ${panelOpen ? "w-[22%]" : "w-[64px]"}`}
+        <div className={`bg-gray-50 sticky top-[56px]
+            h-[calc(100vh-56px)]
+            transition-all ${panelOpen ? "w-[22%]" : "w-[64px]"}
+            relative
+            after:content-['']
+            after:absolute
+            after:top-0
+            after:right-0
+            after:w-px
+            after:h-screen
+            after:bg-gray-300
+         `}
         >
           
-          <div className="p-4 h-full border-r">
+          <div className="p-4">
             <button
               onClick={() => setPanelOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
