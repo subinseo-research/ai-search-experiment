@@ -447,9 +447,7 @@ ${userInput}
         )}
 
         {/* Main Area */}
-        <div 
-          className="flex-1 border-r overflow-hidden mr-[18%]"
-        >
+        <div className="flex-1 border-r overflow-hidden mr-[18%]">
           {systemType === "WebSearch" ? (
             /* Search Engine UI */
             <div className="flex flex-col h-full">
@@ -505,21 +503,54 @@ ${userInput}
           ) : (
             /* GenAI Chat UI */
             <div className="flex flex-col h-full bg-gray-50">
+              {/* Chat history */}
               <div className="flex-1 p-4 overflow-y-auto">
                 <div className="mx-auto w-full max-w-3xl space-y-4">
-                  {chatHistory.map((msg, idx) => (
-                    <div
-                      key={idx}
-                      className={`p-4 rounded-xl text-base leading-relaxed ${
-                        msg.role === "assistant" ? "bg-white border" : "bg-blue-600 text-white ml-auto max-w-lg"
-                      }`}
-                    >
-                      <ReactMarkdown>{msg.content}</ReactMarkdown>
-                    </div>
-                  ))}
+                  {chatHistory.map((msg, idx) => {
+                    const isAssistant = msg.role === "assistant";
+
+                    return (
+                      <div
+                        key={idx}
+                        className={`relative p-4 rounded-xl text-base leading-relaxed ${
+                          isAssistant
+                            ? "bg-white border"
+                            : "bg-blue-600 text-white ml-auto max-w-lg"
+                        }`}
+                      >
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+
+                        {isAssistant && !msg.loading && (
+                          <button
+                            onClick={() =>
+                              setScraps((prev) => [
+                                ...prev,
+                                {
+                                  title: "ConvSearch",
+                                  snippet: msg.content,
+                                  source: "chat",
+                                  comment: "",
+                                },
+                              ])
+                            }
+                            className="
+                              absolute top-2 right-2
+                              text-xs px-2 py-1 rounded
+                              bg-gray-100 hover:bg-gray-200
+                              border cursor-pointer
+                            "
+                            title="Save to scrapbook"
+                          >
+                            📌 Scrap
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
 
+              {/* Input area */}
               <form
                 onSubmit={handleGenAISubmit}
                 className="border-t bg-white py-4 flex justify-center"
@@ -530,12 +561,20 @@ ${userInput}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Ask anything"
                     disabled={isGenerating || showIntroModal}
-                    className="w-full border rounded-full px-4 py-2 text-base focus:outline-none focus:ring-2 focus:ring-blue-400 disabled:bg-gray-100"
+                    className="
+                      w-full border rounded-full px-4 py-2 text-base
+                      focus:outline-none focus:ring-2 focus:ring-blue-400
+                      disabled:bg-gray-100
+                    "
                   />
                   <button
                     type="submit"
                     disabled={isGenerating || showIntroModal || !searchQuery.trim()}
-                    className="ml-2 px-4 py-2 rounded-full bg-blue-600 text-white disabled:opacity-50"
+                    className="
+                      ml-2 px-4 py-2 rounded-full
+                      bg-blue-600 text-white
+                      disabled:opacity-50
+                    "
                   >
                     Enter
                   </button>
