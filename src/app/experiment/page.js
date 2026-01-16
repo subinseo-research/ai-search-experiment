@@ -253,32 +253,77 @@ ${userInput}
   }
 
   /* =========================
-     STEP 1
+     PAGE 1
   ========================= */
-  if (step === 1) {
-    return (
-      <div className="flex flex-col min-h-screen">
-        <ProgressBar progress={15} />
+ if (step === 1) {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <ProgressBar progress={15} />
 
-        <div className="flex flex-1 items-center justify-center">
-          <div className="max-w-2xl w-full text-center space-y-6">
-            <h1 className="text-3xl font-bold">Now you will start a search!
+      <div className="relative flex flex-1 overflow-hidden">
+        {/* Left Panel (same as Step 2) */}
+        <div
+          className={`fixed top-0 h-screen z-40
+            ${taskOpen ? "w-1/5 min-w-[220px]" : "w-12"}
+            bg-gray-100 border-r transition-all duration-300 flex flex-col`}
+        >
+          <button
+            onClick={() => setTaskOpen(!taskOpen)}
+            className="p-2 text-sm font-medium hover:bg-gray-200"
+          >
+            {taskOpen ? (
+              <span className="italic text-gray-600">
+                Click the button to collapse the panel
+              </span>
+            ) : (
+              "▶"
+            )}
+          </button>
+
+          {taskOpen && (
+            <div className="p-4 overflow-y-auto space-y-4">
+              <div>
+                <h3 className="font-semibold mb-1 text-base">Search Scenario</h3>
+                <p className="text-base">{scenario}</p>
+              </div>
+
+              <div>
+                <h3 className="font-semibold mb-1 text-base">Search Task</h3>
+                <p className="text-base">{task}</p>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Main Content */}
+        <div
+          className={`flex-1 flex items-center justify-center transition-all
+            ${taskOpen ? "ml-[20%]" : "ml-12"}`}
+        >
+          <div className="max-w-2xl w-full text-center space-y-6 px-6">
+            <h1 className="text-3xl font-bold">
+              Now you will start a search!
               <br />
-              Perform a search to explore evidence about {topic}.
+              Perform a search to explore evidence about{" "}
+              <span className="font-semibold">
+                {topic || "the given topic"}
+              </span>.
             </h1>
 
-            <div className="bg-gray-100 p-6 rounded-lg text-left space-y-2">
-              <p className="text-base">{instructionMessage}</p>
+            <div className="bg-gray-100 p-6 rounded-lg text-left">
+              <p className="text-lg">{instructionMessage}</p>
             </div>
 
-            <p className="text-red-600 font-medium text-base">
-              You should search for at least four minutes and issue several queries in order to proceed to the next page.
+            <p className="text-red-600 text-base">
+              You should search for at least{" "}
+              <span className="font-semibold">four minutes</span> and
+              <br />
+              issue <span className="font-semibold">several queries</span> in order to proceed to the next page.
             </p>
 
             <button
               onClick={() => {
                 setStep(2);
-                // Ensure the modal is shown when entering step 2
                 setShowIntroModal(true);
               }}
               className="bg-blue-600 text-white px-6 py-3 rounded-lg"
@@ -288,11 +333,12 @@ ${userInput}
           </div>
         </div>
       </div>
-    );
-  }
+    </div>
+  );
+}
 
   /* =========================
-     STEP 2
+     PAGE 2
   ========================= */
   return (
     <div className="flex flex-col min-h-screen">
