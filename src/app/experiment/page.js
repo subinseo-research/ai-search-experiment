@@ -49,9 +49,8 @@ export default function Experiment() {
   const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
 
   // scrap
-  const selection = window.getSelection();
-  const selectedText = selection?.toString().trim();
   const addScrap = ({ title, fullText, source }) => {
+    if (typeof window === "undefined") return;
     const selectedText = window.getSelection()?.toString().trim();
     
     setScraps((prev) => [
