@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 import ReactMarkdown from "react-markdown";
@@ -22,15 +21,13 @@ export default function Experiment() {
   const [task, setTask] = useState("");
   const [systemType, setSystemType] = useState(null);
   const [taskType, setTaskType] = useState("");
+  const topic = taskType;
 
-  const taskPanelAnchorRef = useRef(null);
-
-  const instructionMessage = 
-    systemType === "WebSearch"
-      ? `You will use search engines to conduct the search about the given topic.
-  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
-      : `You will use Chat AI to conduct the search about the given topic.
-  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`;
+  const instructionMessage = systemType
+    ? systemType === "WebSearch"
+      ? `You will use search engines to conduct the search about the given topic. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+      : `You will use Chat AI to conduct the search about the given topic. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+    : "";
 
 
   // Search Engine
@@ -57,7 +54,6 @@ export default function Experiment() {
     const storedTaskType = localStorage.getItem("task_type");
     if (storedTaskType) setTaskType(storedTaskType);
   }, []);
-  const topic = taskType;
 
   useEffect(() => {
     const id = localStorage.getItem("participant_id");
