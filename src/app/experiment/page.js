@@ -572,15 +572,24 @@ ${userInput}
             ))}
           </div>
 
-          {/* Proceed button area (fixed at bottom of scrapbook column) */}
+          {/* Proceed button */}
           <div className="p-4 border-t">
-            {canProceed && (
-              <button
-                onClick={handleNext}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg"
-              >
-                Proceed to Next Step →
-              </button>
+            <button
+              onClick={handleNext}
+              disabled={!canProceed}
+              className={`
+                w-full py-3 rounded-lg font-semibold transition-all
+                ${canProceed
+                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"}
+              `}
+            >
+              Proceed to Next Step →
+            </button>
+            {!canProceed && (
+              <p className="mt-2 text-xs text-gray-500 text-center">
+                Available after 4 minutes and multiple search inputs.
+              </p>
             )}
           </div>
         </div>
