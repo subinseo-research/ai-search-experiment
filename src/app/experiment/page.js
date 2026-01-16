@@ -22,6 +22,8 @@ export default function Experiment() {
   const [systemType, setSystemType] = useState(null);
   const [taskType, setTaskType] = useState("");
   const topic = taskType;
+  const taskPanelAnchorRef = useRef(null);
+
 
   const instructionMessage = systemType
     ? systemType === "WebSearch"
