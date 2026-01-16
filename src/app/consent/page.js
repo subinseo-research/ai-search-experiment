@@ -180,8 +180,6 @@ export default function ConsentPage() {
             <h3 className="text-xl font-semibold">Participants Rights</h3>
             <p className="mt-1">
               If you have questions about your rights as a research participant or wish to report a research-related injury, please contact: 
-              <span className="font-mono">example@university.edu</span>.
-              IRB at <span className="font-mono"> irb@umd.edu</span>.
               For more information regarding participant rights, please visit: https://research.umd.edu/research-resources/research-compliance/institutional-review-board-irb/research-participants 
               This research has been reviewed according to the University of Maryland, College Park IRB procedures for research involving human subjects. 
             </p>
