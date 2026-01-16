@@ -104,7 +104,7 @@ export default function PreSurvey() {
   const handleSubmit = async () => {
     if (loading) return;
 
-    const allQuestions = [...Pretask_Questionnaires, ...selfEfficacyQuestions];
+    const allQuestions = [...Pretask_Questionnaires];
     const unanswered = allQuestions.filter((q) => responses[q] === undefined);
 
     if (unanswered.length > 0) {
@@ -121,11 +121,8 @@ export default function PreSurvey() {
         body: JSON.stringify({
           participant_id: participantId,
           Task_type: taskType,
-          familiarity_responses: Object.fromEntries(
+          presurvey_responses: Object.fromEntries(
             Pretask_Questionnaires.map((q) => [q, responses[q]])
-          ),
-          self_efficacy_responses: Object.fromEntries(
-            selfEfficacyQuestions.map((q) => [q, responses[q]])
           ),
         }),
       });
