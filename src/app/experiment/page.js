@@ -318,7 +318,7 @@ ${userInput}
               You should search for at least{" "}
               <span className="font-semibold">four minutes</span> and
               <br />
-              issue <span className="font-semibold">several queries</span> in order to proceed to the next page.
+              make <span className="font-semibold">several search attempts</span> in order to proceed to the next page.
             </p>
 
             <button
@@ -412,14 +412,17 @@ ${userInput}
                 ×
               </button>
 
-              <h2 className="text-xl font-semibold mb-4">Before you begin</h2>
+              <h2 className="text-xl font-semibold mb-4">Notification</h2>
 
-              <p className="text-sm leading-relaxed">
-                Please search freely regarding the assigned task. You must spend at least four minutes searching and make multiple meaningful search attempts.
-                After meeting the conditions, you may proceed.
+              <p className="text-base leading-relaxed">
+                Please search freely regarding the assigned task. <br />
+                If you search... <br />
+                1. for at least four minutes and <br />
+                2. enter multiple search inputs, <br />
+                you will be able to proceed to the next page.
               </p>
 
-              <div className="mt-5 text-xs text-gray-500">
+              <div className="mt-5 text-sm text-gray-500">
                 Your timer will start after you close this window.
               </div>
             </div>
