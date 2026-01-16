@@ -177,7 +177,7 @@ export default function TaskPage() {
     <main className="min-h-[100svh] flex flex-col bg-white text-gray-900">
       {/* Progress bar */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
-        <ProgressBar progress={20} />
+        <ProgressBar progress={5} />
       </div>
 
       {/* Main content */}
@@ -186,13 +186,11 @@ export default function TaskPage() {
           <h1 className="text-3xl font-bold mb-8">📋 Your Search Task</h1>
 
           <p className="text-gray-600 text-base mb-10">
-            Please read the task carefully.
+            Please read the task carefully. 
             <br />
-            You will next respond to a pre-task survey, followed by the main
-            search task.
+            This is a simulated scenario and the search task you will perform in the experiment. 
             <br />
-            You will be able to review your search task at any time during the
-            session.
+            You will first complete a pre-survey, followed by the main search task.
           </p>
 
           {/* Search Case */}
@@ -216,6 +214,10 @@ export default function TaskPage() {
               }}
             />
           </div>
+
+          <p className="text-gray-600 text-base mb-10">
+            You will be able to review your search task at any time.
+          </p>
 
           <button
             onClick={handleContinue}
