@@ -78,7 +78,7 @@ export default function ConsentPage() {
     <main className="min-h-[100svh] bg-white text-gray-900">
       {/* Progress Bar */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
-        <ProgressBar progress={5} />
+        <ProgressBar progress={2} />
       </div>
 
       <div className="mx-auto max-w-3xl px-6 py-12">
@@ -184,7 +184,7 @@ export default function ConsentPage() {
             </p>
           </div>
         </section>
-          
+
         <hr className="my-10 border-gray-200" />
 
           <p className="mt-1">
