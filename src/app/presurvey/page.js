@@ -76,42 +76,17 @@ export default function PreSurvey() {
   /* -------------------------------
      Questions
   -------------------------------- */
-  const familiarityQuestions = useMemo(
+  const Pretask_Questionnaires = useMemo(
     () => [
-      "How familiar are you with the topic?",
-      "To what extent do you know about the topic?",
-      "How much do you know about the topic?",
-      "How well do you know about the topic?",
+      "How familiar are you with the [Topic]?",
+      "To what extent do keywords and concepts related to [Topic] come to mind for your search?",
+      "How clear is your plan for finding interesting and valuable information related to [Topic]?",
     ],
     []
   );
 
-  const selfEfficacyQuestions = useMemo(
-    () => [
-      "I am usually able to think up creative and effective search strategies to find interesting and valuable information.",
-      "I have the ability to find answers, even when I have no immediate or prior knowledge of the subject.",
-      "The concept is too complex for me to understand through online searches.",
-      "I can do a good search and feel confident it will lead me to interesting information.",
-      "When I plan how to search for scientific information, I am almost certain I can find what I need.",
-      "Given enough time and effort, I believe I can find information that interests me.",
-      "When faced with unfamiliar information, I have confidence that I can search effectively for information that connects to me personally.",
-      "I trust my ability to find new and interesting information.",
-      "After finishing a search, the information I expected usually emerges during the search process.",
-      "When confronted with difficult tasks, I am unsure whether I can find insightful information.",
-    ],
-    []
-  );
-
-  const familiarityLabels = ["Not at all", "Slightly", "Moderately", "Very", "Extremely"];
-  const selfEfficacyLabels = [
-    "Strongly Disagree",
-    "Disagree",
-    "Slightly Disagree",
-    "Slightly Agree",
-    "Agree",
-    "Strongly Agree",
-  ];
-
+  const Labels = ["Not at all", "Slightly", "Somewhat", "Moderately", "Fairly", "Very", "Extremely"];
+  
   /* -------------------------------
      Handle response
   -------------------------------- */
@@ -129,7 +104,7 @@ export default function PreSurvey() {
   const handleSubmit = async () => {
     if (loading) return;
 
-    const allQuestions = [...familiarityQuestions, ...selfEfficacyQuestions];
+    const allQuestions = [...Pretask_Questionnaires, ...selfEfficacyQuestions];
     const unanswered = allQuestions.filter((q) => responses[q] === undefined);
 
     if (unanswered.length > 0) {
@@ -147,7 +122,7 @@ export default function PreSurvey() {
           participant_id: participantId,
           Task_type: taskType,
           familiarity_responses: Object.fromEntries(
-            familiarityQuestions.map((q) => [q, responses[q]])
+            Pretask_Questionnaires.map((q) => [q, responses[q]])
           ),
           self_efficacy_responses: Object.fromEntries(
             selfEfficacyQuestions.map((q) => [q, responses[q]])
@@ -172,7 +147,7 @@ export default function PreSurvey() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="sticky top-0 z-40 bg-white border-b">
-        <ProgressBar progress={50} />
+        <ProgressBar progress={10} />
       </div>
 
       <div className="flex">
@@ -205,12 +180,15 @@ export default function PreSurvey() {
         {/* Survey */}
         <div className="flex-1 flex justify-center overflow-y-auto">
           <div className="max-w-[900px] w-full px-8 py-12 bg-white">
-            <h1 className="text-3xl font-semibold mb-12 text-center">Pre-Survey</h1>
 
-            <h2 className="text-xl font-semibold mb-6">About the given search task</h2>
+            <p className="text-sm font-medium mb-6">
+              On the scales below, indicate how you think about the given topic.
+              <br />
+              There are no right or wrong answers; we are interested in what you think.  
+            </p>
 
             <div className="space-y-8 mb-16">
-              {familiarityQuestions.map((q, idx) => (
+              {Pretask_Questionnaires.map((q, idx) => (
                 <div
                   key={q}
                   ref={(el) => (questionRefs.current[q] = el)}
@@ -221,40 +199,8 @@ export default function PreSurvey() {
                     {idx + 1}. {q}
                   </p>
                   <div className="flex justify-between text-sm text-gray-600">
-                    {familiarityLabels.map((label, i) => (
+                    {Labels.map((label, i) => (
                       <label key={label} className="flex flex-col items-center w-[100px]">
-                        <input
-                          type="radio"
-                          checked={responses[q] === i + 1}
-                          onChange={() => handleChange(q, i + 1)}
-                          className="w-7 h-7 accent-blue-600 hover:scale-110 transition-transform cursor-pointer"
-                        />
-                        <span>{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <h2 className="text-xl font-semibold mb-6">
-              Pre-Search Self-Efficacy (Heppner & Petersen, 1982)
-            </h2>
-
-            <div className="space-y-8">
-              {selfEfficacyQuestions.map((q, idx) => (
-                <div
-                  key={q}
-                  ref={(el) => (questionRefs.current[q] = el)}
-                  className={`border-b pb-8 space-y-4 transition-all
-                    ${highlightQuestion === q ? "animate-flash border-2 border-red-500 rounded-lg p-4" : ""}`}
-                >
-                  <p className="font-medium text-[18px]">
-                    {idx + 1}. {q}
-                  </p>
-                  <div className="flex justify-between text-sm text-gray-600">
-                    {selfEfficacyLabels.map((label, i) => (
-                      <label key={label} className="flex flex-col items-center w-[110px]">
                         <input
                           type="radio"
                           checked={responses[q] === i + 1}
@@ -282,14 +228,13 @@ export default function PreSurvey() {
         </div>
       </div>
 
-      {/* Guide */}
+      {/* Pop-up Guide */}
       {showGuide && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
           <div ref={guideCardRef} className="bg-white p-8 rounded-lg shadow-xl max-w-[720px]">
-            <h2 className="text-2xl font-semibold mb-4">Before You Begin</h2>
-            <p className="mb-6 text-gray-700">
+            <h2 className="text-2xl font-semibold mb-4">Notification</h2>
+           <p className="mb-6 text-base text-gray-700">
               You can review your assigned search task on the left at any time.
-              Your responses will be saved automatically.
             </p>
             <button
               onClick={() => {
@@ -327,7 +272,7 @@ export default function PreSurvey() {
 
               <button
                 onClick={() => {
-                  const allQuestions = [...familiarityQuestions, ...selfEfficacyQuestions];
+                  const allQuestions = [...Pretask_Questionnaires, ...selfEfficacyQuestions];
                   const firstUnanswered = allQuestions.find((q) => responses[q] === undefined);
 
                   if (firstUnanswered && questionRefs.current[firstUnanswered]) {
