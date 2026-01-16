@@ -105,6 +105,28 @@ export default function Experiment() {
   }, [step, showIntroModal]);
 
   /* =========================
+     Page popstate and step
+  ========================= */
+
+  useEffect(() => {
+    window.history.pushState({ step }, "");
+
+    const handlePopState = () => {
+      if (step === 2) {
+        setStep(1);
+        window.history.pushState({ step: 1 }, "");
+      } else {
+        window.history.pushState({ step: 1 }, "");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [step]);
+
+  /* =========================
      SEARCH ENGINE HANDLER
   ========================= */
   const handleSearch = async (e) => {
@@ -313,13 +335,6 @@ ${userInput}
             <div className="bg-gray-100 p-6 rounded-lg text-left">
               <p className="text-lg">{instructionMessage}</p>
             </div>
-
-            <p className="text-red-600 text-base">
-              You should search for at least{" "}
-              <span className="font-semibold">four minutes</span> and
-              <br />
-              make <span className="font-semibold">several search attempts</span> in order to proceed to the next page.
-            </p>
 
             <button
               onClick={() => {
