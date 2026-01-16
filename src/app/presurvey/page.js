@@ -181,7 +181,7 @@ export default function PreSurvey() {
         <div className="flex-1 flex justify-center overflow-y-auto">
           <div className="max-w-[900px] w-full px-8 py-12 bg-white">
 
-            <p className="text-sm font-medium mb-6">
+            <p className="text-base font-medium mt-10 mb-8">
               On the scales below, indicate how you think about the given topic.
               <br />
               There are no right or wrong answers; we are interested in what you think.  
