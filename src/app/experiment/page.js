@@ -20,7 +20,8 @@ export default function Experiment() {
   const [scenario, setScenario] = useState("");
   const [task, setTask] = useState("");
   const [systemType, setSystemType] = useState(null);
-  const topic = scenario; 
+  const [taskType, setTaskType] = useState("");
+  const topic = taskType;
 
   const instructionMessage = 
     systemType === "WebSearch"
