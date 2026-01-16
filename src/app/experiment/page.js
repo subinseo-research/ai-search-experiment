@@ -332,7 +332,7 @@ ${userInput}
             <h1 className="text-3xl font-bold">
               Now you will start a search!
               <br />
-              Perform a search to explore evidence about {"{topic}"}. 
+              Perform a search to explore evidence about {topic}.
             </h1>
 
             <div className="bg-gray-100 p-6 rounded-lg text-left">
