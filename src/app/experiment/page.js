@@ -284,9 +284,19 @@ ${userInput}
       <div className="relative flex flex-1 overflow-hidden">
         {/* Left Panel (same as Step 2) */}
         <div
-          className={`fixed top-0 h-screen z-40
-            ${taskOpen ? "w-1/5 min-w-[220px]" : "w-12"}
-            bg-gray-100 border-r transition-all duration-300 flex flex-col`}
+          className={`bg-gray-50 sticky top-[56px]
+            h-[calc(100vh-56px)]
+            transition-all
+            ${taskOpen ? "w-[22%]" : "w-[64px]"}
+            relative
+            after:content-['']
+            after:absolute
+            after:top-0
+            after:right-0
+            after:w-px
+            after:h-screen
+            after:bg-gray-300
+          `}
         >
           <button
             onClick={() => setTaskOpen(!taskOpen)}
@@ -365,9 +375,19 @@ ${userInput}
       <div className="relative flex flex-1 overflow-hidden">
         {/* Left Panel */}
         <div
-          className={`fixed top-0 h-screen z-40
-            ${taskOpen ? "w-1/5 min-w-[220px]" : "w-12"}
-            bg-gray-100 border-r transition-all duration-300 flex flex-col`}
+          className={`bg-gray-50 sticky top-[56px]
+            h-[calc(100vh-56px)]
+            transition-all
+            ${taskOpen ? "w-[22%]" : "w-[64px]"}
+            relative
+            after:content-['']
+            after:absolute
+            after:top-0
+            after:right-0
+            after:w-px
+            after:h-screen
+            after:bg-gray-300
+          `}
         >
           <button
             onClick={() => setTaskOpen(!taskOpen)}
