@@ -21,6 +21,14 @@ export default function Experiment() {
   const [task, setTask] = useState("");
   const [systemType, setSystemType] = useState(null);
 
+  const instructionMessage = 
+    systemType === "WebSearch"
+      ? `You will now use search engines to conduct the search about the given topic.
+  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find useful or interesting.`
+      : `You will now use Chat AI to conduct the search about the given topic.
+  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find useful or interesting.`;
+
+
   // Search Engine
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -248,22 +256,21 @@ ${userInput}
   if (step === 1) {
     return (
       <div className="flex flex-col min-h-screen">
-        <ProgressBar progress={25} />
+        <ProgressBar progress={15} />
 
         <div className="flex flex-1 items-center justify-center">
           <div className="max-w-2xl w-full text-center space-y-6">
-            <h1 className="text-3xl font-bold">Now you will start a search</h1>
+            <h1 className="text-3xl font-bold">Now you will start a search!
+              <br />
+              Perform a search to explore evidence about {topic}.
+            </h1>
 
             <div className="bg-gray-100 p-6 rounded-lg text-left space-y-2">
-              <p className="font-semibold">Scenario</p>
-              <p className="text-base">{scenario}</p>
-
-              <p className="font-semibold pt-2">Search Task</p>
-              <p className="text-base">{task}</p>
+              <p className="text-base">{instructionMessage}</p>
             </div>
 
-            <p className="text-red-600 font-medium text-sm">
-              You must search for at least four minutes before proceeding.
+            <p className="text-red-600 font-medium text-base">
+              You should search for at least four minutes and issue several queries in order to proceed to the next page.
             </p>
 
             <button
@@ -288,7 +295,7 @@ ${userInput}
   return (
     <div className="flex flex-col min-h-screen">
       <div className="sticky top-0 z-50">
-        <ProgressBar progress={40} />
+        <ProgressBar progress={50} />
       </div>
 
       {/* Timer */}
