@@ -76,11 +76,12 @@ export default function PreSurvey() {
   /* -------------------------------
      Questions
   -------------------------------- */
+  const topic = taskType; 
   const Pretask_Questionnaires = useMemo(
     () => [
-      "How familiar are you with the [Topic]?",
-      "To what extent do keywords and concepts related to [Topic] come to mind for your search?",
-      "How clear is your plan for finding interesting and valuable information related to [Topic]?",
+      "How familiar are you with the {topic}?",
+      "To what extent do keywords and concepts related to {topic} come to mind for your search?",
+      "How clear is your plan for finding interesting and valuable information related to {topic}?",
     ],
     []
   );
@@ -185,7 +186,9 @@ export default function PreSurvey() {
             </p>
 
             <div className="space-y-8 mb-16">
-              {Pretask_Questionnaires.map((q, idx) => (
+              {Pretask_Questionnaires.map((q, idx) => {
+                const renderedQuestion = q.replace("{topic}", taskType); 
+              return (
                 <div
                   key={q}
                   ref={(el) => (questionRefs.current[q] = el)}
@@ -209,7 +212,8 @@ export default function PreSurvey() {
                     ))}
                   </div>
                 </div>
-              ))}
+              );
+            })}
             </div>
 
             <div className="mt-16 text-center">
