@@ -150,9 +150,14 @@ export default function PreSurvey() {
 
       <div className="flex">
         {/* Left panel */}
-        <div className={`border-r bg-gray-50 sticky top-[56px] h-[calc(100vh-56px)]
-          transition-all ${panelOpen ? "w-[22%]" : "w-[64px]"}`}>
-          <div className="p-4">
+        <div
+          className={`bg-gray-50 sticky top-[56px]
+            h-[calc(100vh-56px)]
+            transition-all
+            ${panelOpen ? "w-[22%]" : "w-[64px]"}`}
+        >
+          {/* 👇 border는 여기! + h-full */}
+          <div className="h-full border-r p-4">
             <button
               onClick={() => setPanelOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
@@ -161,7 +166,10 @@ export default function PreSurvey() {
             </button>
 
             {panelOpen && (
-              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
+              <div
+                ref={taskPanelAnchorRef}
+                className="bg-white p-4 rounded border text-lg space-y-3"
+              >
                 <div>
                   <strong>Search Case</strong>
                   <p className="mt-1 whitespace-pre-wrap">{searchCase}</p>
@@ -174,6 +182,8 @@ export default function PreSurvey() {
             )}
           </div>
         </div>
+      </div>
+
 
         {/* Survey */}
         <div className="flex-1 flex justify-center overflow-y-auto">

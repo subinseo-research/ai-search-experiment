@@ -119,7 +119,6 @@ export default function Experiment() {
         window.history.pushState({ step: 1 }, "");
       }
     };
-
     window.addEventListener("popstate", handlePopState);
     return () => {
       window.removeEventListener("popstate", handlePopState);
@@ -326,10 +325,7 @@ ${userInput}
             <h1 className="text-3xl font-bold">
               Now you will start a search!
               <br />
-              Perform a search to explore evidence about{" "}
-              <span className="font-semibold">
-                {topic || "the given topic"}
-              </span>.
+              Perform a search to explore evidence about {"{topic}"}. 
             </h1>
 
             <div className="bg-gray-100 p-6 rounded-lg text-left">
