@@ -332,7 +332,7 @@ ${userInput}
         </div>
 
         {/* Main Content */}
-        <div className="h-full flex items-center justify-center">
+        <div className="flex-1 flex items-center justify-center">
           <div className="max-w-2xl w-full text-center space-y-6 px-6">
             <h1 className="text-3xl font-bold">
               Now you will start a search!
