@@ -161,7 +161,7 @@ export default function PreSurvey() {
             </button>
 
             {panelOpen && (
-              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-sm space-y-3">
+              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
                 <div>
                   <strong>Search Case</strong>
                   <p className="mt-1 whitespace-pre-wrap">{searchCase}</p>
@@ -196,7 +196,7 @@ export default function PreSurvey() {
                     ${highlightQuestion === q ? "animate-flash border-2 border-red-500 rounded-lg p-4" : ""}`}
                 >
                   <p className="font-medium text-[18px]">
-                    {idx + 1}. {q}
+                    {idx + 1}. {renderedQuestion}
                   </p>
                   <div className="flex justify-between text-sm text-gray-600">
                     {Labels.map((label, i) => (
