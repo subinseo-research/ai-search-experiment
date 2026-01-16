@@ -22,6 +22,7 @@ export default function Experiment() {
   const [systemType, setSystemType] = useState(null);
   const [taskType, setTaskType] = useState("");
   const topic = taskType;
+   const taskPanelAnchorRef = useRef(null);
 
   const instructionMessage = 
     systemType === "WebSearch"
@@ -386,46 +387,28 @@ ${userInput}
             after:bg-gray-300
           `}
         >
-          <button
-            onClick={() => setTaskOpen(!taskOpen)}
-            className="p-2 text-sm font-medium hover:bg-gray-200"
-          >
-            {taskOpen ? (
-              <span className="italic text-gray-600">
-                Click the button to collapse the panel
-              </span>
-            ) : (
-              "▶"
+
+          <div className="p-4">
+            <button
+              onClick={() => setTaskOpen((v) => !v)}
+              className="mb-4 w-10 h-10 rounded border bg-white shadow"
+            >
+              {taskOpen ? "←" : "→"}
+            </button>
+
+            {taskOpen && (
+              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
+                <div>
+                  <strong>Search Case</strong>
+                  <p className="mt-1 whitespace-pre-wrap">{searchCase}</p>
+                </div>
+                <div>
+                  <strong>Search Task</strong>
+                  <p className="mt-1 whitespace-pre-wrap">{searchTask}</p>
+                </div>
+              </div>
             )}
-          </button>
-
-          {taskOpen && (
-            <div className="p-4 overflow-y-auto space-y-4">
-              {/* Researcher Notes */}
-              <div className="bg-white border rounded-lg p-3 text-sm italic text-gray-600 leading-relaxed">
-                <p>
-                  Please feel free to search freely regarding the search task below. You can also use the scrapbook to save anything you want
-                  to keep for later.
-                </p>
-                <p className="mt-2">
-                  You should spend at least four minutes searching and make multiple meaningful search attempts during that time.
-                </p>
-                <p className="mt-2">
-                  If the conditions are met, a button to proceed will appear in the bottom right corner.
-                </p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-1 text-base">Search Scenario</h3>
-                <p className="text-base">{scenario}</p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-1 text-base">Search Task</h3>
-                <p className="text-base">{task}</p>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Intro Modal: blocks interaction until closed */}
