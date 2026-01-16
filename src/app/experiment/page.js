@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 import ReactMarkdown from "react-markdown";
@@ -21,8 +22,8 @@ export default function Experiment() {
   const [task, setTask] = useState("");
   const [systemType, setSystemType] = useState(null);
   const [taskType, setTaskType] = useState("");
-  const topic = taskType;
-   const taskPanelAnchorRef = useRef(null);
+
+  const taskPanelAnchorRef = useRef(null);
 
   const instructionMessage = 
     systemType === "WebSearch"
@@ -51,6 +52,13 @@ export default function Experiment() {
   /* =========================
      Initial setup
   ========================= */
+
+  useEffect(() => {
+    const storedTaskType = localStorage.getItem("task_type");
+    if (storedTaskType) setTaskType(storedTaskType);
+  }, []);
+  const topic = taskType;
+
   useEffect(() => {
     const id = localStorage.getItem("participant_id");
     if (!id) {
@@ -299,36 +307,32 @@ ${userInput}
             after:bg-gray-300
           `}
         >
-          <button
-            onClick={() => setTaskOpen(!taskOpen)}
-            className="p-2 text-sm font-medium hover:bg-gray-200"
-          >
-            {taskOpen ? (
-              <span className="italic text-gray-600">
-                Click the button to collapse the panel
-              </span>
-            ) : (
-              "▶"
+
+          <div className="p-4">
+            <button
+              onClick={() => setTaskOpen((v) => !v)}
+              className="mb-4 w-10 h-10 rounded border bg-white shadow"
+            >
+              {taskOpen ? "←" : "→"}
+            </button>
+
+            {taskOpen && (
+              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
+                <div>
+                  <strong>Search Case</strong>
+                  <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
+                </div>
+                <div>
+                  <strong>Search Task</strong>
+                  <p className="mt-1 whitespace-pre-wrap">{task}</p>
+                </div>
+              </div>
             )}
-          </button>
-
-          {taskOpen && (
-            <div className="p-4 overflow-y-auto space-y-4">
-              <div>
-                <h3 className="font-semibold mb-1 text-base">Search Scenario</h3>
-                <p className="text-base">{scenario}</p>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-1 text-base">Search Task</h3>
-                <p className="text-base">{task}</p>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
 
         {/* Main Content */}
-        <div className="flex-1 flex items-center justify-center">
+        <div className={`flex-1 flex items-center justify-center ${taskOpen ? "ml-[22%]" : "ml-[64px]"}`}>
           <div className="max-w-2xl w-full text-center space-y-6 px-6">
             <h1 className="text-3xl font-bold">
               Now you will start a search!
@@ -400,11 +404,11 @@ ${userInput}
               <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
                 <div>
                   <strong>Search Case</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{searchCase}</p>
+                  <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
                 </div>
                 <div>
                   <strong>Search Task</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{searchTask}</p>
+                  <p className="mt-1 whitespace-pre-wrap">{task}</p>
                 </div>
               </div>
             )}
