@@ -172,7 +172,6 @@ export default function ConsentPage() {
             <p className="mt-1">
               Your participation in this research is completely voluntary. You may choose not to take part at all. If you decide to participate in this research, you may stop participating at any time. If you decide not to participate in this study or if you stop participating at any time, you will not be penalized. 
               If you have questions, concerns, or complaints about the study, or if you wish to withdraw, please contact the investigator:
-              {" "}
             </p>
           </div>
 
@@ -180,11 +179,12 @@ export default function ConsentPage() {
             <h3 className="text-xl font-semibold">Participants Rights</h3>
             <p className="mt-1">
               If you have questions about your rights as a research participant or wish to report a research-related injury, please contact: 
-              For more information regarding participant rights, please visit: https://research.umd.edu/research-resources/research-compliance/institutional-review-board-irb/research-participants 
+              For more information regarding participant rights, please visit:
               This research has been reviewed according to the University of Maryland, College Park IRB procedures for research involving human subjects. 
             </p>
           </div>
-
+        </section>
+          
         <hr className="my-10 border-gray-200" />
 
           <p className="mt-1">
