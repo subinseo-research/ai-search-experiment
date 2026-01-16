@@ -306,7 +306,7 @@ ${userInput}
           `}
         >
 
-          <div className="p-4">
+          <div className="px-4 pt-2">
             <button
               onClick={() => setTaskOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
@@ -315,14 +315,16 @@ ${userInput}
             </button>
 
             {taskOpen && (
-              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
-                <div>
-                  <strong>Search Case</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
-                </div>
-                <div>
-                  <strong>Search Task</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{task}</p>
+              <div className="p-4 mt-2">
+                <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
+                  <div>
+                    <strong>Search Case</strong>
+                    <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
+                  </div>
+                  <div>
+                    <strong>Search Task</strong>
+                    <p className="mt-1 whitespace-pre-wrap">{task}</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -330,7 +332,7 @@ ${userInput}
         </div>
 
         {/* Main Content */}
-        <div className={`flex-1 flex items-center justify-center ${taskOpen ? "ml-[22%]" : "ml-[64px]"}`}>
+        <div className="flex-1 flex items-center justify-center">
           <div className="max-w-2xl w-full text-center space-y-6 px-6">
             <h1 className="text-3xl font-bold">
               Now you will start a search!
@@ -390,7 +392,7 @@ ${userInput}
           `}
         >
 
-          <div className="p-4">
+          <div className="px-4 pt-2">
             <button
               onClick={() => setTaskOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
@@ -399,14 +401,16 @@ ${userInput}
             </button>
 
             {taskOpen && (
-              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
-                <div>
-                  <strong>Search Case</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
-                </div>
-                <div>
-                  <strong>Search Task</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{task}</p>
+              <div className="p-4 mt-2">
+                <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
+                  <div>
+                    <strong>Search Case</strong>
+                    <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
+                  </div>
+                  <div>
+                    <strong>Search Task</strong>
+                    <p className="mt-1 whitespace-pre-wrap">{task}</p>
+                  </div>
                 </div>
               </div>
             )}
@@ -550,7 +554,7 @@ ${userInput}
         >
           {/* Title */}
           <div className="p-4 border-b">
-            <h2 className="font-semibold mb-3">Scrapbook</h2>
+            <h2 className="mt-4 font-semibold mb-4">Scrapbook</h2>
           </div>
 
           {/* Scrap list (scrollable) */}
