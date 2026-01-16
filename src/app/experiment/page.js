@@ -25,10 +25,10 @@ export default function Experiment() {
 
   const instructionMessage = 
     systemType === "WebSearch"
-      ? `You will now use search engines to conduct the search about the given topic.
-  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find useful or interesting.`
-      : `You will now use Chat AI to conduct the search about the given topic.
-  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find useful or interesting.`;
+      ? `You will use search engines to conduct the search about the given topic.
+  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+      : `You will use Chat AI to conduct the search about the given topic.
+  You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`;
 
 
   // Search Engine
