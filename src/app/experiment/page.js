@@ -521,10 +521,11 @@ ${userInput}
         >
         <div className="h-full flex">
           <div className="flex-1 overflow-hidden">
-            <div className="mx-auto max-w-3xl h-full">
+            <div className="mx-auto max-w-3xl">
+
           {systemType === "WebSearch" ? ( 
             /* Search Engine UI */
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
 
               {/* search result */}
               {isInitialState ? (
@@ -629,7 +630,7 @@ ${userInput}
           ) : (
             
             /* GenAI Chat UI */
-            <div className="flex flex-col h-full bg-white">
+            <div className="flex flex-col bg-white">
               {isGenAIInitialState ? (
                 /* ===== Initial Empty State ===== */
                 <div className="flex flex-col items-center justify-center h-full px-4">
@@ -650,7 +651,7 @@ ${userInput}
                 </div>
                 
               ) : (         
-                <div className="flex-1 p-4 pb-36">
+                <div className="p-4 pb-36">
                 {/* Chat history */}
                 <div className="mx-auto w-full max-w-3xl space-y-4">
                   {chatHistory.map((msg, idx) => {
