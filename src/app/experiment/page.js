@@ -191,7 +191,7 @@ export default function Experiment() {
   }, [step]);
 
   /* =========================
-     SEARCH ENGINE HANDLER
+     Search Engine (WebSearch)
   ========================= */
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -221,7 +221,7 @@ export default function Experiment() {
   };
 
   /* =========================
-     GENAI HANDLER (CHAT)
+     Gen AI (ChatSearch)
   ========================= */
   const handleGenAISubmit = async (e) => {
     e.preventDefault();
@@ -301,7 +301,7 @@ ${userInput}
   };
 
   /* =========================
-     SCRAPBOOK
+     Scrapbook
   ========================= */
   const handleDrop = (e) => {
     e.preventDefault();
@@ -464,7 +464,7 @@ ${userInput}
 
             {taskOpen && (
               <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent">
+                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-base space-y-4">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
