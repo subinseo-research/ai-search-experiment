@@ -707,7 +707,7 @@ ${userInput}
           {/* Proceed button */}
           <div 
             className="fixed bottom-0 right-0 bg-gray-50 border-t z-50"
-            style={{ width: `calc(100% - ${taskOpen ? "20%" : "64px"} - ${scrapWidth}%)` }}
+            style={{ width: 300 }}
           >
             <div className="p-4">
             <button
