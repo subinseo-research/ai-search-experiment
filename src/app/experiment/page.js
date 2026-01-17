@@ -519,8 +519,8 @@ ${userInput}
             paddingRight: `${scrapWidth}%`,
           }}
         >
-        <div className="h-full flex">
-          <div className="flex-1 overflow-hidden">
+        <div className="h-full flex min-h-0">
+          <div className="flex-1 overflow-hidden min-h-0">
             <div className="mx-auto max-w-3xl h-full">
           {systemType === "WebSearch" ? ( 
             /* Search Engine UI */
