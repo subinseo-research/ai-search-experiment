@@ -346,7 +346,7 @@ ${userInput}
     <div className="flex flex-col min-h-screen">
       <ProgressBar progress={15} />
 
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-x-hidden">
         {/* Left Panel (same as Step 2) */}
         <div
           className={`sticky top-0 h-screen
@@ -424,13 +424,17 @@ ${userInput}
       </div>
 
       {/* Timer */}
-      <div className="sticky top-20 z-40 flex justify-end pr-6">
-        <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
-          Time: {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
+      <div className="sticky top-20 z-50">
+        {/* Timer Overlay */}
+        <div className="absolute top-3 right-6">
+          <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
+            Time: {Math.floor(seconds / 60)}:
+            {(seconds % 60).toString().padStart(2, "0")}
+          </div>
         </div>
       </div>
 
-      <div className="relative flex flex-1 overflow-hidden">
+      <div className="relative flex flex-1 overflow-x-hidden">
         {/* Left Panel */}
         <div
           className={`sticky top-0 h-screen
@@ -555,7 +559,7 @@ ${userInput}
             /* GenAI Chat UI */
             <div className="flex flex-col h-full bg-gray-50">
               {/* Chat history */}
-              <div className="flex-1 p-4 overflow-y-auto">
+              <div className="flex-1 p-4 overflow-y-auto pb-36">
                 <div className="mx-auto w-full max-w-3xl space-y-4">
                   {chatHistory.map((msg, idx) => {
                     const isAssistant = msg.role === "assistant";
@@ -632,34 +636,35 @@ ${userInput}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
-        {/* Drag Handle */}
-        <div
-          onMouseDown={() => (isDraggingRef.current = true)}
-          className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-400/30 z-50"
-          aria-label="Resize Scrapbook"
-        />
+          {/* Drag Handle */}
+          <div
+            onMouseDown={() => (isDraggingRef.current = true)}
+            className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-400/30 z-50"
+            aria-label="Resize Scrapbook"
+          />
 
           {/* Title */}
           <div className="p-4 border-b">
             <h2 className="mt-2 font-semibold mb-1">Scrapbook</h2>
           </div>
 
-          {/* Scrap list (scrollable) */}
-          <div className="flex-1 p-4 overflow-y-auto">
+          {/* Scrollable content */}
+          <div className="flex-1 p-4 overflow-y-auto pb-36">
             {scraps.map((item, i) => (
               <div key={i} className="bg-white p-3 pt-6 mb-3 rounded border relative">
                 <button
                   onClick={() => handleDeleteScrap(i)}
                   className="absolute top-2 right-2"
-                  title="Delete scrap"
                 >
                   ✕
                 </button>
+
                 {item.type !== "note" && (
-                    <ReactMarkdown className="prose prose-sm max-w-none">
-                      {item.snippet}
-                    </ReactMarkdown>
+                  <ReactMarkdown className="prose prose-sm max-w-none">
+                    {item.snippet}
+                  </ReactMarkdown>
                 )}
+
                 <textarea
                   className="w-full border mt-2 p-2 text-sm"
                   placeholder={
@@ -672,6 +677,7 @@ ${userInput}
                 />
               </div>
             ))}
+
           {/* + Note button*/}
           <button
             onClick={addNote}
@@ -690,14 +696,14 @@ ${userInput}
         </div>
 
           {/* Proceed button */}
-          <div className="sticky bottom-0 left-0 w-full p-4 bg-transparent z-40">
+          <div className="sticky bottom-0 p-4 bg-gray-50 border-t z-40">
             <button
               onClick={handleNext}
               disabled={!canProceed}
               className={`
                 w-full py-3 rounded-lg font-semibold transition-all
                 ${canProceed
-                  ? "bg-blue-600 text-white hover:bg-blue-700 cursor-pointer"
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"}
               `}
             >
