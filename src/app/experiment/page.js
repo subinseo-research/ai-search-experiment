@@ -509,7 +509,14 @@ ${userInput}
         )}
 
         {/* Main Area */}
-        <div className="flex-1 border-r overflow-hidden">
+        <div className="flex-1 overflow-hidden"
+          style={{
+            paddingLeft: taskOpen ? "20%" : "64px",
+            paddingRight: `${scrapWidth}%`,
+          }}
+        >
+        <div className="h-full flex justify-center">
+          <div className="w-full max-w-3xl overflow-hidden">
           {systemType === "WebSearch" ? (
             /* Search Engine UI */
             <div className="flex flex-col h-full">
@@ -637,6 +644,8 @@ ${userInput}
             </div>
           )}
         </div>
+      </div>
+    </div>
 
         {/* Scrapbook */}
         <div
