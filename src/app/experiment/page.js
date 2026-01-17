@@ -341,78 +341,89 @@ ${userInput}
   /* =========================
      PAGE 1
   ========================= */
- if (step === 1) {
-  return (
-    <div className="flex flex-col min-h-screen">
-      <ProgressBar progress={15} />
+  if (step === 1) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <ProgressBar progress={15} />
 
-      <div className="relative flefx flex-1 overflow-x-hidden">
-        {/* Left Panel (same as Step 2) */}
-        <div
-          className={`sticky top-0 h-screen
-            bg-gray-100
-            transition-all
-            ${taskOpen ? "w-[20%]" : "w-[64px]"}
-            border-r border-gray-300
-            overflow-hidden
-          `}
-        >
+        <div className="flex flex-1 overflow-hidden">
+          {/* Left Panel */}
+          <div
+            className={`
+              sticky top-0 h-screen
+              bg-gray-100 border-r border-gray-300
+              transition-all
+              ${taskOpen ? "w-[20%]" : "w-[64px]"}
+              overflow-hidden
+            `}
+          >
+            <div className="px-4 pt-2">
+              <button
+                onClick={() => setTaskOpen((v) => !v)}
+                className="mb-4 w-10 h-10 rounded border bg-white shadow"
+              >
+                {taskOpen ? "←" : "→"}
+              </button>
 
-          <div className="px-4 pt-2">
-            <button
-              onClick={() => setTaskOpen((v) => !v)}
-              className="mb-4 w-10 h-10 rounded border bg-white shadow"
-            >
-              {taskOpen ? "←" : "→"}
-            </button>
-
-            {taskOpen && (
-              <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} 
-                  className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent"
-                >
-                  <div>
-                    <strong>Search Case</strong>
-                    <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
-                  </div>
-                  <div>
-                    <strong>Search Task</strong>
-                    <p className="mt-1 whitespace-pre-wrap">{task}</p>
+              {taskOpen && (
+                <div className="p-4 mt-2">
+                  <div className="p-4 rounded border border-gray-300 text-base space-y-4">
+                    <div>
+                      <strong>Search Case</strong>
+                      <p className="mt-1 whitespace-pre-wrap">
+                        {scenario}
+                      </p>
+                    </div>
+                    <div>
+                      <strong>Search Task</strong>
+                      <p className="mt-1 whitespace-pre-wrap">
+                        {task}
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="flex-1 flex items-center justify-center">
-          <div className="max-w-2xl w-full text-center space-y-6 px-6">
-            <h1 className="text-3xl font-bold">
-              Now you will start a search!
-              <br />
-              Perform a search to explore evidence about {topic}.
-            </h1>
-
-            <div className="bg-gray-100 p-6 rounded-lg text-left">
-              <p className="text-lg">{instructionMessage}</p>
+              )}
             </div>
+          </div>
 
-            <button
-              onClick={() => {
-                setStep(2);
-                setShowIntroModal(true);
-              }}
-              className="bg-blue-600 text-white px-6 py-3 rounded-lg"
-            >
-              Start Experiment →
-            </button>
+          {/* Main Intro Content */}
+          <div className="flex-1 flex items-center justify-center">
+            <div className="max-w-2xl w-full text-center space-y-8 px-6">
+              <h1 className="text-3xl font-bold leading-snug">
+                Now you will start a search!
+                <br />
+                Perform a search to explore evidence about{" "}
+                <span className="font-semibold">{topic}</span>.
+              </h1>
+
+              <div className="bg-gray-100 p-6 rounded-lg text-left">
+                <p className="text-base leading-relaxed">
+                  {instructionMessage}
+                </p>
+              </div>
+
+              <button
+                onClick={() => {
+                  setStep(2);
+                  setShowIntroModal(true);
+                }}
+                className="
+                  inline-flex items-center justify-center
+                  bg-blue-600 text-white
+                  px-8 py-3 rounded-lg
+                  font-medium
+                  hover:bg-blue-700
+                  transition
+                "
+              >
+                Start Experiment →
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-  );
-}
+    );
+  }
 
   /* =========================
      PAGE 2
