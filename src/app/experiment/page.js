@@ -67,6 +67,31 @@ export default function Experiment() {
   const handleDeleteScrap = (index) => {
   setScraps((prev) => prev.filter((_, i) => i !== index));
   };
+  const [scrapWidth, setScrapWidth] = useState(18);
+  const isDraggingRef = useRef(false);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDraggingRef.current) return;
+      const newWidth = ((window.innerWidth - e.clientX) / window.innerWidth) * 100;
+      if (newWidth >= 14 && newWidth <= 30) {
+        setScrapWidth(newWidth);
+      }
+    };
+
+    const handleMouseUp = () => {
+      isDraggingRef.current = false;
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, []);
+
 
   /* =========================
      Initial setup
@@ -315,14 +340,7 @@ ${userInput}
             h-full
             transition-all
             ${taskOpen ? "w-[22%]" : "w-[64px]"}
-            relative
-            after:content-['']
-            after:absolute
-            after:top-0
-            after:right-0
-            after:w-px
-            after:h-screen
-            after:bg-gray-300
+            border-r border-gray-300
           `}
         >
 
@@ -336,7 +354,7 @@ ${userInput}
 
             {taskOpen && (
               <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
+                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -401,14 +419,7 @@ ${userInput}
             h-full
             transition-all
             ${taskOpen ? "w-[22%]" : "w-[64px]"}
-            relative
-            after:content-['']
-            after:absolute
-            after:top-0
-            after:right-0
-            after:w-px
-            after:h-screen
-            after:bg-gray-300
+            border-r border-gray-300
           `}
         >
 
@@ -422,7 +433,7 @@ ${userInput}
 
             {taskOpen && (
               <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
+                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -597,11 +608,16 @@ ${userInput}
 
         {/* Scrapbook */}
         <div
-          className="fixed top-0 right-0 h-screen
-          w-[18%] min-w-[220px] bg-gray-50 border-l flex flex-col z-40"
+          className="fixed top-0 right-0 h-screen bg-gray-50 border-l flex flex-col z-40"
+          style={{ width: `${scrapWidth}%`, minWidth: 220 }}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
+        <div
+          onMouseDown={() => (isDraggingRef.current = true)}
+          className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-300/30"
+        />
+
           {/* Title */}
           <div className="p-4 border-b">
             <h2 className="mt-2 font-semibold mb-1">Scrapbook</h2>
