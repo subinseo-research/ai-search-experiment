@@ -35,6 +35,9 @@ export default function Experiment() {
   // Search Engine
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
+  const isInitialState =
+    searchResults.length === 0 && questionCount === 0;
+
 
   // GenAI Chat
   const [chatHistory, setChatHistory] = useState([]);
@@ -519,8 +522,11 @@ ${userInput}
           <div className="flex-1 overflow-hidden">
             <div className="mx-auto max-w-3xl h-full">
           {systemType === "WebSearch" ? (
+
             /* Search Engine UI */
             <div className="flex flex-col h-full">
+
+              {/* search bar */}
               <form onSubmit={handleSearch} className="flex p-3 border-b">
                 <input
                   value={searchQuery}
@@ -538,40 +544,65 @@ ${userInput}
                 </button>
               </form>
 
-              <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
-                {searchResults.map((r) => (
-                  <div
-                    key={r.id}
-                    draggable
-                    onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify(r))}
-                    className="bg-white border p-3 mb-3 rounded cursor-grab"
-                  >
-                    
-                    <h3 className="font-semibold text-blue-700 hover:underline">
+              {/* search result */}
+              {isInitialState ? (
+                <div className="flex-1 flex items-center justify-center bg-gray-50">
+                  <div className="max-w-xl w-full bg-white border rounded-xl p-10 text-center space-y-6">
+                    <div className="text-4xl">🔍</div>
+
+                    <h2 className="text-2xl font-semibold">
+                      Start your search
+                    </h2>
+
+                    <p className="text-gray-600">
+                      Use the search box above to explore scientific evidence about{" "}
+                      <span className="font-medium">{topic}</span>.
+                    </p>
+
+                    <ul className="text-sm text-gray-500 space-y-2">
+                      <li>• Try different search approaches</li>
+                      <li>• Refine your queries as you go</li>
+                      <li>• Save anything useful in the scrapbook</li>
+                    </ul>
+                  </div>
+                </div>
+              ) : (
+                
+                <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
+                  {searchResults.map((r) => (
+                    <div
+                      key={r.id}
+                      draggable
+                      onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify(r))}
+                      className="bg-white border p-3 mb-3 rounded cursor-grab"
+                    >
+                      
+                      <h3 className="font-semibold text-blue-700 hover:underline">
+                        <a
+                          href={r.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {r.title}
+                        </a>
+                      </h3>
+                      <p className="text-sm mt-1">{r.snippet}</p>
                       <a
                         href={r.link}
                         target="_blank"
                         rel="noopener noreferrer"
+                        className="text-xs text-green-700 break-all hover:underline mt-1 inline-block"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {r.title}
+                        {r.link}
                       </a>
-                    </h3>
-                    <p className="text-sm mt-1">{r.snippet}</p>
-                    <a
-                      href={r.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-green-700 break-all hover:underline mt-1 inline-block"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {r.link}
-                    </a>
-                  </div>
-                ))}
+                    </div>
+                  ))}
+                </div>
+              )}
               </div>
-            </div>
-          ) : (
+            ) : (
             
             /* GenAI Chat UI */
             <div className="flex flex-col h-full bg-gray-50">
