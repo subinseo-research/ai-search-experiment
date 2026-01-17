@@ -424,7 +424,8 @@ ${userInput}
       </div>
 
       {/* Timer */}
-      <div className="sticky top-20 z-50">
+      <div className="sticky top-0 z-50 bg-white">
+        <ProgressBar progress={50} />
         {/* Timer Overlay */}
         <div className="absolute top-3 right-6">
           <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
@@ -696,7 +697,7 @@ ${userInput}
         </div>
 
           {/* Proceed button */}
-          <div className="sticky bottom-0 p-4 bg-gray-50 border-t z-40">
+          <div className="sticky bottom-0 p-4 bg-gray-50 border-t z-10">
             <button
               onClick={handleNext}
               disabled={!canProceed}
