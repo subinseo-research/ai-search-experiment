@@ -424,18 +424,21 @@ ${userInput}
       </div>
 
       {/* Timer */}
-      <div className="fixed top-4 right-6 bg-black text-white px-4 py-2 rounded-md text-sm z-50">
-        Time: {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
+      <div className="sticky top-20 z-40 flex justify-end pr-6">
+        <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
+          Time: {Math.floor(seconds / 60)}:{(seconds % 60).toString().padStart(2, "0")}
+        </div>
       </div>
 
       <div className="relative flex flex-1 overflow-hidden">
         {/* Left Panel */}
         <div
-          className={`bg-gray-50 sticky top-0
-            h-full
+          className={`sticky top-0 h-screen
+            bg-gray-100
             transition-all
             ${taskOpen ? "w-[20%]" : "w-[64px]"}
             border-r border-gray-300
+            overflow-hidden
           `}
         >
 
@@ -650,7 +653,7 @@ ${userInput}
                   className="absolute top-2 right-2"
                   title="Delete scrap"
                 >
-                  ❎
+                  ✕
                 </button>
                 {item.type !== "note" && (
                     <ReactMarkdown className="prose prose-sm max-w-none">
@@ -687,7 +690,7 @@ ${userInput}
         </div>
 
           {/* Proceed button */}
-          <div className="absolute bottom-0 left-0 w-full p-4 bg-transparent">
+          <div className="sticky bottom-0 left-0 w-full p-4 bg-transparent z-40">
             <button
               onClick={handleNext}
               disabled={!canProceed}
