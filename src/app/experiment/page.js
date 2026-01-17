@@ -205,7 +205,7 @@ export default function Experiment() {
     setQuestionCount((prev) => prev + 1);
 
     try {
-      const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&start=1&num=40`);
+      const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=40`);
       const data = await res.json();
 
       const results =
