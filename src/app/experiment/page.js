@@ -435,7 +435,7 @@ ${userInput}
       </div>
 
       {/* Timer */}
-      <div className="fixed top-3 right-6 z-[60]">
+      <div className="fixed top-4 right-6 z-[60]">
         {/* Timer Overlay */}
         <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
             Time: {Math.floor(seconds / 60)}:
