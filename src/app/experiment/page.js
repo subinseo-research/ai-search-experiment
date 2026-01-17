@@ -397,8 +397,7 @@ ${userInput}
               <h1 className="text-3xl font-bold leading-snug">
                 Now you will start a search!
                 <br />
-                Perform a search to explore evidence about{" "}
-                <span className="font-semibold">{topic}</span>.
+                Perform a search to explore evidence about {topic}.
               </h1>
 
               <div className="bg-gray-100 p-6 rounded-lg text-left">
@@ -692,7 +691,7 @@ ${userInput}
               {/* Input area */}
               <form
                 onSubmit={handleGenAISubmit}
-                className="border-t bg-white py-4 flex justify-center"
+                className="bg-white py-4 flex justify-center"
               >
                 <div className="w-full max-w-xl flex items-center gap-2">
                   <input
