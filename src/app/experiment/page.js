@@ -521,10 +521,11 @@ ${userInput}
         >
         <div className="h-full flex min-h-0">
           <div className="flex-1 overflow-hidden min-h-0">
-            <div className="mx-auto max-w-3xl h-full">
+            <div className="mx-auto max-w-3xl">
           {systemType === "WebSearch" ? ( 
+
             /* Search Engine UI */
-            <div className="flex flex-col h-full">
+            <div className="flex flex-col">
 
               {/* search result */}
               {isInitialState ? (
@@ -629,7 +630,7 @@ ${userInput}
           ) : (
             
             /* GenAI Chat UI */
-            <div className="flex flex-col h-full bg-white">
+            <div className="flex flex-col bg-white">
               {isGenAIInitialState ? (
                 /* ===== Initial Empty State ===== */
                 <div className="flex flex-col items-center justify-center h-full px-4">
