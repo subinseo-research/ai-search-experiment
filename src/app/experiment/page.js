@@ -651,7 +651,7 @@ ${userInput}
 
         {/* Scrapbook */}
         <div
-          className="sticky top-0 h-full bg-gray-50 border-l flex flex-col"
+          className="absolute top-0 right-0 h-full bg-gray-50 border-l flex flex-col z-40"
           style={{ width: `${scrapWidth}%`, minWidth: 220, maxWidth: 600 }}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
