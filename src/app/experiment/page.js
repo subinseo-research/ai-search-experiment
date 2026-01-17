@@ -513,19 +513,18 @@ ${userInput}
         )}
 
         {/* Main Area */}
-        <div className="flex-1 overflow-y-auto"
+        <div className="flex-1 overflow-hidden"
           style={{
             paddingLeft: taskOpen ? "20%" : "64px",
             paddingRight: `${scrapWidth}%`,
           }}
         >
-        <div className="h-full flex min-h-0">
-          <div className="flex-1 overflow-hidden min-h-0">
-            <div className="mx-auto max-w-3xl">
+        <div className="h-full flex">
+          <div className="flex-1 overflow-hidden">
+            <div className="mx-auto max-w-3xl h-full">
           {systemType === "WebSearch" ? ( 
-
             /* Search Engine UI */
-            <div className="flex flex-col">
+            <div className="flex flex-col h-full">
 
               {/* search result */}
               {isInitialState ? (
@@ -592,7 +591,7 @@ ${userInput}
                     </button>
                   </form>
 
-                  <div className="flex-1 p-4 bg-gray-50">
+                  <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
                     {searchResults.map((r) => (
                       <div
                         key={r.id}
@@ -630,7 +629,7 @@ ${userInput}
           ) : (
             
             /* GenAI Chat UI */
-            <div className="flex flex-col bg-white">
+            <div className="flex flex-col h-full bg-white">
               {isGenAIInitialState ? (
                 /* ===== Initial Empty State ===== */
                 <div className="flex flex-col items-center justify-center h-full px-4">
@@ -651,7 +650,7 @@ ${userInput}
                 </div>
                 
               ) : (         
-                <div className="flex-1 p-4 pb-36">
+                <div className="flex-1 p-4 overflow-y-auto pb-36">
                 {/* Chat history */}
                 <div className="mx-auto w-full max-w-3xl space-y-4">
                   {chatHistory.map((msg, idx) => {
