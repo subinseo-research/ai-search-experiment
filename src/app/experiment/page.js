@@ -56,6 +56,7 @@ export default function Experiment() {
     setScraps((prev) => [
       ...prev,
       {
+        type: "scrap",
         title,
         snippet: selectedText || fullText,
         source,
@@ -71,7 +72,7 @@ export default function Experiment() {
   const isDraggingRef = useRef(false);
 
   useEffect(() => {
-    const handleMouseMove = (e) => {
+    const onMove = (e) => {
       if (!isDraggingRef.current) return;
       const newWidth = ((window.innerWidth - e.clientX) / window.innerWidth) * 100;
       if (newWidth >= 14 && newWidth <= 30) {
@@ -79,16 +80,15 @@ export default function Experiment() {
       }
     };
 
-    const handleMouseUp = () => {
-      isDraggingRef.current = false;
+    const onUp = () => {
+      isDraggingRef.current= false;
     };
 
-    window.addEventListener("mousemove", handleMouseMove);
-    window.addEventListener("mouseup", handleMouseUp);
-
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
     };
   }, []);
 
@@ -336,11 +336,12 @@ ${userInput}
       <div className="relative flex flex-1 overflow-hidden">
         {/* Left Panel (same as Step 2) */}
         <div
-          className={`bg-gray-50 sticky top-0
-            h-full
+          className={`sticky top-0 h-screen
+            bg-gray-100
             transition-all
-            ${taskOpen ? "w-[22%]" : "w-[64px]"}
+            ${taskOpen ? "w-[18%]" : "w-[64px]"}
             border-r border-gray-300
+            overflow-hidden
           `}
         >
 
@@ -354,7 +355,9 @@ ${userInput}
 
             {taskOpen && (
               <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent">
+                <div ref={taskPanelAnchorRef} 
+                  className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent"
+                >
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -472,13 +475,13 @@ ${userInput}
 
               <div className="mt-5 text-sm text-gray-500">
                 Your timer will start after you close this window.
-              </div>
+              </div>className="fixed top-0 right-0
             </div>
           </div>
         )}
 
         {/* Main Area */}
-        <div className="flex-1 border-r overflow-hidden mr-[18%]">
+        <div cclassName="flex-1 border-r overflow-hidden">
           {systemType === "WebSearch" ? (
             /* Search Engine UI */
             <div className="flex flex-col h-full">
@@ -608,38 +611,52 @@ ${userInput}
 
         {/* Scrapbook */}
         <div
-          className="fixed top-0 right-0 h-screen bg-gray-50 border-l flex flex-col z-40"
+          className="relative h-full bg-gray-50 border-l flex flex-col"
           style={{ width: `${scrapWidth}%`, minWidth: 220 }}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
+        {/* Drag Handle */}
         <div
           onMouseDown={() => (isDraggingRef.current = true)}
-          className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-300/30"
+          className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-400/30 z-50"
+          aria-label="Resize Scrapbook"
         />
 
           {/* Title */}
-          <div className="p-4 border-b">
+          <div className="p-4 border-b flex items-center justify-between">
             <h2 className="mt-2 font-semibold mb-1">Scrapbook</h2>
+              <button
+                onClick={addNote}
+                className="text-sm px-3 py-1 rounded border bg-white hover:bg-gray-100"
+              >
+                + Note
+              </button>
           </div>
 
           {/* Scrap list (scrollable) */}
           <div className="flex-1 p-4 overflow-y-auto">
             {scraps.map((item, i) => (
-              <div key={i} className="bg-white p-3 mb-3 rounded border relative">
+              <div key={i} className="bg-white p-3 pt-6 mb-3 rounded border relative">
                 <button
                   onClick={() => handleDeleteScrap(i)}
-                  className="absolute top-2 right-2 text-xs text-gray-400 hover:text-red-500"
+                  className="absolute top-2 right-2"
                   title="Delete scrap"
                 >
                   ❎
                 </button>
-                <ReactMarkdown className="prose prose-sm max-w-none">
-                  {item.snippet}
-                </ReactMarkdown>
+                {item.type !== "note" && (
+                    <ReactMarkdown className="prose prose-sm max-w-none">
+                      {item.snippet}
+                    </ReactMarkdown>
+                )}
                 <textarea
                   className="w-full border mt-2 p-2 text-sm"
-                  placeholder="Your notes..."
+                  placeholder={
+                    item.type==="note"
+                      ? "Write your note here..."
+                      : "Your notes..."
+                  }
                   value={item.comment}
                   onChange={(e) => handleUpdateScrapComment(i, e.target.value)}
                 />
