@@ -624,8 +624,8 @@ ${userInput}
 
         {/* Scrapbook */}
         <div
-          className="relative h-full bg-gray-50 border-l flex flex-col"
-          style={{ width: `${scrapWidth}%`, minWidth: 220 }}
+          className="sticky top-0 h-screen bg-gray-50 border-l flex flex-col"
+          style={{ width: `${scrapWidth}%`, minWidth: 220, maxWidth: 600 }}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
@@ -637,14 +637,8 @@ ${userInput}
         />
 
           {/* Title */}
-          <div className="p-4 border-b flex items-center justify-between">
+          <div className="p-4 border-b">
             <h2 className="mt-2 font-semibold mb-1">Scrapbook</h2>
-              <button
-                onClick={addNote}
-                className="text-sm px-3 py-1 rounded border bg-white hover:bg-gray-100"
-              >
-                + Note
-              </button>
           </div>
 
           {/* Scrap list (scrollable) */}
@@ -666,7 +660,7 @@ ${userInput}
                 <textarea
                   className="w-full border mt-2 p-2 text-sm"
                   placeholder={
-                    item.type==="note"
+                    item.type === "note"
                       ? "Write your note here..."
                       : "Your notes..."
                   }
@@ -675,10 +669,25 @@ ${userInput}
                 />
               </div>
             ))}
-          </div>
+          {/* + Note button*/}
+          <button
+            onClick={addNote}
+            className="
+                w-full mt-4 py-2
+                border-2 border-dashed
+                rounded-lg
+                text-sm
+                text-gray-600
+                hover:bg-gray-100
+                transition
+              "
+          >
+            + Add a new note
+          </button>
+        </div>
 
           {/* Proceed button */}
-          <div className="p-4 border-t">
+          <div className="absolute bottom-0 left-0 w-full p-4 bg-transparent">
             <button
               onClick={handleNext}
               disabled={!canProceed}
