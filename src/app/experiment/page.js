@@ -629,8 +629,28 @@ ${userInput}
             
             /* GenAI Chat UI */
             <div className="flex flex-col h-full bg-gray-50">
-              {/* Chat history */}
-              <div className="flex-1 p-4 overflow-y-auto pb-36">
+              {isGenAIInitialState ? (
+                /* ===== Initial Empty State ===== */
+                <div className="flex flex-col items-center justify-center h-full px-4">
+                  <div className="w-full max-w-xl bg-white border rounded-xl p-10 text-center space-y-6">
+                    <div className="text-4xl">🤖</div>
+                    <h2 className="text-2xl font-semibold">
+                      Start a conversation
+                    </h2>
+                    <p className="text-gray-600">
+                      Ask the AI anything you'd like to know or discuss.
+                    </p>
+                    <ul className="text-sm text-gray-500 space-y-2 text-left inline-block">
+                      <li>• Ask questions about {topic}</li>
+                      <li>• Feel free to ask follow-up questions</li>
+                      <li>• Save anything useful in the scrapbook</li>
+                    </ul>
+                  </div>
+                </div>
+                
+              ) : (         
+                <div className="flex-1 p-4 overflow-y-auto pb-36">
+                {/* Chat history */}
                 <div className="mx-auto w-full max-w-3xl space-y-4">
                   {chatHistory.map((msg, idx) => {
                     const isAssistant = msg.role === "assistant";
@@ -664,7 +684,8 @@ ${userInput}
                     );
                   })}
                 </div>
-              </div>
+                </div>
+              )}
 
               {/* Input area */}
               <form
