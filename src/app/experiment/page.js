@@ -513,7 +513,7 @@ ${userInput}
         )}
 
         {/* Main Area */}
-        <div className="flex-1 overflow-hidden"
+        <div className="flex-1 overflow-y-auto"
           style={{
             paddingLeft: taskOpen ? "20%" : "64px",
             paddingRight: `${scrapWidth}%`,
@@ -591,7 +591,7 @@ ${userInput}
                     </button>
                   </form>
 
-                  <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
+                  <div className="flex-1 p-4 bg-gray-50">
                     {searchResults.map((r) => (
                       <div
                         key={r.id}
@@ -650,7 +650,7 @@ ${userInput}
                 </div>
                 
               ) : (         
-                <div className="flex-1 p-4 overflow-y-auto pb-36">
+                <div className="flex-1 p-4 pb-36">
                 {/* Chat history */}
                 <div className="mx-auto w-full max-w-3xl space-y-4">
                   {chatHistory.map((msg, idx) => {
