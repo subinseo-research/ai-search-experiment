@@ -529,7 +529,7 @@ ${userInput}
 
               {/* search result */}
               {isInitialState ? (
-                <div className="flex flex-col items-center justify-center h-full bg-gray-50 px-4">
+                <div className="flex flex-col items-center justify-center h-full bg-white px-4">
                   <div className="w-full max-w-xl bg-white border rounded-xl p-10 text-center space-y-6 mb-8">
                     <div className="text-4xl">🔍</div>
 
@@ -575,7 +575,7 @@ ${userInput}
                 /* ===== After First Search ===== */
                 <>
                   {/* search bar */}
-                  <form onSubmit={handleSearch} className="flex p-3 border-b">
+                  <form onSubmit={handleSearch} className="flex p-3">
                     <input
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
@@ -630,7 +630,7 @@ ${userInput}
           ) : (
             
             /* GenAI Chat UI */
-            <div className="flex flex-col h-full bg-gray-50">
+            <div className="flex flex-col h-full bg-white">
               {isGenAIInitialState ? (
                 /* ===== Initial Empty State ===== */
                 <div className="flex flex-col items-center justify-center h-full px-4">
