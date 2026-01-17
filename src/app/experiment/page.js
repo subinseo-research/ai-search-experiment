@@ -438,7 +438,7 @@ ${userInput}
       </div>
 
       {/* Timer */}
-      <div className="fixed top-4 right-6 z-[60]">
+      <div className="fixed top-6 right-5 z-[60]">
         {/* Timer Overlay */}
         <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
             Time: {Math.floor(seconds / 60)}:
@@ -719,7 +719,7 @@ ${userInput}
 
           {/* Title */}
           <div className="p-4 border-b">
-            <h2 className="mt-2 font-semibold mb-1">Scrapbook</h2>
+            <h2 className="mt-2 font-semibold mb-1">Scrapbook & Notes</h2>
           </div>
 
           {/* Scrollable content */}
