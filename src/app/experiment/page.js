@@ -454,7 +454,7 @@ ${userInput}
           `}
         >
 
-          <div className="px-4 pt-2">
+          <div className="px-4 pt-4">
             <button
               onClick={() => setTaskOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
