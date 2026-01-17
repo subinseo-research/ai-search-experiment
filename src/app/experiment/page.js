@@ -705,16 +705,12 @@ ${userInput}
         </div>
 
           {/* Proceed button */}
-          <div 
-            className="fixed bottom-0 right-0 bg-gray-50 border-t z-50"
-            style={{ width: 300 }}
-          >
-            <div className="p-4">
+          <div className="sticky bottom-0 bg-gray-50 p-4">
             <button
               onClick={handleNext}
               disabled={!canProceed}
               className={`
-                w-full py-3 rounded-lg font-semibold transition-all
+                w-full py-2.5 rounded-md font-semibold transition 
                 ${canProceed
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"}
@@ -722,6 +718,7 @@ ${userInput}
             >
               Proceed to Next Step →
             </button>
+            
             {!canProceed && (
               <p className="mt-2 text-xs text-gray-500 text-center">
                 Available after 4 minutes and multiple search inputs.
@@ -731,6 +728,5 @@ ${userInput}
           </div>
         </div>
       </div>
-    </div>
   );
 }
