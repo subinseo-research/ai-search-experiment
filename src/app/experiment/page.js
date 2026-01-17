@@ -343,22 +343,19 @@ ${userInput}
   ========================= */
  if (step === 1) {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen">
       <ProgressBar progress={15} />
 
-      <div className="relative flefx flex-1 overflow-x-hidden">
+      <div className="flex flex-1">
         {/* Left Panel (same as Step 2) */}
         <div
-          className={`sticky top-0 h-screen
-            bg-gray-100
-            transition-all
+          className={`
             ${taskOpen ? "w-[20%]" : "w-[64px]"}
             border-r border-gray-300
-            overflow-hidden
           `}
         >
 
-          <div className="px-4 pt-2">
+          <div className="p-4">
             <button
               onClick={() => setTaskOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
@@ -367,10 +364,7 @@ ${userInput}
             </button>
 
             {taskOpen && (
-              <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} 
-                  className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent"
-                >
+              <div className="p-4 rounded border border-gray-300 space-y-3">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -379,8 +373,7 @@ ${userInput}
                     <strong>Search Task</strong>
                     <p className="mt-1 whitespace-pre-wrap">{task}</p>
                   </div>
-                </div>
-              </div>
+                </div>           
             )}
           </div>
         </div>
