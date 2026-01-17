@@ -447,7 +447,7 @@ ${userInput}
         {/* Left Panel */}
         <div
           className={`
-            fixed top-0 left-0 h-screen
+            fixed top-0 left-0 h-full 
             bg-gray-100 border-r border-gray-300
             transition-all
             ${taskOpen ? "w-[20%]" : "w-[64px]"}
@@ -640,7 +640,7 @@ ${userInput}
 
         {/* Scrapbook */}
         <div
-          className="sticky top-0 h-screen bg-gray-50 border-l flex flex-col"
+          className="sticky top-0 h-full bg-gray-50 border-l flex flex-col"
           style={{ width: `${scrapWidth}%`, minWidth: 220, maxWidth: 600 }}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
@@ -658,7 +658,7 @@ ${userInput}
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 p-4 overflow-y-auto pb-36">
+          <div className="flex-1 p-4 overflow-y-auto">
             {scraps.map((item, i) => (
               <div key={i} className="bg-white p-3 pt-6 mb-3 rounded border relative">
                 <button
