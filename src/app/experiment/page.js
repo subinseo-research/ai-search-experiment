@@ -527,8 +527,8 @@ ${userInput}
 
               {/* search result */}
               {isInitialState ? (
-                <div className="flex-1 flex items-center justify-center bg-gray-50">
-                  <div className="relative -top-10 max-w-xl w-full bg-white border rounded-xl p-10 text-center space-y-6">
+                <div className="flex flex-col items-center justify-center h-full bg-gray-50 px-4">
+                  <div className="w-full max-w-xl bg-white border rounded-xl p-10 text-center space-y-6 mb-8">
                     <div className="text-4xl">🔍</div>
 
                     <h2 className="text-2xl font-semibold">
@@ -550,7 +550,7 @@ ${userInput}
                   {/* search bar */}
                   <form 
                     onSubmit={handleSearch} 
-                    className="mt-6 flex w-full max-w-xl"
+                    className="flex w-full max-w-xl"
                   >
                     <input
                       value={searchQuery}
