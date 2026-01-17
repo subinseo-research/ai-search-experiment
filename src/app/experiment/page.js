@@ -515,8 +515,9 @@ ${userInput}
             paddingRight: `${scrapWidth}%`,
           }}
         >
-        <div className="h-full flex justify-center">
-          <div className="w-full max-w-3xl overflow-hidden">
+        <div className="h-full flex">
+          <div className="flex-1 overflow-hidden">
+            <div className="mx-auto max-w-3xl h-full">
           {systemType === "WebSearch" ? (
             /* Search Engine UI */
             <div className="flex flex-col h-full">
@@ -646,6 +647,7 @@ ${userInput}
         </div>
       </div>
     </div>
+  </div>
 
         {/* Scrapbook */}
         <div
