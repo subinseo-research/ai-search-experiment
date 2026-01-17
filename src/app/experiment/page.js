@@ -616,7 +616,7 @@ ${userInput}
                   className="absolute top-2 right-2 text-xs text-gray-400 hover:text-red-500"
                   title="Delete scrap"
                 >
-                  🗑️
+                  ❎
                 </button>
                 <ReactMarkdown className="prose prose-sm max-w-none">
                   {item.snippet}
