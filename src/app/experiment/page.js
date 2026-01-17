@@ -71,7 +71,7 @@ export default function Experiment() {
   const handleDeleteScrap = (index) => {
   setScraps((prev) => prev.filter((_, i) => i !== index));
   };
-  const [scrapWidth, setScrapWidth] = useState(18);
+  const [scrapWidth, setScrapWidth] = useState(24);
   const isDraggingRef = useRef(false);
   const addNote = () => {
     setScraps((prev) => [
