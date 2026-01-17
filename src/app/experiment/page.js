@@ -42,6 +42,8 @@ export default function Experiment() {
   // GenAI Chat
   const [chatHistory, setChatHistory] = useState([]);
   const [isGenerating, setIsGenerating] = useState(false);
+  const isGenAIInitialState =
+    chatHistory.length === 0 && questionCount === 0;
 
   // Common
   const [scraps, setScraps] = useState([]);
