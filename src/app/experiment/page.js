@@ -498,7 +498,7 @@ ${userInput}
         >
 
           {/* ===== MAIN AREA ===== */}
-          <div className="flex-1 border-r overflow-hidden">
+          <div className="flex-1 border-r overflow-hidden flex flex-col">
             {systemType === "WebSearch" ? (
               <div className="flex flex-col h-full">
                 <form onSubmit={handleSearch} className="flex p-3 border-b">
@@ -606,35 +606,30 @@ ${userInput}
           </div>
         </div>
 
-        {/* Proceed Button (viewport fixed) */}
-        <div
-          className="fixed bottom-0 right-0 bg-gray-50 border-t z-50"
-          style={{
-            width: `calc(100% - ${taskOpen ? "20%" : "64px"} - ${scrapWidth}%)`,
-          }}
-        >
-          <div className="p-4">
+        {/* Proceed Button */}
+        {!showIntroModal && (
+          <div className="sticky bottom-0 bg-gray-50 border-t p-4">
             <button
               onClick={handleNext}
               disabled={!canProceed}
-              className={`w-full py-3 rounded-lg font-semibold ${
-                canProceed
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-300 text-gray-500"
-              }`}
+              className={`w-full py-3 rounded-lg font-semibold transition-all
+                ${canProceed
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-gray-300 text-gray-500 cursor-not-allowed"}
+              `}
             >
               Proceed to Next Step →
             </button>
+
             {!canProceed && (
               <p className="mt-2 text-xs text-gray-500 text-center">
                 Available after 4 minutes and multiple search inputs.
               </p>
             )}
           </div>
+        )}
         </div>
-
       </div>
-    </div>
   );
 }
 
