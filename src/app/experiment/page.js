@@ -521,33 +521,14 @@ ${userInput}
         <div className="h-full flex">
           <div className="flex-1 overflow-hidden">
             <div className="mx-auto max-w-3xl h-full">
-          {systemType === "WebSearch" ? (
-
+          {systemType === "WebSearch" ? ( 
             /* Search Engine UI */
             <div className="flex flex-col h-full">
-
-              {/* search bar */}
-              <form onSubmit={handleSearch} className="flex p-3 border-b">
-                <input
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1 border px-3 py-2"
-                  placeholder="Type your query..."
-                  disabled={showIntroModal}
-                />
-                <button
-                  className="bg-blue-600 text-white px-4 disabled:opacity-50"
-                  disabled={showIntroModal}
-                  type="submit"
-                >
-                  Search
-                </button>
-              </form>
 
               {/* search result */}
               {isInitialState ? (
                 <div className="flex-1 flex items-center justify-center bg-gray-50">
-                  <div className="max-w-xl w-full bg-white border rounded-xl p-10 text-center space-y-6">
+                  <div className="relative -top-10 max-w-xl w-full bg-white border rounded-xl p-10 text-center space-y-6">
                     <div className="text-4xl">🔍</div>
 
                     <h2 className="text-2xl font-semibold">
@@ -555,7 +536,7 @@ ${userInput}
                     </h2>
 
                     <p className="text-gray-600">
-                      Use the search box above to explore scientific evidence about{" "}
+                      Use the search box above to explore scientific evidence about {" "}
                       <span className="font-medium">{topic}</span>.
                     </p>
 
@@ -565,44 +546,86 @@ ${userInput}
                       <li>• Save anything useful in the scrapbook</li>
                     </ul>
                   </div>
+
+                  {/* search bar */}
+                  <form 
+                    onSubmit={handleSearch} 
+                    className="mt-6 flex w-full max-w-xl"
+                  >
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 border px-4 py-3 rounded-l-md"
+                      placeholder="Search Anything"
+                      disabled={showIntroModal}
+                    />
+                    <button
+                      className="bg-blue-600 text-white px-6 rounded-r-md"
+                      disabled={showIntroModal}
+                      type="submit"
+                    >
+                      Search
+                    </button>
+                  </form>
                 </div>
               ) : (
-                
-                <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
-                  {searchResults.map((r) => (
-                    <div
-                      key={r.id}
-                      draggable
-                      onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify(r))}
-                      className="bg-white border p-3 mb-3 rounded cursor-grab"
+
+                /* ===== After First Search ===== */
+                <>
+                  {/* search bar */}
+                  <form onSubmit={handleSearch} className="flex p-3 border-b">
+                    <input
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="flex-1 border px-3 py-2"
+                      placeholder="Type your query..."
+                      disabled={showIntroModal}
+                    />
+                    <button
+                      className="bg-blue-600 text-white px-4 disabled:opacity-50"
+                      disabled={showIntroModal}
+                      type="submit"
                     >
-                      
-                      <h3 className="font-semibold text-blue-700 hover:underline">
+                      Search
+                    </button>
+                  </form>
+
+                  <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
+                    {searchResults.map((r) => (
+                      <div
+                        key={r.id}
+                        draggable
+                        onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify(r))}
+                        className="bg-white border p-3 mb-3 rounded cursor-grab"
+                      >
+                        
+                        <h3 className="font-semibold text-blue-700 hover:underline">
+                          <a
+                            href={r.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {r.title}
+                          </a>
+                        </h3>
+                        <p className="text-sm mt-1">{r.snippet}</p>
                         <a
                           href={r.link}
                           target="_blank"
                           rel="noopener noreferrer"
+                          className="text-xs text-green-700 break-all hover:underline mt-1 inline-block"
                           onClick={(e) => e.stopPropagation()}
                         >
-                          {r.title}
+                          {r.link}
                         </a>
-                      </h3>
-                      <p className="text-sm mt-1">{r.snippet}</p>
-                      <a
-                        href={r.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-green-700 break-all hover:underline mt-1 inline-block"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        {r.link}
-                      </a>
-                    </div>
-                  ))}
-                </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
-              </div>
-            ) : (
+            </div>
+          ) : (
             
             /* GenAI Chat UI */
             <div className="flex flex-col h-full bg-gray-50">
