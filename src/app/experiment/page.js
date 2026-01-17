@@ -343,19 +343,22 @@ ${userInput}
   ========================= */
  if (step === 1) {
   return (
-    <div className="flex flex-col h-screen">
+    <div className="flex flex-col min-h-screen">
       <ProgressBar progress={15} />
 
-      <div className="flex flex-1">
+      <div className="relative flefx flex-1 overflow-x-hidden">
         {/* Left Panel (same as Step 2) */}
         <div
-          className={`
+          className={`sticky top-0 h-screen
+            bg-gray-100
+            transition-all
             ${taskOpen ? "w-[20%]" : "w-[64px]"}
             border-r border-gray-300
+            overflow-hidden
           `}
         >
 
-          <div className="p-4">
+          <div className="px-4 pt-2">
             <button
               onClick={() => setTaskOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
@@ -364,7 +367,10 @@ ${userInput}
             </button>
 
             {taskOpen && (
-              <div className="p-4 rounded border border-gray-300 space-y-3">
+              <div className="p-4 mt-2">
+                <div ref={taskPanelAnchorRef} 
+                  className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent"
+                >
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -373,7 +379,8 @@ ${userInput}
                     <strong>Search Task</strong>
                     <p className="mt-1 whitespace-pre-wrap">{task}</p>
                   </div>
-                </div>           
+                </div>
+              </div>
             )}
           </div>
         </div>
@@ -411,36 +418,34 @@ ${userInput}
      PAGE 2
   ========================= */
   return (
-    <div className="h-screen overflow-hidden flex flex-col">
-
-      {/* Progress Bar */}
+    <div className="flex flex-col h-screen overflow-hidden">
       <div className="sticky top-0 z-50">
         <ProgressBar progress={50} />
       </div>
 
-      {/* Timer (viewport fixed) */}
+      {/* Timer */}
       <div className="fixed top-3 right-6 z-[60]">
+        {/* Timer Overlay */}
         <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
-          Time: {Math.floor(seconds / 60)}:
-          {(seconds % 60).toString().padStart(2, "0")}
+            Time: {Math.floor(seconds / 60)}:
+            {(seconds % 60).toString().padStart(2, "0")}
         </div>
       </div>
 
-      {/* ===== BODY AREA ===== */}
-      <div className="flex flex-1 relative overflow-hidden">
-
-        {/* Left Panel (fixed) */}
+      <div className="relative flex flex-1 overflow-x-hidden">
+        {/* Left Panel */}
         <div
           className={`
             fixed top-0 left-0 h-screen
             bg-gray-100 border-r border-gray-300
-            transition-all z-40
+            transition-all
             ${taskOpen ? "w-[20%]" : "w-[64px]"}
           `}
         >
+
           <div className="px-4 pt-2">
             <button
-              onClick={() => setTaskOpen(v => !v)}
+              onClick={() => setTaskOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
             >
               {taskOpen ? "←" : "→"}
@@ -448,10 +453,7 @@ ${userInput}
 
             {taskOpen && (
               <div className="p-4 mt-2">
-                <div
-                  ref={taskPanelAnchorRef}
-                  className="p-4 rounded border border-gray-300 text-lg space-y-3"
-                >
+                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-lg space-y-3 bg-transparent">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -466,21 +468,25 @@ ${userInput}
           </div>
         </div>
 
-        {/* Intro Modal */}
+        {/* Intro Modal: blocks interaction until closed */}
         {showIntroModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg">
               <button
                 onClick={() => setShowIntroModal(false)}
                 className="absolute top-3 right-3 text-gray-500 text-xl"
+                aria-label="Close"
               >
                 ×
               </button>
 
               <h2 className="text-xl font-semibold mb-4">Notification</h2>
+
               <p className="text-base leading-relaxed">
-                Please search freely regarding the assigned task.<br />
-                If you search for at least four minutes and enter multiple inputs,
+                Please search freely regarding the assigned task. <br />
+                If you search... <br />
+                1. for at least four minutes and <br />
+                2. enter multiple search inputs, <br />
                 you will be able to proceed to the next page.
               </p>
 
@@ -491,128 +497,213 @@ ${userInput}
           </div>
         )}
 
-        {/* Main + Scrapbook Wrapper */}
-        <div
-          className="flex flex-1"
-          style={{ marginLeft: taskOpen ? "20%" : "64px" }}
-        >
+        {/* Main Area */}
+        <div className="flex-1 border-r overflow-hidden">
+          {systemType === "WebSearch" ? (
+            /* Search Engine UI */
+            <div className="flex flex-col h-full">
+              <form onSubmit={handleSearch} className="flex p-3 border-b">
+                <input
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="flex-1 border px-3 py-2"
+                  placeholder="Type your query..."
+                  disabled={showIntroModal}
+                />
+                <button
+                  className="bg-blue-600 text-white px-4 disabled:opacity-50"
+                  disabled={showIntroModal}
+                  type="submit"
+                >
+                  Search
+                </button>
+              </form>
 
-          {/* ===== MAIN AREA ===== */}
-          <div className="flex-1 border-r overflow-hidden flex flex-col">
-            {systemType === "WebSearch" ? (
-              <div className="flex flex-col h-full">
-                <form onSubmit={handleSearch} className="flex p-3 border-b">
-                  <input
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="flex-1 border px-3 py-2"
-                    placeholder="Type your query..."
-                    disabled={showIntroModal}
-                  />
-                  <button
-                    type="submit"
-                    disabled={showIntroModal}
-                    className="bg-blue-600 text-white px-4 disabled:opacity-50"
+              <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
+                {searchResults.map((r) => (
+                  <div
+                    key={r.id}
+                    draggable
+                    onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify(r))}
+                    className="bg-white border p-3 mb-3 rounded cursor-grab"
                   >
-                    Search
-                  </button>
-                </form>
-
-                <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
-                  {searchResults.map(r => (
-                    <div
-                      key={r.id}
-                      draggable
-                      onDragStart={e =>
-                        e.dataTransfer.setData("text/plain", JSON.stringify(r))
-                      }
-                      className="bg-white border p-3 mb-3 rounded cursor-grab"
+                    
+                    <h3 className="font-semibold text-blue-700 hover:underline">
+                      <a
+                        href={r.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {r.title}
+                      </a>
+                    </h3>
+                    <p className="text-sm mt-1">{r.snippet}</p>
+                    <a
+                      href={r.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-green-700 break-all hover:underline mt-1 inline-block"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <h3 className="font-semibold text-blue-700">
-                        <a href={r.link} target="_blank" rel="noopener noreferrer">
-                          {r.title}
-                        </a>
-                      </h3>
-                      <p className="text-sm mt-1">{r.snippet}</p>
-                    </div>
-                  ))}
-                </div>
+                      {r.link}
+                    </a>
+                  </div>
+                ))}
               </div>
-            ) : (
-              <div className="flex flex-col h-full bg-gray-50">
-                <div className="flex-1 p-4 overflow-y-auto pb-32">
-                  <div className="mx-auto max-w-3xl space-y-4">
-                    {chatHistory.map((msg, idx) => (
+            </div>
+          ) : (
+            
+            /* GenAI Chat UI */
+            <div className="flex flex-col h-full bg-gray-50">
+              {/* Chat history */}
+              <div className="flex-1 p-4 overflow-y-auto pb-36">
+                <div className="mx-auto w-full max-w-3xl space-y-4">
+                  {chatHistory.map((msg, idx) => {
+                    const isAssistant = msg.role === "assistant";
+
+                    return (
                       <div
                         key={idx}
-                        className={`p-4 rounded-xl ${
-                          msg.role === "assistant"
+                        className={`relative p-4 rounded-xl text-base leading-relaxed ${
+                          isAssistant
                             ? "bg-white border"
                             : "bg-blue-600 text-white ml-auto max-w-lg"
                         }`}
                       >
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
+
+                        {isAssistant && !msg.loading && (
+                          <button
+                            onClick={() =>
+                              addScrap({
+                                title: "ConvSearch",
+                                fullText: msg.content,
+                                source: "chat",
+                              })
+                            }
+                            className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
+                          >
+                            📌 Scrap
+                          </button>
+                        )}
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-
-                <form
-                  onSubmit={handleGenAISubmit}
-                  className="border-t bg-white py-4 flex justify-center"
-                >
-                  <div className="w-full max-w-xl flex gap-2">
-                    <input
-                      value={searchQuery}
-                      onChange={e => setSearchQuery(e.target.value)}
-                      disabled={isGenerating || showIntroModal}
-                      className="w-full border rounded-full px-4 py-2"
-                      placeholder="Ask anything"
-                    />
-                    <button
-                      type="submit"
-                      disabled={isGenerating || showIntroModal}
-                      className="bg-blue-600 text-white px-4 rounded-full"
-                    >
-                      Enter
-                    </button>
-                  </div>
-                </form>
               </div>
-            )}
-          </div>
 
-          {/* ===== SCRAPBOOK ===== */}
-          <div
-            className="h-screen bg-gray-50 border-l flex flex-col"
-            style={{ width: `${scrapWidth}%`, minWidth: 220, maxWidth: 600 }}
-            onDrop={handleDrop}
-            onDragOver={e => e.preventDefault()}
-          >
-            <div className="p-4 border-b font-semibold">Scrapbook</div>
-
-            <div className="flex-1 p-4 overflow-y-auto">
-              {scraps.map((item, i) => (
-                <div key={i} className="bg-white p-3 mb-3 rounded border">
-                  <ReactMarkdown>{item.snippet}</ReactMarkdown>
-                  <textarea
-                    className="w-full border mt-2 p-2 text-sm"
-                    value={item.comment}
-                    onChange={e => handleUpdateScrapComment(i, e.target.value)}
+              {/* Input area */}
+              <form
+                onSubmit={handleGenAISubmit}
+                className="border-t bg-white py-4 flex justify-center"
+              >
+                <div className="w-full max-w-xl flex items-center gap-2">
+                  <input
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder="Ask anything"
+                    disabled={isGenerating || showIntroModal}
+                    className="
+                      w-full border rounded-full px-4 py-2 text-base
+                      focus:outline-none focus:ring-2 focus:ring-blue-400
+                      disabled:bg-gray-100
+                    "
                   />
+                  <button
+                    type="submit"
+                    disabled={isGenerating || showIntroModal || !searchQuery.trim()}
+                    className="
+                      ml-2 px-4 py-2 rounded-full
+                      bg-blue-600 text-white
+                      disabled:opacity-50
+                    "
+                  >
+                    Enter
+                  </button>
                 </div>
-              ))}
+              </form>
             </div>
-          </div>
+          )}
         </div>
 
-        {/* Proceed Button */}
-        {!showIntroModal && (
-          <div className="sticky bottom-0 bg-gray-50 border-t p-4">
+        {/* Scrapbook */}
+        <div
+          className="sticky top-0 h-screen bg-gray-50 border-l flex flex-col"
+          style={{ width: `${scrapWidth}%`, minWidth: 220, maxWidth: 600 }}
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+        >
+          {/* Drag Handle */}
+          <div
+            onMouseDown={() => (isDraggingRef.current = true)}
+            className="absolute left-0 top-0 h-full w-1 cursor-col-resize bg-transparent hover:bg-blue-400/30 z-50"
+            aria-label="Resize Scrapbook"
+          />
+
+          {/* Title */}
+          <div className="p-4 border-b">
+            <h2 className="mt-2 font-semibold mb-1">Scrapbook</h2>
+          </div>
+
+          {/* Scrollable content */}
+          <div className="flex-1 p-4 overflow-y-auto pb-36">
+            {scraps.map((item, i) => (
+              <div key={i} className="bg-white p-3 pt-6 mb-3 rounded border relative">
+                <button
+                  onClick={() => handleDeleteScrap(i)}
+                  className="absolute top-2 right-2"
+                >
+                  ✕
+                </button>
+
+                {item.type !== "note" && (
+                  <ReactMarkdown className="prose prose-sm max-w-none">
+                    {item.snippet}
+                  </ReactMarkdown>
+                )}
+
+                <textarea
+                  className="w-full border mt-2 p-2 text-sm"
+                  placeholder={
+                    item.type === "note"
+                      ? "Write your note here..."
+                      : "Your notes..."
+                  }
+                  value={item.comment}
+                  onChange={(e) => handleUpdateScrapComment(i, e.target.value)}
+                />
+              </div>
+            ))}
+
+          {/* + Note button*/}
+          <button
+            onClick={addNote}
+            className="
+                w-full mt-4 py-2
+                border-2 border-dashed
+                rounded-lg
+                text-sm
+                text-gray-600
+                hover:bg-gray-100
+                transition
+              "
+          >
+            + Add a new note
+          </button>
+        </div>
+
+          {/* Proceed button */}
+          <div 
+            className="fixed bottom-0 right-0 bg-gray-50 border-t z-50"
+            style={{ width: `calc(100% - ${taskOpen ? "20%" : "64px"} - ${scrapWidth}%)` }}
+          >
+            <div className="p-4">
             <button
               onClick={handleNext}
               disabled={!canProceed}
-              className={`w-full py-3 rounded-lg font-semibold transition-all
+              className={`
+                w-full py-3 rounded-lg font-semibold transition-all
                 ${canProceed
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"}
@@ -620,17 +711,15 @@ ${userInput}
             >
               Proceed to Next Step →
             </button>
-
             {!canProceed && (
               <p className="mt-2 text-xs text-gray-500 text-center">
                 Available after 4 minutes and multiple search inputs.
               </p>
             )}
+            </div>
           </div>
-        )}
         </div>
       </div>
+    </div>
   );
 }
-
-
