@@ -70,6 +70,19 @@ export default function Experiment() {
   };
   const [scrapWidth, setScrapWidth] = useState(18);
   const isDraggingRef = useRef(false);
+  const addNote = () => {
+    setScraps((prev) => [
+      ...prev,
+      {
+        type: "note",
+        title: "Note",
+        snippet: "",
+        source: "note",
+        comment: "",
+      },
+    ]);
+  };
+
 
   useEffect(() => {
     const onMove = (e) => {
@@ -339,7 +352,7 @@ ${userInput}
           className={`sticky top-0 h-screen
             bg-gray-100
             transition-all
-            ${taskOpen ? "w-[18%]" : "w-[64px]"}
+            ${taskOpen ? "w-[20%]" : "w-[64px]"}
             border-r border-gray-300
             overflow-hidden
           `}
@@ -421,7 +434,7 @@ ${userInput}
           className={`bg-gray-50 sticky top-0
             h-full
             transition-all
-            ${taskOpen ? "w-[22%]" : "w-[64px]"}
+            ${taskOpen ? "w-[20%]" : "w-[64px]"}
             border-r border-gray-300
           `}
         >
@@ -475,13 +488,13 @@ ${userInput}
 
               <div className="mt-5 text-sm text-gray-500">
                 Your timer will start after you close this window.
-              </div>className="fixed top-0 right-0
+              </div>
             </div>
           </div>
         )}
 
         {/* Main Area */}
-        <div cclassName="flex-1 border-r overflow-hidden">
+        <div className="flex-1 border-r overflow-hidden">
           {systemType === "WebSearch" ? (
             /* Search Engine UI */
             <div className="flex flex-col h-full">
