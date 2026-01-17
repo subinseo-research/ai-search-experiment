@@ -346,7 +346,7 @@ ${userInput}
     <div className="flex flex-col min-h-screen">
       <ProgressBar progress={15} />
 
-      <div className="relative flex flex-1 overflow-x-hidden">
+      <div className="relative flefx flex-1 overflow-x-hidden">
         {/* Left Panel (same as Step 2) */}
         <div
           className={`sticky top-0 h-screen
@@ -418,31 +418,28 @@ ${userInput}
      PAGE 2
   ========================= */
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col h-screen overflow-hidden">
       <div className="sticky top-0 z-50">
         <ProgressBar progress={50} />
       </div>
 
       {/* Timer */}
-      <div className="sticky top-0 z-50 bg-white">
+      <div className="fixed top-3 right-6 z-[60]">
         {/* Timer Overlay */}
-        <div className="absolute top-3 right-6">
-          <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
+        <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
             Time: {Math.floor(seconds / 60)}:
             {(seconds % 60).toString().padStart(2, "0")}
-          </div>
         </div>
       </div>
 
       <div className="relative flex flex-1 overflow-x-hidden">
         {/* Left Panel */}
         <div
-          className={`sticky top-0 h-screen
-            bg-gray-100
+          className={`
+            fixed top-0 left-0 h-screen
+            bg-gray-100 border-r border-gray-300
             transition-all
             ${taskOpen ? "w-[20%]" : "w-[64px]"}
-            border-r border-gray-300
-            overflow-hidden
           `}
         >
 
@@ -500,6 +497,11 @@ ${userInput}
           </div>
         )}
 
+      <div
+        className="flex-1 flex"
+        style={{ marginLeft: taskOpen ? "20%" : "64px" }}
+      >
+
         {/* Main Area */}
         <div className="flex-1 border-r overflow-hidden">
           {systemType === "WebSearch" ? (
@@ -556,6 +558,7 @@ ${userInput}
               </div>
             </div>
           ) : (
+            
             /* GenAI Chat UI */
             <div className="flex flex-col h-full bg-gray-50">
               {/* Chat history */}
@@ -696,7 +699,11 @@ ${userInput}
         </div>
 
           {/* Proceed button */}
-          <div className="sticky bottom-0 p-4 bg-gray-50 border-t z-10">
+          <div 
+            className="fixed bottom-0 right-0 bg-gray-50 border-t z-50"
+            style={{ width: `calc(100% - ${taskOpen ? "20%" : "64px"} - ${scrapWidth}%)` }}
+          >
+            <div className="p-4">
             <button
               onClick={handleNext}
               disabled={!canProceed}
@@ -714,9 +721,11 @@ ${userInput}
                 Available after 4 minutes and multiple search inputs.
               </p>
             )}
+            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
   );
 }
