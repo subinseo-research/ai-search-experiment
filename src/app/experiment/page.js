@@ -319,7 +319,10 @@ ${userInput}
 
     try {
       const dropped = JSON.parse(raw);
-      // Use functional update to avoid stale-state bugs
+      if (dropped.type === "web") {
+        setScraps((prev) => [...prev, {type: "web", title: dropped.title, link: dropped.link, comment: ""}]);
+      return;
+    }
       setScraps((prev) => [...prev, { ...dropped, comment: "" }]);
     } catch {
       // ignore invalid payload
@@ -600,7 +603,7 @@ ${userInput}
                       <div
                         key={r.id}
                         draggable
-                        onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify(r))}
+                        onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify({type: "web", title: r.title, link: r.link}))}
                         className="bg-white border p-3 mb-3 rounded cursor-grab"
                       >
                         
@@ -759,10 +762,31 @@ ${userInput}
                   ✕
                 </button>
 
-                {item.type !== "note" && (
+                {item.type === "scrap" && (
                   <ReactMarkdown className="prose prose-sm max-w-none">
                     {item.snippet}
                   </ReactMarkdown>
+                )}
+
+                {item.type === "web" && (
+                  <div className="space-y-1">
+                    <a
+                      href={`/lp?u=${encodeURIComponent(item.link)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-sm font-semibold text-blue-700 hover:underline block"
+                    >
+                      {item.title}
+                    </a>
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-gray-500 break-all hover:underline"
+                    >
+                      {item.link}
+                    </a>
+                  </div>
                 )}
 
                 <textarea
