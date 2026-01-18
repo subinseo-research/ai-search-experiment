@@ -3,7 +3,7 @@
 import { useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
-export default function LandingPage() {
+export default function LandingContent() {
   const params = useSearchParams();
   const url = params.get("u");
 
@@ -11,24 +11,20 @@ export default function LandingPage() {
   const lastActivityRef = useRef(Date.now());
   const [art, setArt] = useState(0);
 
-  /* ===== Fetch landing content ===== */
-    useEffect(() => {
+  useEffect(() => {
     if (!url) return;
 
     fetch(`/api/fetchArticle?u=${encodeURIComponent(url)}`)
-        .then((res) => res.json())
-        .then((data) => {
-        if (data.ok) {
-            setContent(data.text);
-        } else {
-            setContent(`Failed to load content.\n\nReason: ${data.error}`);
-        }
-        })
-        .catch(() => {
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.ok) setContent(data.text);
+        else setContent(`Failed to load content.\n\nReason: ${data.error}`);
+      })
+      .catch(() => {
         setContent("Failed to load content due to a network error.");
-        });
-    }, [url]);
-    
+      });
+  }, [url]);
+
   /* ===== ART activity signals ===== */
   useEffect(() => {
     const mark = () => (lastActivityRef.current = Date.now());

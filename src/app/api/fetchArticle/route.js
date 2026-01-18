@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { JSDOM } from "jsdom";
 import { Readability } from "@mozilla/readability";
 
+export const runtime = "nodejs";
+
 // (권장) 너무 긴 텍스트 방지
 const MAX_CHARS = 20000;
 
