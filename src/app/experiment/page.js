@@ -679,7 +679,7 @@ ${userInput}
                             }
                             className="mt-4 self-end text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
                           >
-                            📌 Scrap
+                            📌Scrap
                           </button>
                         )}
                       </div>
