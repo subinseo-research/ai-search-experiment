@@ -53,6 +53,7 @@ export default function Experiment() {
   const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
 
   // scrap
+  
   const addScrap = ({ title, fullText, source }) => {
     if (typeof window === "undefined") return;
     const selectedText = window.getSelection()?.toString().trim();
@@ -71,6 +72,10 @@ export default function Experiment() {
   };
   const handleDeleteScrap = (index) => {
   setScraps((prev) => prev.filter((_, i) => i !== index));
+  };
+  const autoResizeTextarea = (el) => {
+    el.style.height = "auto";
+    el.style.height = el.scrollHeight + "px";
   };
   const [scrapWidth, setScrapWidth] = useState(24);
   const isDraggingRef = useRef(false);
@@ -761,14 +766,18 @@ ${userInput}
                 )}
 
                 <textarea
-                  className="w-full border mt-2 p-2 text-sm"
+                  className="w-full border mt-2 p-2 text-sm resize-none overflow-hidden"
                   placeholder={
                     item.type === "note"
                       ? "Write your note here..."
                       : "Your notes..."
                   }
                   value={item.comment}
-                  onChange={(e) => handleUpdateScrapComment(i, e.target.value)}
+                  onChange={(e) => {
+                    handleUpdateScrapComment(i, e.target.value);
+                    autoResizeTextarea(e.target);
+                  }}
+                  rows={1}
                 />
               </div>
             ))}
