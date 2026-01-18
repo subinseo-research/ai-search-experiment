@@ -121,7 +121,7 @@ export default function PreSurvey() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participant_id: participantId,
-          Task_type: taskType,
+          task_id: taskType,
           presurvey_responses: Object.fromEntries(
             Pretask_Questionnaires.map((q) => [q, responses[q]])
           ),
