@@ -14,30 +14,31 @@ export async function POST(req) {
 
     const {
       participant_id,
+      task_id,
+      condition,
       serendipity_responses,
-      post_familiarity_responses,
       emotion_responses,
       post_self_efficacy_responses,
       open_ended,
     } = body;
 
-    if (!participant_id) {
-      throw new Error("participant_id is required");
-    }
-    if (!process.env.AIRTABLE_BASE_ID) {
-      throw new Error("Missing AIRTABLE_BASE_ID");
-    }
-    if (!process.env.AIRTABLE_API_KEY) {
-      throw new Error("Missing AIRTABLE_API_KEY");
-    }
+    if (!participant_id) throw new Error("participant_id is required");
+    if (!task_id) throw new Error("task_id is required");
+    if (!condition) throw new Error("condition is required");
 
-    // ✅ pre-survey처럼 fallback 허용
-    const table = process.env.AIRTABLE_POST_SURVEY_TABLE || "post_survey";
+    if (!process.env.AIRTABLE_BASE_ID)
+      throw new Error("Missing AIRTABLE_BASE_ID");
+    if (!process.env.AIRTABLE_API_KEY)
+      throw new Error("Missing AIRTABLE_API_KEY");
+
+    const table =
+      process.env.AIRTABLE_POST_SURVEY_TABLE || "post_survey";
 
     const fields = {
       participant_id,
+      task_id,
+      condition,
       serendipity_responses: safeStringify(serendipity_responses),
-      post_familiarity_responses: safeStringify(post_familiarity_responses),
       emotion_responses: safeStringify(emotion_responses),
       post_self_efficacy_responses: safeStringify(post_self_efficacy_responses),
       open_ended: safeStringify(open_ended),
@@ -57,7 +58,6 @@ export async function POST(req) {
       }
     );
 
-    // Airtable은 실패/성공 모두 JSON이지만, 혹시 모를 경우 대비
     const text = await res.text();
     let data;
     try {
@@ -69,18 +69,15 @@ export async function POST(req) {
     if (!res.ok) {
       console.error("Airtable post-survey error:", {
         status: res.status,
-        statusText: res.statusText,
         data,
       });
-
-      // ✅ 프론트에서 바로 원인 보게 JSON으로 리턴
       return NextResponse.json(
         { success: false, where: "airtable", status: res.status, data },
         { status: 500 }
       );
     }
 
-    return NextResponse.json({ success: true, data });
+    return NextResponse.json({ success: true });
   } catch (error) {
     console.error("PostSurvey API error:", error);
     return NextResponse.json(
