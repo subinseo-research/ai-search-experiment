@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@google/genai": "^1.34.0",
+    "@mozilla/readability": "^0.6.0",
     "@supabase/supabase-js": "^2.75.0",
     "@tailwindcss/typography": "^0.5.19",
     "airtable": "^0.12.2",
+    "jsdom": "^27.4.0",
     "mssql": "^12.2.0",
     "next": "^16.1.1",
     "oracledb": "^6.10.0",
