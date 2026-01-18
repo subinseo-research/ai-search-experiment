@@ -150,20 +150,16 @@ export default function PreSurvey() {
 
       <div className="flex h-[calc(100vh-56px)]">
         {/* Left panel */}
-        <div className={`bg-gray-50 sticky top-[56px] h-full
-            transition-all ${panelOpen ? "w-[22%]" : "w-[64px]"}
-            relative
-            after:content-['']
-            after:absolute
-            after:top-0
-            after:right-0
-            after:w-px
-            after:h-full
-            after:bg-gray-300
+        <div className={`
+            sticky top-[56px] h-full
+            bg-gray-100 border-r border-gray-300
+            transition-all 
+            ${panelOpen ? "w-[20%]" : "w-[64px]"}
+            overflow-hidden
          `}
         >
           
-          <div className="p-4">
+          <div className="px-4 pt-2">
             <button
               onClick={() => setPanelOpen((v) => !v)}
               className="mb-4 w-10 h-10 rounded border bg-white shadow"
@@ -172,14 +168,16 @@ export default function PreSurvey() {
             </button>
 
             {panelOpen && (
-              <div ref={taskPanelAnchorRef} className="bg-white p-4 rounded border text-lg space-y-3">
-                <div>
-                  <strong>Search Case</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{searchCase}</p>
-                </div>
-                <div>
-                  <strong>Search Task</strong>
-                  <p className="mt-1 whitespace-pre-wrap">{searchTask}</p>
+              <div className="p-4 mt-2">
+                <div className="p-4 rounded border border-gray-300 text-base space-y-4">
+                  <div>
+                    <strong>Search Case</strong>
+                    <p className="mt-1 whitespace-pre-wrap">{searchCase}</p>
+                  </div>
+                  <div>
+                    <strong>Search Task</strong>
+                    <p className="mt-1 whitespace-pre-wrap">{searchTask}</p>
+                  </div>
                 </div>
               </div>
             )}
