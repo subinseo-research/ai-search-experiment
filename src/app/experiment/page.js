@@ -770,14 +770,9 @@ ${userInput}
 
                 {item.type === "web" && (
                   <div className="space-y-1">
-                    <a
-                      href={`/lp?u=${encodeURIComponent(item.link)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm font-semibold text-blue-700 hover:underline block"
-                    >
+                    <div className="text-sm font-semibold text-gray-800">
                       {item.title}
-                    </a>
+                    </div>
                     <a
                       href={item.link}
                       target="_blank"
