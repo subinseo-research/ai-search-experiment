@@ -51,11 +51,11 @@ export default function PostSurvey() {
   const questionRefs = useRef({});
 
   const [participantId, setParticipantId] = useState(null);
+  const [systemType, setSystemType] = useState(null);
   const [taskType, setTaskType] = useState("");
 
   // section-based states
   const [serendipityResponses, setSerendipityResponses] = useState({});
-  const [postFamiliarityResponses, setPostFamiliarityResponses] = useState({});
   const [emotionResponses, setEmotionResponses] = useState({});
   const [selfEfficacyResponses, setSelfEfficacyResponses] = useState({});
   const [openEndedResponses, setOpenEndedResponses] = useState({});
@@ -76,6 +76,13 @@ export default function PostSurvey() {
       return;
     }
     setParticipantId(id);
+    
+    const system = localStorage.getItem("system_type");
+    if (!system) {
+      router.push("/task");
+      return;
+    }
+    setSystemType(system); 
 
     setTaskType(localStorage.getItem("task_type") || "the topic");
   }, [router]);
@@ -91,17 +98,8 @@ export default function PostSurvey() {
     "I was able to see the ordinary in new ways.",
   ];
 
-  const postSearchFamiliarity = [
-    `After completing the search task, how familiar are you with ${taskType}?`,
-    `How many keywords can you think of when you think about ${taskType}?`,
-    `How would you rate your current understanding of the basic concepts of ${taskType}?`,
-    `How much understanding do you now have of the scientific aspects of ${taskType}?`,
-    `How familiar are you now with ongoing debates or controversies related to ${taskType}?`,
-  ];
-
   const evaluationQuestions = [
     "My overall experience with search (bad / good)",
-    "Degree of information provided to users (complete / incomplete)",
     "Your understanding of information (insufficient / sufficient)",
     "Your feelings of participating in search (negative / positive)",
     "Attitude of search engines/chat AI (cooperative / belligerent)",
@@ -115,15 +113,9 @@ export default function PostSurvey() {
 
   const selfEfficacyQuestions = [
     "I am usually able to think up creative and effective search strategies to find interesting and valuable information.",
-    "I have the ability to find answers, even when I have no immediate or prior knowledge of the subject.",
-    "The concept is too complex for me to understand through online searches.",
     "I can do a good search and feel confident it will lead me to interesting information.",
     "When I plan how to search for scientific information, I am almost certain I can find what I need.",
-    "Given enough time and effort, I believe I can find information that interests me.",
-    "When faced with unfamiliar information, I have confidence that I can search effectively for information that connects to me personally.",
     "I trust my ability to find new and interesting information.",
-    "After finishing a search, the information I expected usually emerges during the search process.",
-    "When confronted with difficult tasks, I am unsure whether I can find insightful information.",
   ];
 
   const sevenPointLabels = [
@@ -138,7 +130,6 @@ export default function PostSurvey() {
 
   const pages = [
     { title: "", questions: serendipityQuestions, section: "serendipity" },
-    { title: "", questions: postSearchFamiliarity, section: "postFamiliarity" },
     { title: "", questions: evaluationQuestions, section: "emotion" },
     { title: "", questions: selfEfficacyQuestions, section: "selfEfficacy" },
     { title: "", questions: [], section: "openEnded" },
@@ -146,7 +137,6 @@ export default function PostSurvey() {
 
   const sectionSetters = {
     serendipity: setSerendipityResponses,
-    postFamiliarity: setPostFamiliarityResponses,
     emotion: setEmotionResponses,
     selfEfficacy: setSelfEfficacyResponses,
     openEnded: setOpenEndedResponses,
@@ -154,7 +144,6 @@ export default function PostSurvey() {
 
   const sectionResponses = {
     serendipity: serendipityResponses,
-    postFamiliarity: postFamiliarityResponses,
     emotion: emotionResponses,
     selfEfficacy: selfEfficacyResponses,
     openEnded: openEndedResponses,
@@ -175,8 +164,9 @@ export default function PostSurvey() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participant_id: participantId,
+          condition: systemType, // WebSearch | ConvSearch
+          task_id: taskType,
           serendipity_responses: serendipityResponses,
-          post_familiarity_responses: postFamiliarityResponses,
           emotion_responses: emotionResponses,
           post_self_efficacy_responses: selfEfficacyResponses,
           open_ended: openEndedResponses,
@@ -233,7 +223,7 @@ export default function PostSurvey() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="sticky top-0 z-40 bg-white border-b">
-        <ProgressBar progress={60 + page * 8} />
+        <ProgressBar progress={50 + page * 10} />
       </div>
 
       <div className="max-w-[900px] mx-auto bg-white px-8 py-12">
@@ -259,31 +249,33 @@ export default function PostSurvey() {
           </div>
         )}
 
-        {page === 5 && (
+        {page === pages.length && (
           <div className="space-y-10">
 
-             {/* Question 1 */}
+             {/* Open-ended Question 1 */}
             <div className="space-y-3">
                <p className="font-medium text-[18px]">
                 What keywords can you think of when you think about <strong>{taskType}</strong>?
                </p>
               <textarea
                 className="w-full border rounded-md p-4 min-h-[120px]"
-                placeholder="Please list any keywords that come to mind."
+                placeholder="There are no right or wrong answers. Please provide anything."
+                value={openEndedResponses["OEQ1"] || ""}
                 onChange={(e) =>
                   handleChange("openEnded", "OEQ1", e.target.value)
                 }
               />
             </div>
 
-          {/* Question 2 */}
+          {/* Open-ended Question 2 */}
             <div className="space-y-3">
               <p className="font-medium text-[18px]">
-                Among the information you found during the search, was there anything that felt meaningful to your daily life or that you wanted to remember?
+                Did you encounter any information that you could relate to your own experiences or to similar situations?
               </p>
               <textarea
                 className="w-full border rounded-md p-4 min-h-[140px]"
-                placeholder="Any information meaningful to you?"
+                placeholder="There are no right or wrong answers. Please provide anything."
+                value={openEndedResponses["OEQ2"] || ""}
                 onChange={(e) =>
                   handleChange("openEnded", "OEQ2", e.target.value)
                 }
