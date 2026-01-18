@@ -8,29 +8,6 @@ import ReactMarkdown from "react-markdown";
 const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
-// airtable 
-const logEvent = async ({ log_type, log_data }) => {
-  if (!participantId || !systemType) return;
-
-  try {
-    await fetch("/api/experiment-log", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        participant_id: participantId,
-        condition: systemType,
-        task_id: taskType,
-        log_type,
-        log_data,
-        timestamp: new Date().toISOString(),
-      }),
-    });
-  } catch (err) {
-    console.error("Logging failed:", err);
-  }
-};
-
-
 export default function Experiment() {
   const router = useRouter();
 
@@ -47,6 +24,32 @@ export default function Experiment() {
   const topic = taskType;
   const taskPanelAnchorRef = useRef(null);
 
+  // airtable 
+  const logEvent = async ({ log_type, log_data }) => {
+    try {
+      const nowIso = new Date().toISOString(); // ms 포함 ISO
+      const nowMs = Date.now();               // Unix ms
+
+      await fetch("/api/experiment-log", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participant_id: participantId,
+          condition: systemType, // WebSearch | ConvSearch
+          task_id: taskType,
+          log_type,
+          log_data: {
+            ...log_data,
+            timestamp_iso_ms: nowIso,
+            timestamp_unix_ms: nowMs,
+          },
+          timestamp: nowIso, // Airtable Date field
+        }),
+      });
+    } catch (err) {
+      console.error("Logging failed:", err);
+    }
+  };
 
   const instructionMessage = systemType
     ? systemType === "WebSearch"
@@ -80,7 +83,15 @@ export default function Experiment() {
   const addScrap = ({ title, fullText, source }) => {
     if (typeof window === "undefined") return;
     const selectedText = window.getSelection()?.toString().trim();
-    
+    logEvent({
+      log_type: "scrap",
+      log_data: {
+        title,
+        snippet: selectedText || fullText,
+        source,
+      },
+    });
+
     setScraps((prev) => [
       ...prev,
       {
@@ -137,7 +148,7 @@ export default function Experiment() {
     };
   }, []);
 
-
+  
   /* =========================
      Initial setup
   ========================= */
@@ -232,6 +243,7 @@ export default function Experiment() {
 
     // Count only valid queries
     setQuestionCount((prev) => prev + 1);
+    logEvent({ log_type: "query", log_data: { query: q } }); //save log data 
 
     try {
       const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=40`);
@@ -259,6 +271,11 @@ export default function Experiment() {
     e.preventDefault();
     const userInput = searchQuery.trim();
     if (!userInput || isGenerating) return;
+    logEvent({
+      log_type: "prompt",
+      log_data: { prompt: userInput },
+    });
+
 
     // Count only valid user questions
     setQuestionCount((prev) => prev + 1);
@@ -293,6 +310,10 @@ ${userInput}
       });
 
       const data = await res.json();
+      logEvent({
+        log_type: "ai_response",
+        log_data: { response: data?.text || "" },
+      });
 
       setChatHistory((prev) => {
         const updated = [...prev];
@@ -353,13 +374,23 @@ ${userInput}
   };
 
   const handleUpdateScrapComment = (index, value) => {
-    setScraps((prev) => {
-      const next = [...prev];
-      if (!next[index]) return prev;
-      next[index] = { ...next[index], comment: value };
-      return next;
-    });
-  };
+      if (value.length % 10 === 0) {
+        logEvent({
+          log_type: "note",
+          log_data: {
+            action: "update",
+            index,
+            content: value,
+          },
+        });
+      }
+      setScraps((prev) => {
+        const next = [...prev];
+        if (!next[index]) return prev;
+        next[index] = { ...next[index], comment: value };
+        return next;
+      });
+    };
 
   const handleNext = () => {
     router.push("/postsurvey");
@@ -635,7 +666,18 @@ ${userInput}
                             href={r.link}
                             target="_blank"
                             rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              logEvent({
+                                log_type: "click",
+                                log_data: {
+                                  title: r.title,
+                                  snippet: r.snippet,
+                                  link: r.link,
+                                  rank: searchResults.findIndex(x => x.id === r.id) + 1, 
+                                },
+                            });
+                          }}
                           >
                             {r.title}
                           </a>
