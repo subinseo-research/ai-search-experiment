@@ -8,6 +8,29 @@ import ReactMarkdown from "react-markdown";
 const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
+// airtable 
+const logEvent = async ({ log_type, log_data }) => {
+  if (!participantId || !systemType) return;
+
+  try {
+    await fetch("/api/experiment-log", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        participant_id: participantId,
+        condition: systemType,
+        task_id: taskType,
+        log_type,
+        log_data,
+        timestamp: new Date().toISOString(),
+      }),
+    });
+  } catch (err) {
+    console.error("Logging failed:", err);
+  }
+};
+
+
 export default function Experiment() {
   const router = useRouter();
 
