@@ -37,8 +37,6 @@ export default function Experiment() {
   const [searchResults, setSearchResults] = useState([]);
   const isInitialState =
     searchResults.length === 0 && questionCount === 0;
-  const lastActivityRef = useRef(Date.now());
-  const [art, setArt] = useState(0);
 
   // GenAI Chat
   const [chatHistory, setChatHistory] = useState([]);
@@ -603,7 +601,7 @@ ${userInput}
                         
                         <h3 className="font-semibold text-blue-700 hover:underline">
                           <a
-                            href={`/lp?u=${encodeURIComponent(r.link)}`}
+                            href={r.link}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
