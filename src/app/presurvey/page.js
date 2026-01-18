@@ -143,15 +143,14 @@ export default function PreSurvey() {
      Render
   -------------------------------- */
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="h-screen overflow-hidden bg-gray-50">
       <div className="sticky top-0 z-40 bg-white border-b">
         <ProgressBar progress={10} />
       </div>
 
-      <div className="flex">
+      <div className="flex h-[calc(100vh-56px)]">
         {/* Left panel */}
-        <div className={`bg-gray-50 sticky top-[56px]
-            h-[calc(100vh-56px)]
+        <div className={`bg-gray-50 sticky top-[56px] h-full
             transition-all ${panelOpen ? "w-[22%]" : "w-[64px]"}
             relative
             after:content-['']
@@ -159,7 +158,7 @@ export default function PreSurvey() {
             after:top-0
             after:right-0
             after:w-px
-            after:h-screen
+            after:h-full
             after:bg-gray-300
          `}
         >
@@ -188,7 +187,7 @@ export default function PreSurvey() {
         </div>
 
         {/* Survey */}
-        <div className="flex-1 flex justify-center overflow-y-auto">
+        <div className="flex-1 flex justify-center h-full overflow-y-auto">
           <div className="max-w-[900px] w-full px-8 py-12 bg-white">
 
             <p className="text-lg font-medium mt-10 mb-8">
