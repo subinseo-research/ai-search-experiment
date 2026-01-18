@@ -671,6 +671,19 @@ ${userInput}
                             ? "bg-white border"
                             : "bg-blue-600 text-white ml-auto max-w-lg"
                         }`}
+                        draggable={isAssistant}
+                        onDragStart={(e) => {
+                          if (!isAssistant) return;
+                          const selection = window.getSelection()?.toString().trim();
+                          if (!selection) {
+                            e.preventDefault();
+                            return;
+                          }
+                          e.dataTransfer.setData(
+                             "text/plain",
+                             JSON.stringify({ type: "scrap", title: "ConvSearch", snippet: selection, source: "chat"})
+                          );
+                        }}
                       >
                         <ReactMarkdown>{msg.content}</ReactMarkdown>
 
