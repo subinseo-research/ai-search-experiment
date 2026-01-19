@@ -18,21 +18,14 @@ export default function DemographicSurvey() {
 
   const [participantId, setParticipantId] = useState(null);
   const [loading, setLoading] = useState(false);
-
-  // 저장 실패시에만 보여줄 메시지
   const [message, setMessage] = useState("");
-
-  // Warning modal
-  const [showWarningModal, setShowWarningModal] = useState(false);
-
-  // 미응답 하이라이트
+  const [showWarningModal, setShowWarningModal] = useState(false); //warning modality
   const [highlightFields, setHighlightFields] = useState([]);
   const fieldRefs = useRef({});
-
   const requiredFields = ["age", "gender", "education", "race", "hispanic"];
 
   /* -----------------------------
-     participant_id 불러오기
+  Call the previous information 
   ------------------------------*/
   useEffect(() => {
     const id = localStorage.getItem("participant_id");
@@ -44,7 +37,7 @@ export default function DemographicSurvey() {
   }, []);
 
   /* -----------------------------
-     formData 복원 (새로고침/뒤로가기)
+     formData--prevent refresh
   ------------------------------*/
   useEffect(() => {
     const saved = localStorage.getItem("demographic_form");
@@ -58,23 +51,21 @@ export default function DemographicSurvey() {
   }, []);
 
   /* -----------------------------
-     formData 자동 저장
+     formData--auto save
   ------------------------------*/
   useEffect(() => {
     localStorage.setItem("demographic_form", JSON.stringify(formData));
   }, [formData]);
 
   /* -----------------------------
-     필수 문항 미응답 체크
+  Required questions
   ------------------------------*/
   const getUnansweredRequiredFields = () => {
     return requiredFields.filter((field) => !isAnswered(field));
   };
-
   const hasUnansweredRequired = () => getUnansweredRequiredFields().length > 0;
-
   /* -----------------------------
-     입력 변경 
+     Change the answer 
   ------------------------------*/
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -89,19 +80,14 @@ export default function DemographicSurvey() {
       }));
       return;
     }
-
-    // 나머지 필드
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
-
-    // 일반 필드는 값이 들어오면 해당 필드 highlight 해제
     setHighlightFields((prev) =>
       String(value ?? "").trim() ? prev.filter((f) => f !== name) : prev
     );
   };
-
   useEffect(() => {
     if (formData.race.length > 0) {
       setHighlightFields((prev) => prev.filter((f) => f !== "race"));
@@ -143,7 +129,7 @@ export default function DemographicSurvey() {
   };
 
   /* -----------------------------
-     실제 저장 (Continue 포함)
+    save the data 
   ------------------------------*/
   const submitData = async () => {
     if (!participantId) {
@@ -154,7 +140,6 @@ export default function DemographicSurvey() {
 
     try {
       const fields = buildAirtablePayloadFields();
-
       const res = await fetch("/api/airtable/demographic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -237,7 +222,7 @@ export default function DemographicSurvey() {
   return (
     <div className="w-full h-screen flex flex-col bg-gray-50">
       <div className="w-full">
-        <ProgressBar progress={100} />
+        <ProgressBar progress={95} />
       </div>
 
       <div className="flex-1 flex items-center justify-center">
