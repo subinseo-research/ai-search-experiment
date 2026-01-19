@@ -14,18 +14,55 @@ export default function DemographicSurvey() {
     education: "",
     race: [],
     hispanic: "",
+
+    // political
+    party_id: "",
+    party_lean: "", // Q7 (Conditional)
+    ideology_scale: "",
+
+    // usage
+    use_chatgpt: "",
+    use_other_genai: "",
+    use_google: "",
+    use_other_search: "",
   });
 
   const [participantId, setParticipantId] = useState(null);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
-  const [showWarningModal, setShowWarningModal] = useState(false); //warning modality
+  const [showWarningModal, setShowWarningModal] = useState(false);
   const [highlightFields, setHighlightFields] = useState([]);
   const fieldRefs = useRef({});
-  const requiredFields = ["age", "gender", "education", "race", "hispanic"];
+
+  const requiredFields = [
+    "age",
+    "gender",
+    "education",
+    "race",
+    "hispanic",
+
+    // political (3)
+    "party_id",
+    "party_lean",
+    "ideology_scale",
+
+    // usage (4)
+    "use_chatgpt",
+    "use_other_genai",
+    "use_google",
+    "use_other_search",
+  ];
+
+  const USAGE_OPTIONS = [
+    "Never",
+    "1–2 times",
+    "3–5 times",
+    "6–10 times",
+    "More than 10 times",
+  ];
 
   /* -----------------------------
-  Call the previous information 
+    Call the previous information
   ------------------------------*/
   useEffect(() => {
     const id = localStorage.getItem("participant_id");
@@ -58,14 +95,33 @@ export default function DemographicSurvey() {
   }, [formData]);
 
   /* -----------------------------
-  Required questions
+     Answer check (REQUIRED)
   ------------------------------*/
+  const isAnswered = (field) => {
+    // race (checkbox)
+    if (field === "race") {
+      return formData.race.length > 0;
+    }
+
+    // party_lean: conditional required
+    if (field === "party_lean") {
+      return ["Independent", "Another party", "No preference"].includes(
+        formData.party_id
+      )
+        ? String(formData.party_lean ?? "").trim() !== ""
+        : true; // Republican / Democrat이면 lean 질문은 자동 충족
+    }
+
+    return String(formData[field] ?? "").trim() !== "";
+  };
+
   const getUnansweredRequiredFields = () => {
     return requiredFields.filter((field) => !isAnswered(field));
   };
   const hasUnansweredRequired = () => getUnansweredRequiredFields().length > 0;
+
   /* -----------------------------
-     Change the answer 
+     Change the answer
   ------------------------------*/
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -80,14 +136,17 @@ export default function DemographicSurvey() {
       }));
       return;
     }
+
     setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
+
     setHighlightFields((prev) =>
       String(value ?? "").trim() ? prev.filter((f) => f !== name) : prev
     );
   };
+
   useEffect(() => {
     if (formData.race.length > 0) {
       setHighlightFields((prev) => prev.filter((f) => f !== "race"));
@@ -125,11 +184,22 @@ export default function DemographicSurvey() {
     const hispStr = String(formData.hispanic ?? "").trim();
     if (hispStr) fields.hispanic = hispStr;
 
+    // political
+    if (formData.party_id) fields.party_id = formData.party_id;
+    if (formData.party_lean) fields.party_lean = formData.party_lean;
+    if (formData.ideology_scale) fields.ideology_scale = formData.ideology_scale;
+
+    // usage
+    if (formData.use_chatgpt) fields.use_chatgpt = formData.use_chatgpt;
+    if (formData.use_other_genai) fields.use_other_genai = formData.use_other_genai;
+    if (formData.use_google) fields.use_google = formData.use_google;
+    if (formData.use_other_search) fields.use_other_search = formData.use_other_search;
+
     return fields;
   };
 
   /* -----------------------------
-    save the data 
+    save the data
   ------------------------------*/
   const submitData = async () => {
     if (!participantId) {
@@ -182,10 +252,25 @@ export default function DemographicSurvey() {
   ------------------------------*/
   const handleAnswerTheQuestion = () => {
     setMessage("");
-    const highlightTargets = ["age", "gender", "education", "race", "hispanic"];
-    const unanswered = highlightTargets.filter(
-      (field) => !isAnswered(field)
-    );
+
+    const highlightTargets = [
+      "age",
+      "gender",
+      "education",
+      "race",
+      "hispanic",
+
+      "party_id",
+      "party_lean",
+      "ideology_scale",
+
+      "use_chatgpt",
+      "use_other_genai",
+      "use_google",
+      "use_other_search",
+    ];
+
+    const unanswered = highlightTargets.filter((field) => !isAnswered(field));
     setHighlightFields(unanswered);
 
     const first = unanswered[0];
@@ -199,19 +284,11 @@ export default function DemographicSurvey() {
     setShowWarningModal(false);
   };
 
-  const isAnswered = (field) => {
-    if (field === "race") {
-      return formData.race.length > 0;
-    }
-    return String(formData[field] ?? "").trim() !== "";
-  };
-
   /* -----------------------------
      Continue Without Answering:
   ------------------------------*/
   const handleContinueWithoutAnswering = () => {
     setMessage("");
-
     setShowWarningModal(false);
     setLoading(true);
     submitData();
@@ -325,7 +402,7 @@ export default function DemographicSurvey() {
               </select>
             </div>
 
-            {/* Race (optional) */}
+            {/* Race */}
             <div
               ref={(el) => (fieldRefs.current.race = el)}
               className={
@@ -386,6 +463,217 @@ export default function DemographicSurvey() {
                   <label htmlFor={option}>{option}</label>
                 </div>
               ))}
+            </div>
+
+            {/* Q6: Party ID */}
+            <div
+              ref={(el) => (fieldRefs.current.party_id = el)}
+              className={
+                isHighlighted("party_id")
+                  ? "p-3 rounded-lg border-2 border-red-500"
+                  : ""
+              }
+            >
+              <label className="block mb-2 font-medium">
+                Generally speaking, do you think of yourself as a…
+              </label>
+
+              {[
+                "Republican",
+                "Democrat",
+                "Independent",
+                "Another party",
+                "No preference",
+              ].map((opt) => (
+                <div key={opt} className="flex items-center mb-1">
+                  <input
+                    type="radio"
+                    name="party_id"
+                    value={opt}
+                    checked={formData.party_id === opt}
+                    onChange={handleChange}
+                    className="mr-2"
+                  />
+                  <label>{opt}</label>
+                </div>
+              ))}
+            </div>
+
+            {/* Q7: Party Lean (Conditional) */}
+            {["Independent", "Another party", "No preference"].includes(formData.party_id) && (
+              <div
+                ref={(el) => (fieldRefs.current.party_lean = el)}
+                className={
+                  isHighlighted("party_lean")
+                    ? "p-3 rounded-lg border-2 border-red-500"
+                    : ""
+                }
+              >
+                <label className="block mb-2 font-medium">
+                  If you had to choose, do you think of yourself as closer to…
+                </label>
+
+                {["Republican Party", "Democratic Party"].map((opt) => (
+                  <div key={opt} className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      name="party_lean"
+                      value={opt}
+                      checked={formData.party_lean === opt}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    <label>{opt}</label>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Q8: Ideology Scale */}
+            <div
+              ref={(el) => (fieldRefs.current.ideology_scale = el)}
+              className={
+                isHighlighted("ideology_scale")
+                  ? "p-3 rounded-lg border-2 border-red-500"
+                  : ""
+              }
+            >
+              <label className="block mb-3 font-medium">
+                In general, do you think of yourself as…
+              </label>
+
+              {[
+                "Extremely liberal",
+                "Liberal",
+                "Slightly liberal",
+                "Moderate / middle of the road",
+                "Slightly conservative",
+                "Conservative",
+                "Extremely conservative",
+              ].map((opt) => (
+                <div key={opt} className="flex items-center mb-1">
+                  <input
+                    type="radio"
+                    name="ideology_scale"
+                    value={opt}
+                    checked={formData.ideology_scale === opt}
+                    onChange={handleChange}
+                    className="mr-2"
+                  />
+                  <label>{opt}</label>
+                </div>
+              ))}
+            </div>
+
+            {/* Tool Usage Frequency */}
+            <div className="space-y-6">
+              <h2 className="text-lg font-semibold mt-6">
+                How frequently do you use the following tools in a typical week for information seeking?
+              </h2>
+
+              {/* ChatGPT */}
+              <div
+                ref={(el) => (fieldRefs.current.use_chatgpt = el)}
+                className={
+                  isHighlighted("use_chatgpt")
+                    ? "p-3 rounded-lg border-2 border-red-500"
+                    : ""
+                }
+              >
+                <label className="block mb-2 font-medium">ChatGPT</label>
+                {USAGE_OPTIONS.map((opt) => (
+                  <div key={opt} className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      name="use_chatgpt"
+                      value={opt}
+                      checked={formData.use_chatgpt === opt}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    <label>{opt}</label>
+                  </div>
+                ))}
+              </div>
+
+              {/* Other Generative AI */}
+              <div
+                ref={(el) => (fieldRefs.current.use_other_genai = el)}
+                className={
+                  isHighlighted("use_other_genai")
+                    ? "p-3 rounded-lg border-2 border-red-500"
+                    : ""
+                }
+              >
+                <label className="block mb-2 font-medium">
+                  Other Generative AI (e.g., Gemini, Copilot, Perplexity)
+                </label>
+                {USAGE_OPTIONS.map((opt) => (
+                  <div key={opt} className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      name="use_other_genai"
+                      value={opt}
+                      checked={formData.use_other_genai === opt}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    <label>{opt}</label>
+                  </div>
+                ))}
+              </div>
+
+              {/* Google Search */}
+              <div
+                ref={(el) => (fieldRefs.current.use_google = el)}
+                className={
+                  isHighlighted("use_google")
+                    ? "p-3 rounded-lg border-2 border-red-500"
+                    : ""
+                }
+              >
+                <label className="block mb-2 font-medium">Google Search</label>
+                {USAGE_OPTIONS.map((opt) => (
+                  <div key={opt} className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      name="use_google"
+                      value={opt}
+                      checked={formData.use_google === opt}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    <label>{opt}</label>
+                  </div>
+                ))}
+              </div>
+
+              {/* Other Search Engines */}
+              <div
+                ref={(el) => (fieldRefs.current.use_other_search = el)}
+                className={
+                  isHighlighted("use_other_search")
+                    ? "p-3 rounded-lg border-2 border-red-500"
+                    : ""
+                }
+              >
+                <label className="block mb-2 font-medium">
+                  Other Search Engines (e.g., Bing, DuckDuckGo)
+                </label>
+                {USAGE_OPTIONS.map((opt) => (
+                  <div key={opt} className="flex items-center mb-1">
+                    <input
+                      type="radio"
+                      name="use_other_search"
+                      value={opt}
+                      checked={formData.use_other_search === opt}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    <label>{opt}</label>
+                  </div>
+                ))}
+              </div>
             </div>
 
             {/* Submit */}

@@ -4,6 +4,28 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
+    const fields = {
+      participant_id: body.participant_id ?? null,
+
+      // basic demographics
+      age: body.age !== undefined && body.age !== null ? Number(body.age) : null,
+      gender: body.gender ?? null,
+      education: body.education ?? null,
+      race: Array.isArray(body.race) ? body.race : null,
+      hispanic: body.hispanic ?? null,
+
+      // political (3)
+      party_id: body.party_id ?? null,
+      party_lean: body.party_lean ?? null,
+      ideology_scale: body.ideology_scale ?? null,
+
+      // usage (4)
+      use_chatgpt: body.use_chatgpt ?? null,
+      use_other_genai: body.use_other_genai ?? null,
+      use_google: body.use_google ?? null,
+      use_other_search: body.use_other_search ?? null,
+    };
+
     const airtableRes = await fetch(
       `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/Demographic`,
       {
@@ -12,16 +34,7 @@ export async function POST(req) {
           Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          fields: {
-            participant_id: body.participant_id,
-            age: body.age ? Number(body.age) : null,
-            gender: body.gender,
-            education: body.education,
-            race: body.race,
-            hispanic: body.hispanic,
-          },
-        }),
+        body: JSON.stringify({ fields }),
       }
     );
 
