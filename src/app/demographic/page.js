@@ -363,7 +363,7 @@ export default function DemographicSurvey() {
 
               {["Male", "Female", "Non-binary", "Not listed (please state)"].map(
                 (option) => (
-                  <div key={option} className="flex items-center mb-2 cursor-pointer py-2">
+                  <div key={option} className="flex items-center mb-1 cursor-pointer">
                     <input
                       type="radio"
                       id={option}
@@ -371,7 +371,7 @@ export default function DemographicSurvey() {
                       value={option}
                       checked={formData.gender === option}
                       onChange={handleChange}
-                      className="mr-3 w-4 h-4"
+                      className="mr-2 w-4 h-4"
                     />
                     <label htmlFor={option}>{option}</label>
                   </div>
@@ -536,25 +536,34 @@ export default function DemographicSurvey() {
                     : ""
                 }
               >
-                <label className="block mb-2 font-medium">
+                <p className="block mb-2 font-medium">
                   If you had to choose, do you think of yourself as closer to…
-                </label>
+                </p>
 
-                {["Republican Party", "Democratic Party"].map((opt) => (
-                  <div key={opt} className="flex items-center mb-1">
-                    <input
-                      type="radio"
-                      name="party_lean"
-                      value={opt}
-                      checked={formData.party_lean === opt}
-                      onChange={handleChange}
-                      className="mr-2"
-                    />
-                    <label>{opt}</label>
-                  </div>
-                ))}
+                {["Republican Party", "Democratic Party"].map((opt) => {
+                  const id = `party_lean_${opt.replace(/\s+/g, "_")}`;
+                  return (
+                    <label
+                      key={opt}
+                      htmlFor={id}
+                      className="flex items-center mb-1 cursor-pointer select-none"
+                    >
+                      <input
+                        id={id}
+                        type="radio"
+                        name="party_lean"
+                        value={opt}
+                        checked={formData.party_lean === opt}
+                        onChange={handleChange}
+                        className="mr-2"
+                      />
+                      {opt}
+                    </label>
+                  );
+                })}
               </div>
             )}
+
 
             {/* Q8: Ideology Scale */}
             <div
@@ -565,9 +574,9 @@ export default function DemographicSurvey() {
                   : ""
               }
             >
-              <label className="block mb-3 font-medium">
+              <p className="block mb-3 font-medium">
                 In general, do you think of yourself as…
-              </label>
+              </p>
 
               {[
                 "Extremely liberal",
@@ -577,20 +586,29 @@ export default function DemographicSurvey() {
                 "Slightly conservative",
                 "Conservative",
                 "Extremely conservative",
-              ].map((opt) => (
-                <div key={opt} className="flex items-center mb-1">
-                  <input
-                    type="radio"
-                    name="ideology_scale"
-                    value={opt}
-                    checked={formData.ideology_scale === opt}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  <label>{opt}</label>
-                </div>
-              ))}
+              ].map((opt) => {
+                const id = `ideology_${opt.replace(/[^a-zA-Z0-9]/g, "_")}`;
+                return (
+                  <label
+                    key={opt}
+                    htmlFor={id}
+                    className="flex items-center mb-1 cursor-pointer select-none"
+                  >
+                    <input
+                      id={id}
+                      type="radio"
+                      name="ideology_scale"
+                      value={opt}
+                      checked={formData.ideology_scale === opt}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    {opt}
+                  </label>
+                );
+              })}
             </div>
+
 
             {/* Tool Usage Frequency (Matrix) */}
             <div
