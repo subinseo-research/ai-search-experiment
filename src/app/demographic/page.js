@@ -344,7 +344,7 @@ export default function DemographicSurvey() {
                 value={formData.age}
                 onChange={handleChange}
                 className="w-full border rounded-lg p-2"
-                placeholder="Enter your age"
+                placeholder="Enter your age (numbers only)"
               />
             </div>
 
@@ -441,7 +441,7 @@ export default function DemographicSurvey() {
                 "American Indian or Alaska Native",
                 "Native Hawaiian or Other Pacific Islander",
               ].map((race) => (
-                <div key={race} className="flex items-center mb-2 cursor-pointer py-2">
+                <div key={race} className="flex items-center mb-1 cursor-pointer">
                   <input
                     type="checkbox"
                     id={race}
@@ -449,7 +449,7 @@ export default function DemographicSurvey() {
                     value={race}
                     checked={formData.race.includes(race)}
                     onChange={handleChange}
-                    className="mr-3 w-4 h-4"
+                    className="mr-2 w-4 h-4"
                   />
                   <label htmlFor={race}>{race}</label>
                 </div>
@@ -503,19 +503,27 @@ export default function DemographicSurvey() {
                 "Independent",
                 "Another party",
                 "No preference",
-              ].map((opt) => (
-                <div key={opt} className="flex items-center mb-1">
-                  <input
-                    type="radio"
-                    name="party_id"
-                    value={opt}
-                    checked={formData.party_id === opt}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  <label>{opt}</label>
-                </div>
-              ))}
+              ].map((opt) => {
+                const id = `party_id_${opt.replace(/\s+/g, "_")}`;
+                return (
+                  <label
+                    key={opt}
+                    htmlFor={id}
+                    className="flex items-center mb-1 cursor-pointer select-none"
+                  >
+                    <input
+                      id={id}
+                      type="radio"
+                      name="party_id"
+                      value={opt}
+                      checked={formData.party_id === opt}
+                      onChange={handleChange}
+                      className="mr-2"
+                    />
+                    {opt}
+                  </label>
+                );
+              })}
             </div>
 
             {/* Q7: Party Lean (Conditional) */}
@@ -634,14 +642,16 @@ export default function DemographicSurvey() {
                           <td className="border p-2 font-medium">{label}</td>
 
                           {USAGE_OPTIONS.map((opt) => (
-                            <td key={opt} className="border p-2 text-center">
-                              <input
-                                type="radio"
-                                name={field}
-                                value={opt}
-                                checked={formData[field] === opt}
-                                onChange={handleChange}
-                              />
+                            <td key={opt} className="border p-0">
+                               <label className="flex items-center justify-center w-full h-full cursor-pointer py-2 hover:bg-gray-50">
+                                <input
+                                  type="radio"
+                                  name={field}
+                                  value={opt}
+                                  checked={formData[field] === opt}
+                                  onChange={handleChange}
+                                />
+                              </label>
                             </td>
                           ))}
                         </tr>
@@ -688,14 +698,16 @@ export default function DemographicSurvey() {
                           <td className="border p-2 font-medium">{label}</td>
 
                           {USAGE_OPTIONS.map((opt) => (
-                            <td key={opt} className="border p-2 text-center">
-                              <input
-                                type="radio"
-                                name={field}
-                                value={opt}
-                                checked={formData[field] === opt}
-                                onChange={handleChange}
-                              />
+                            <td key={opt} className="border p-0">
+                              <label className="flex items-center justify-center w-full h-full cursor-pointer py-2 hover:bg-gray-50">
+                                <input
+                                  type="radio"
+                                  name={field}
+                                  value={opt}
+                                  checked={formData[field] === opt}
+                                  onChange={handleChange}
+                                />
+                              </label>
                             </td>
                           ))}
                         </tr>
