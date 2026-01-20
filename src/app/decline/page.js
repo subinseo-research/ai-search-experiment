@@ -6,7 +6,7 @@ import ProgressBar from "../../components/ProgressBar";
 const REDIRECT_DELAY = 3000;
 
 const PROLIFIC_COMPLETION_URL =
-  "https://app.prolific.com/submissions/complete?cc=C1P8TZBS";
+  "https://app.prolific.com/submissions/complete?cc=CAXSLOV7";
 
 export default function Decline() {
   useEffect(() => {
