@@ -294,7 +294,6 @@ export default function Experiment() {
       const prompt = `
 Please answer briefly and kindly, as if responding in a friendly and helpful manner.
 When necessary, use clear headings, bullet points, and formatting to organize the information.
-At the end of the response, always include 3 to 5 numbered suggestions for additional searching or follow-up questions.
 
 User:
 ${userInput}
