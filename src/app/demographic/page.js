@@ -20,11 +20,18 @@ export default function DemographicSurvey() {
     party_lean: "", // Q7 (Conditional)
     ideology_scale: "",
 
-    // usage
+    // generative AI usage
     use_chatgpt: "",
-    use_other_genai: "",
+    use_gemini: "",
+    use_copilot: "",
+    use_genai_other: "",
+    use_genai_other_name: "",
+
+    // web search usage
     use_google: "",
-    use_other_search: "",
+    use_bing: "",
+    use_search_other: "",
+    use_search_other_name: "",
   });
 
   const [participantId, setParticipantId] = useState(null);
@@ -46,11 +53,14 @@ export default function DemographicSurvey() {
     "party_lean",
     "ideology_scale",
 
-    // usage (4)
+    // usage
     "use_chatgpt",
-    "use_other_genai",
+    "use_gemini",
+    "use_copilot",
+    "use_genai_other",
     "use_google",
-    "use_other_search",
+    "use_bing",
+    "use_search_other",
   ];
 
   const USAGE_OPTIONS = [
@@ -190,10 +200,18 @@ export default function DemographicSurvey() {
     if (formData.ideology_scale) fields.ideology_scale = formData.ideology_scale;
 
     // usage
-    if (formData.use_chatgpt) fields.use_chatgpt = formData.use_chatgpt;
-    if (formData.use_other_genai) fields.use_other_genai = formData.use_other_genai;
-    if (formData.use_google) fields.use_google = formData.use_google;
-    if (formData.use_other_search) fields.use_other_search = formData.use_other_search;
+    if (formData.use_gemini) fields.use_gemini = formData.use_gemini;
+    if (formData.use_copilot) fields.use_copilot = formData.use_copilot;
+    if (formData.use_bing) fields.use_bing = formData.use_bing;
+
+    if (formData.use_genai_other) fields.use_genai_other = formData.use_genai_other;
+    if (formData.use_genai_other_name)
+      fields.use_genai_other_name = formData.use_genai_other_name;
+
+    if (formData.use_search_other)
+      fields.use_search_other = formData.use_search_other;
+    if (formData.use_search_other_name)
+      fields.use_search_other_name = formData.use_search_other_name;
 
     return fields;
   };
@@ -565,116 +583,138 @@ export default function DemographicSurvey() {
               ))}
             </div>
 
-            {/* Tool Usage Frequency */}
-            <div className="space-y-6">
-              <h2 className="text-lg font-semibold mt-6">
+            {/* Tool Usage Frequency (Matrix) */}
+            <div
+              className={
+                [
+                  "use_chatgpt",
+                  "use_gemini",
+                  "use_copilot",
+                  "use_genai_other",
+                  "use_google",
+                  "use_bing",
+                  "use_search_other",
+                ].some(isHighlighted)
+                  ? "p-4 rounded-lg border-2 border-red-500"
+                  : ""
+              }
+            >
+              <h2 className="text-lg font-semibold mb-4">
                 How frequently do you use the following tools in a typical week for information seeking?
               </h2>
 
-              {/* ChatGPT */}
-              <div
-                ref={(el) => (fieldRefs.current.use_chatgpt = el)}
-                className={
-                  isHighlighted("use_chatgpt")
-                    ? "p-3 rounded-lg border-2 border-red-500"
-                    : ""
-                }
-              >
-                <label className="block mb-2 font-medium">ChatGPT</label>
-                {USAGE_OPTIONS.map((opt) => (
-                  <div key={opt} className="flex items-center mb-1">
-                    <input
-                      type="radio"
-                      name="use_chatgpt"
-                      value={opt}
-                      checked={formData.use_chatgpt === opt}
-                      onChange={handleChange}
-                      className="mr-2"
-                    />
-                    <label>{opt}</label>
-                  </div>
-                ))}
-              </div>
+              <div className="overflow-x-auto space-y-6">
+                {/* ===================== */}
+                {/* Generative AI */}
+                {/* ===================== */}
+                <div>
+                  <h3 className="font-semibold mb-2">Generative AI</h3>
 
-              {/* Other Generative AI */}
-              <div
-                ref={(el) => (fieldRefs.current.use_other_genai = el)}
-                className={
-                  isHighlighted("use_other_genai")
-                    ? "p-3 rounded-lg border-2 border-red-500"
-                    : ""
-                }
-              >
-                <label className="block mb-2 font-medium">
-                  Other Generative AI (e.g., Gemini, Copilot, Perplexity)
-                </label>
-                {USAGE_OPTIONS.map((opt) => (
-                  <div key={opt} className="flex items-center mb-1">
-                    <input
-                      type="radio"
-                      name="use_other_genai"
-                      value={opt}
-                      checked={formData.use_other_genai === opt}
-                      onChange={handleChange}
-                      className="mr-2"
-                    />
-                    <label>{opt}</label>
-                  </div>
-                ))}
-              </div>
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr>
+                        <th className="border p-2 text-left">Tool</th>
+                        {USAGE_OPTIONS.map((opt) => (
+                          <th key={opt} className="border p-2 text-center">
+                            {opt}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
 
-              {/* Google Search */}
-              <div
-                ref={(el) => (fieldRefs.current.use_google = el)}
-                className={
-                  isHighlighted("use_google")
-                    ? "p-3 rounded-lg border-2 border-red-500"
-                    : ""
-                }
-              >
-                <label className="block mb-2 font-medium">Google Search</label>
-                {USAGE_OPTIONS.map((opt) => (
-                  <div key={opt} className="flex items-center mb-1">
-                    <input
-                      type="radio"
-                      name="use_google"
-                      value={opt}
-                      checked={formData.use_google === opt}
-                      onChange={handleChange}
-                      className="mr-2"
-                    />
-                    <label>{opt}</label>
-                  </div>
-                ))}
-              </div>
+                    <tbody>
+                      {[
+                        { label: "ChatGPT", field: "use_chatgpt" },
+                        { label: "Gemini", field: "use_gemini" },
+                        { label: "Copilot", field: "use_copilot" },
+                        { label: "Other Generative AI", field: "use_genai_other" },
+                      ].map(({ label, field }) => (
+                        <tr key={field}>
+                          <td className="border p-2 font-medium">{label}</td>
 
-              {/* Other Search Engines */}
-              <div
-                ref={(el) => (fieldRefs.current.use_other_search = el)}
-                className={
-                  isHighlighted("use_other_search")
-                    ? "p-3 rounded-lg border-2 border-red-500"
-                    : ""
-                }
-              >
-                <label className="block mb-2 font-medium">
-                  Other Search Engines (e.g., Bing, DuckDuckGo)
-                </label>
-                {USAGE_OPTIONS.map((opt) => (
-                  <div key={opt} className="flex items-center mb-1">
-                    <input
-                      type="radio"
-                      name="use_other_search"
-                      value={opt}
-                      checked={formData.use_other_search === opt}
-                      onChange={handleChange}
-                      className="mr-2"
-                    />
-                    <label>{opt}</label>
-                  </div>
-                ))}
+                          {USAGE_OPTIONS.map((opt) => (
+                            <td key={opt} className="border p-2 text-center">
+                              <input
+                                type="radio"
+                                name={field}
+                                value={opt}
+                                checked={formData[field] === opt}
+                                onChange={handleChange}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Other GenAI name */}
+                  <input
+                    type="text"
+                    name="use_genai_other_name"
+                    value={formData.use_genai_other_name}
+                    onChange={handleChange}
+                    placeholder="If other, please specify (optional)"
+                    className="mt-2 w-full border rounded-lg p-2"
+                  />
+                </div>
+
+                {/* ===================== */}
+                {/* Web Search Engines */}
+                {/* ===================== */}
+                <div>
+                  <h3 className="font-semibold mb-2">Web Search Engines</h3>
+
+                  <table className="w-full border-collapse text-sm">
+                    <thead>
+                      <tr>
+                        <th className="border p-2 text-left">Tool</th>
+                        {USAGE_OPTIONS.map((opt) => (
+                          <th key={opt} className="border p-2 text-center">
+                            {opt}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+
+                    <tbody>
+                      {[
+                        { label: "Google", field: "use_google" },
+                        { label: "Bing", field: "use_bing" },
+                        { label: "Other Search Engines", field: "use_search_other" },
+                      ].map(({ label, field }) => (
+                        <tr key={field}>
+                          <td className="border p-2 font-medium">{label}</td>
+
+                          {USAGE_OPTIONS.map((opt) => (
+                            <td key={opt} className="border p-2 text-center">
+                              <input
+                                type="radio"
+                                name={field}
+                                value={opt}
+                                checked={formData[field] === opt}
+                                onChange={handleChange}
+                              />
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+
+                  {/* Other Search name */}
+                  <input
+                    type="text"
+                    name="use_search_other_name"
+                    value={formData.use_search_other_name}
+                    onChange={handleChange}
+                    placeholder="If other, please specify (optional)"
+                    className="mt-2 w-full border rounded-lg p-2"
+                  />
+                </div>
               </div>
             </div>
+
 
             {/* Submit */}
             <div className="text-center pt-4">
