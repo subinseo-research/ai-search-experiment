@@ -53,6 +53,7 @@ export default function PostSurvey() {
   const [participantId, setParticipantId] = useState(null);
   const [systemType, setSystemType] = useState(null);
   const [taskType, setTaskType] = useState("");
+  const [scraps, setScraps] = useState([]);
 
   // section-based states
   const [serendipityResponses, setSerendipityResponses] = useState({});
@@ -67,8 +68,9 @@ export default function PostSurvey() {
   const [highlightQuestion, setHighlightQuestion] = useState(null);
 
   /* -------------------------------
-     Load participant + task type
+     useEffect 
   -------------------------------- */
+  {/* Participants' information load */}
   useEffect(() => {
     const id = localStorage.getItem("participant_id");
     if (!id) {
@@ -86,6 +88,18 @@ export default function PostSurvey() {
 
     setTaskType(localStorage.getItem("task_type") || "the topic");
   }, [router]);
+
+  {/* scrapbook load */}
+  useEffect(() => {
+    const savedScraps = localStorage.getItem("scrapbook");
+    if (savedScraps) {
+      try {
+        setScraps(JSON.parse(savedScraps));
+      } catch {
+        setScraps([]);
+      }
+    }
+  }, []);
 
   /* -------------------------------
      Question Sets
@@ -222,78 +236,149 @@ export default function PostSurvey() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Progress */}
       <div className="sticky top-0 z-40 bg-white border-b">
         <ProgressBar progress={50 + page * 10} />
       </div>
 
-      <div className="max-w-[900px] mx-auto bg-white px-8 py-12">
-        <h1 className="text-3xl font-semibold mb-4 text-center">Survey</h1>
-        <h2 className="text-xl font-semibold mb-10 text-center">
-          {pages[page - 1].title}
-        </h2>
+      {/* Main layout */}
+      <div className="flex min-h-[calc(100vh-56px)]">
+        
+        {/*Survey */}
+        <div className="flex-1 flex justify-center overflow-y-auto">
+          <div className="max-w-[900px] w-full bg-white px-8 py-12">
 
-        {questions.length > 0 && (
-          <div className="space-y-8">
-            {questions.map((q) => (
-              <LikertRow
-                key={q}
-                index={qIndex++}
-                question={q}
-                labels={sevenPointLabels}
-                value={sectionResponses[section][q]}
-                onChange={(v) => handleChange(section, q, v)}
-                highlightRef={(el) => (questionRefs.current[q] = el)}
-                highlight={highlightQuestion === q}
-              />
+            <h1 className="text-3xl font-semibold mb-4 text-center">Survey</h1>
+            <h2 className="text-xl font-semibold mb-10 text-center">
+              {pages[page - 1].title}
+            </h2>
+
+            {questions.length > 0 && (
+              <div className="space-y-8">
+                {questions.map((q) => (
+                  <LikertRow
+                    key={q}
+                    index={qIndex++}
+                    question={q}
+                    labels={sevenPointLabels}
+                    value={sectionResponses[section][q]}
+                    onChange={(v) => handleChange(section, q, v)}
+                    highlightRef={(el) => (questionRefs.current[q] = el)}
+                    highlight={highlightQuestion === q}
+                  />
+                ))}
+              </div>
+            )}
+
+            {page === pages.length && (
+              <div className="space-y-10 mt-12">
+
+                {/* Open-ended Question 1 */}
+                <div className="space-y-3">
+                  <p className="font-medium text-[18px]">
+                    What keywords can you think of when you think about{" "}
+                    <strong>{taskType}</strong>?
+                  </p>
+                  <textarea
+                    className="w-full border rounded-md p-4 min-h-[120px]"
+                    placeholder="There are no right or wrong answers. Please provide anything."
+                    value={openEndedResponses["OEQ1"] || ""}
+                    onChange={(e) =>
+                      handleChange("openEnded", "OEQ1", e.target.value)
+                    }
+                  />
+                </div>
+
+                {/* Open-ended Question 2 */}
+                <div className="space-y-3">
+                  <p className="font-medium text-[18px]">
+                    Did you encounter any information that you could relate to your
+                    own experiences or to similar situations?
+                  </p>
+                  <textarea
+                    className="w-full border rounded-md p-4 min-h-[140px]"
+                    placeholder="There are no right or wrong answers. Please provide anything."
+                    value={openEndedResponses["OEQ2"] || ""}
+                    onChange={(e) =>
+                      handleChange("openEnded", "OEQ2", e.target.value)
+                    }
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mt-16 text-center">
+              <button
+                onClick={handleNext}
+                disabled={loading}
+                className="px-10 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg disabled:opacity-50"
+              >
+                {loading
+                  ? "Submitting..."
+                  : page < pages.length
+                  ? "Next"
+                  : "Submit"}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* ===============================
+            Scrapbook / Notes (Read-only)
+          =============================== */}
+        <div className="w-[26%] min-w-[260px] max-w-[420px] bg-gray-50 border-l overflow-y-auto">
+          <div className="p-4 border-b">
+            <h2 className="font-semibold">Your Scrapbook</h2>
+            <p className="text-xs text-gray-500">
+              Saved during the search session (read-only)
+            </p>
+          </div>
+
+          <div className="p-4 space-y-3">
+            {scraps.length === 0 && (
+              <p className="text-sm text-gray-400">
+                No items were saved during the search.
+              </p>
+            )}
+
+            {scraps.map((item, i) => (
+              <div
+                key={i}
+                className="bg-white border rounded-lg p-3 text-sm space-y-2"
+              >
+                {item.type === "scrap" && (
+                  <div className="prose prose-sm max-w-none">
+                    {item.snippet}
+                  </div>
+                )}
+
+                {item.type === "web" && (
+                  <>
+                    <div className="font-medium">{item.title}</div>
+                    <a
+                      href={item.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 break-all"
+                    >
+                      {item.link}
+                    </a>
+                  </>
+                )}
+
+                {item.comment && (
+                  <div className="pt-2 mt-2 border-t text-xs text-gray-600">
+                    <strong>Note:</strong> {item.comment}
+                  </div>
+                )}
+              </div>
             ))}
           </div>
-        )}
-
-        {page === pages.length && (
-          <div className="space-y-10">
-
-             {/* Open-ended Question 1 */}
-            <div className="space-y-3">
-               <p className="font-medium text-[18px]">
-                What keywords can you think of when you think about <strong>{taskType}</strong>?
-               </p>
-              <textarea
-                className="w-full border rounded-md p-4 min-h-[120px]"
-                placeholder="There are no right or wrong answers. Please provide anything."
-                value={openEndedResponses["OEQ1"] || ""}
-                onChange={(e) =>
-                  handleChange("openEnded", "OEQ1", e.target.value)
-                }
-              />
-            </div>
-
-          {/* Open-ended Question 2 */}
-            <div className="space-y-3">
-              <p className="font-medium text-[18px]">
-                Did you encounter any information that you could relate to your own experiences or to similar situations?
-              </p>
-              <textarea
-                className="w-full border rounded-md p-4 min-h-[140px]"
-                placeholder="There are no right or wrong answers. Please provide anything."
-                value={openEndedResponses["OEQ2"] || ""}
-                onChange={(e) =>
-                  handleChange("openEnded", "OEQ2", e.target.value)
-                }
-              />
-            </div>
-          </div>
-        )}
-
-        <div className="mt-16 text-center">
-          <button
-            onClick={handleNext}
-            disabled={loading}
-            className="px-10 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg disabled:opacity-50"
-          >
-            {loading ? "Submitting..." : page < pages.length ? "Next" : "Submit"}
-          </button>
         </div>
       </div>
+    </div>
+  );
+
 
       {/* Warning Modal */}
       {showWarningModal && (
@@ -339,6 +424,4 @@ export default function PostSurvey() {
           </div>
         </div>
       )}
-    </div>
-  );
 }
