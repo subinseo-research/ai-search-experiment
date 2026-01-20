@@ -77,6 +77,7 @@ export default function PreSurvey() {
      Questions
   -------------------------------- */
   const topic = taskType; 
+  const QUESTION_ORDER_KEY = "presurvey_question_order";
   const Pretask_Questionnaires = useMemo(
     () => [
       "How familiar are you with the {topic}?",
@@ -85,6 +86,27 @@ export default function PreSurvey() {
     ],
     []
   );
+  const randomizedQuestions = useMemo(() => {
+    const savedOrder = localStorage.getItem(QUESTION_ORDER_KEY);
+    if (savedOrder) {
+      try {
+        const parsed = JSON.parse(savedOrder);
+        if (Array.isArray(parsed) && parsed.length === Pretask_Questionnaires.length) {
+          return parsed;
+        }
+      } catch {
+        localStorage.removeItem(QUESTION_ORDER_KEY);
+      }
+    }
+    const shuffled = [...Pretask_Questionnaires]
+      .map((q) => ({ q, r: Math.random() }))
+      .sort((a, b) => a.r - b.r)
+      .map(({ q }) => q);
+
+    localStorage.setItem(QUESTION_ORDER_KEY, JSON.stringify(shuffled));
+    return shuffled;
+  }, [Pretask_Questionnaires]);
+
 
   const Labels = ["Not at all", "Slightly", "Somewhat", "Moderately", "Fairly", "Very", "Extremely"];
   
@@ -105,7 +127,7 @@ export default function PreSurvey() {
   const handleSubmit = async () => {
     if (loading) return;
 
-    const allQuestions = [...Pretask_Questionnaires];
+    const allQuestions = [...randomizedQuestions];
     const unanswered = allQuestions.filter((q) => responses[q] === undefined);
 
     if (unanswered.length > 0) {
@@ -123,7 +145,7 @@ export default function PreSurvey() {
           participant_id: participantId,
           task_id: taskType,
           presurvey_responses: Object.fromEntries(
-            Pretask_Questionnaires.map((q) => [q, responses[q]])
+            randomizedQuestions.map((q) => [q, responses[q]])
           ),
         }),
       });
@@ -131,6 +153,7 @@ export default function PreSurvey() {
       if (!res.ok) throw new Error(await res.text());
 
       localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(QUESTION_ORDER_KEY);
       router.push("/experiment");
     } catch {
       alert("Failed to save pre-survey responses. Please try again.");
@@ -195,7 +218,7 @@ export default function PreSurvey() {
             </p>
 
             <div className="space-y-8 mb-16">
-              {Pretask_Questionnaires.map((q, idx) => {
+              {randomizedQuestions.map((q, idx) => {
                 const renderedQuestion = q.replace("{topic}", taskType); 
               return (
                 <div
@@ -282,7 +305,7 @@ export default function PreSurvey() {
 
               <button
                 onClick={() => {
-                  const allQuestions = [...Pretask_Questionnaires];
+                  const allQuestions = [...randomizedQuestions];
                   const firstUnanswered = allQuestions.find((q) => responses[q] === undefined);
 
                   if (firstUnanswered && questionRefs.current[firstUnanswered]) {
