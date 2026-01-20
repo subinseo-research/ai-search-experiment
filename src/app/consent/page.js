@@ -60,7 +60,7 @@ export default function ConsentPage() {
         }),
       });
 
-      router.push("/thankyou?status=declined");
+      router.push("/decline?status=declined");
     } catch (err) {
       console.error("Consent decline error:", err);
     }
