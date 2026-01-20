@@ -51,6 +51,23 @@ export default function Experiment() {
     }
   };
 
+  const logFinalScrapbook = async () => {
+    await logEvent({
+      log_type: "final_scrapbook",
+      log_data: {
+        total_items: scraps.length,
+        scraps: scraps.map((item, index) => ({
+          index,
+          type: item.type,           // scrap | web | note
+          title: item.title || null,
+          snippet: item.snippet || null,
+          source: item.source || null,
+          comment: item.comment || "",
+        })),
+      },
+    });
+  };
+
   const instructionMessage = systemType
     ? systemType === "WebSearch"
       ? `You will use search engines to conduct the search about the given topic. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
@@ -391,9 +408,25 @@ ${userInput}
       });
     };
 
-  const handleNext = () => {
-    router.push("/postsurvey");
+  const handleNext = async () => {
+    try {
+      await logFinalScrapbook(); //final scrap & notes log
+
+      await logEvent({
+        log_type: "session_end",    //session end time log 
+        log_data: {
+          total_time_sec: seconds,
+          total_questions: questionCount,
+        },
+      });
+
+    } catch (err) {
+      console.error("Final scrapbook logging failed:", err);
+    } finally {
+      router.push("/postsurvey");
+    }
   };
+
 
   if (loading) {
     return (
