@@ -4,6 +4,15 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 
+function shuffleArray(array) {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
 /* -------------------------------
    Likert Row (Pre-survey style)
 -------------------------------- */
@@ -60,6 +69,8 @@ export default function PostSurvey() {
   const [emotionResponses, setEmotionResponses] = useState({});
   const [selfEfficacyResponses, setSelfEfficacyResponses] = useState({});
   const [openEndedResponses, setOpenEndedResponses] = useState({});
+  const [shuffledQuestionsByPage, setShuffledQuestionsByPage] = useState({});
+
 
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
@@ -88,6 +99,20 @@ export default function PostSurvey() {
 
     setTaskType(localStorage.getItem("task_type") || "the topic");
   }, [router]);
+
+  useEffect(() => {
+    const shuffled = {};
+
+    pages.forEach((p, index) => {
+      if (p.section === "openEnded") {
+        shuffled[index] = p.questions; 
+      } else {
+        shuffled[index] = shuffleArray(p.questions); 
+      }
+    });
+
+    setShuffledQuestionsByPage(shuffled);
+  }, []);
 
   {/* scrapbook load */}
   useEffect(() => {
@@ -208,7 +233,8 @@ export default function PostSurvey() {
 };
 
   const handleNext = () => {
-    const { questions, section } = pages[page - 1];
+    const { section } = pages[page - 1];
+    const questions = shuffledQuestionsByPage[page - 1] || [];
     const currentResponses = sectionResponses[section];
 
     const unanswered = questions.filter(
@@ -232,7 +258,8 @@ export default function PostSurvey() {
      Render
   -------------------------------- */
   let qIndex = 1;
-  const { questions, section } = pages[page - 1];
+  const { section } = pages[page - 1];
+  const questions = shuffledQuestionsByPage[page - 1] || pages[page - 1].questions;
 
   return (
     <div className="min-h-screen bg-gray-50">
