@@ -243,11 +243,9 @@ export default function PostSurvey() {
 
       {/* Main layout */}
       <div className="flex min-h-[calc(100vh-56px)]">
-        
-        {/*Survey */}
+        {/* Survey */}
         <div className="flex-1 flex justify-center overflow-y-auto">
           <div className="max-w-[900px] w-full bg-white px-8 py-12">
-
             <h1 className="text-3xl font-semibold mb-4 text-center">Survey</h1>
             <h2 className="text-xl font-semibold mb-10 text-center">
               {pages[page - 1].title}
@@ -272,8 +270,7 @@ export default function PostSurvey() {
 
             {page === pages.length && (
               <div className="space-y-10 mt-12">
-
-                {/* Open-ended Question 1 */}
+                {/* OEQ1 */}
                 <div className="space-y-3">
                   <p className="font-medium text-[18px]">
                     What keywords can you think of when you think about{" "}
@@ -289,7 +286,7 @@ export default function PostSurvey() {
                   />
                 </div>
 
-                {/* Open-ended Question 2 */}
+                {/* OEQ2 */}
                 <div className="space-y-3">
                   <p className="font-medium text-[18px]">
                     Did you encounter any information that you could relate to your
@@ -313,19 +310,13 @@ export default function PostSurvey() {
                 disabled={loading}
                 className="px-10 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg disabled:opacity-50"
               >
-                {loading
-                  ? "Submitting..."
-                  : page < pages.length
-                  ? "Next"
-                  : "Submit"}
+                {loading ? "Submitting..." : page < pages.length ? "Next" : "Submit"}
               </button>
             </div>
           </div>
         </div>
 
-        {/* ===============================
-            Scrapbook / Notes (Read-only)
-          =============================== */}
+        {/* Scrapbook */}
         <div className="w-[26%] min-w-[260px] max-w-[420px] bg-gray-50 border-l overflow-y-auto">
           <div className="p-4 border-b">
             <h2 className="font-semibold">Your Scrapbook</h2>
@@ -347,9 +338,7 @@ export default function PostSurvey() {
                 className="bg-white border rounded-lg p-3 text-sm space-y-2"
               >
                 {item.type === "scrap" && (
-                  <div className="prose prose-sm max-w-none">
-                    {item.snippet}
-                  </div>
+                  <div className="prose prose-sm max-w-none">{item.snippet}</div>
                 )}
 
                 {item.type === "web" && (
@@ -376,11 +365,8 @@ export default function PostSurvey() {
           </div>
         </div>
       </div>
-    </div>
-  );
 
-
-      {/* Warning Modal */}
+      {/* ✅ Warning Modal: 최상위 div 내부, main layout 밖 */}
       {showWarningModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
           <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center space-y-6">
@@ -424,4 +410,6 @@ export default function PostSurvey() {
           </div>
         </div>
       )}
+    </div>
+  );
 }
