@@ -626,16 +626,16 @@ export default function DemographicSurvey() {
                   : ""
               }
             >
-              <h2 className="text-lg font-semibold mb-4">
+              <p className="block mb-3 font-medium">
                 How frequently do you use the following tools in a typical week for information seeking?
-              </h2>
+              </p>
 
               <div className="overflow-x-auto space-y-6">
                 {/* ===================== */}
                 {/* Generative AI */}
                 {/* ===================== */}
                 <div>
-                  <h3 className="font-semibold mb-2">Generative AI</h3>
+                  <h4 className="font-semibold mb-2">Generative AI</h4>
 
                   <table className="w-full border-collapse text-sm">
                     <thead>
@@ -692,7 +692,7 @@ export default function DemographicSurvey() {
                 {/* Web Search Engines */}
                 {/* ===================== */}
                 <div>
-                  <h3 className="font-semibold mb-2">Web Search Engines</h3>
+                  <h4 className="font-semibold mb-2">Web Search Engines</h4>
 
                   <table className="w-full border-collapse text-sm">
                     <thead>
