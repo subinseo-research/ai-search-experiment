@@ -638,9 +638,9 @@ export default function DemographicSurvey() {
                   <h4 className="font-semibold mb-2">Generative AI</h4>
 
                   <table className="w-full border-collapse text-sm">
-                    <thead>
+                    <thead className="font-normal">
                       <tr>
-                        <th className="border p-2 text-left">Tool</th>
+                        <th className="border p-2 text-left text-gray-700">Tool</th>
                         {USAGE_OPTIONS.map((opt) => (
                           <th key={opt} className="border p-2 text-center">
                             {opt}
@@ -695,9 +695,9 @@ export default function DemographicSurvey() {
                   <h4 className="font-semibold mb-2">Web Search Engines</h4>
 
                   <table className="w-full border-collapse text-sm">
-                    <thead>
+                    <thead className="font-normal">
                       <tr>
-                        <th className="border p-2 text-left">Tool</th>
+                        <th className="border p-2 text-left text-gray-700">Tool</th>
                         {USAGE_OPTIONS.map((opt) => (
                           <th key={opt} className="border p-2 text-center">
                             {opt}
