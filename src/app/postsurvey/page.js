@@ -151,9 +151,9 @@ export default function PostSurvey() {
   ];
 
   const selfEfficacyQuestions = [
-    "I am usually able to think up creative and effective search strategies to find interesting and valuable information.",
+    "Given enough time and effort, I believe I can find information that interests me.",
     "I can do a good search and feel confident it will lead me to interesting information.",
-    "When I plan how to search for scientific information, I am almost certain I can find what I need.",
+    "The concept is too complex for me to explore through online search.",
     "I trust my ability to find new and interesting information.",
   ];
 
