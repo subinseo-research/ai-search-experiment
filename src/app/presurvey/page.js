@@ -20,6 +20,7 @@ export default function PreSurvey() {
 
   const [responses, setResponses] = useState({});
   const [loading, setLoading] = useState(false);
+  const [randomizedQuestions, setRandomizedQuestions] = useState([]);
 
   /* -------------------------------
      UI state
@@ -86,27 +87,33 @@ export default function PreSurvey() {
     ],
     []
   );
-  const randomizedQuestions = useMemo(() => {
+  useEffect(() => {
+    if (Pretask_Questionnaires.length === 0) return;
+
     const savedOrder = localStorage.getItem(QUESTION_ORDER_KEY);
     if (savedOrder) {
       try {
         const parsed = JSON.parse(savedOrder);
-        if (Array.isArray(parsed) && parsed.length === Pretask_Questionnaires.length) {
-          return parsed;
+        if (
+          Array.isArray(parsed) &&
+          parsed.length === Pretask_Questionnaires.length
+        ) {
+          setRandomizedQuestions(parsed);
+          return;
         }
       } catch {
         localStorage.removeItem(QUESTION_ORDER_KEY);
       }
     }
+
     const shuffled = [...Pretask_Questionnaires]
       .map((q) => ({ q, r: Math.random() }))
       .sort((a, b) => a.r - b.r)
       .map(({ q }) => q);
 
     localStorage.setItem(QUESTION_ORDER_KEY, JSON.stringify(shuffled));
-    return shuffled;
+    setRandomizedQuestions(shuffled);
   }, [Pretask_Questionnaires]);
-
 
   const Labels = ["Not at all", "Slightly", "Somewhat", "Moderately", "Fairly", "Very", "Extremely"];
   
@@ -218,35 +225,51 @@ export default function PreSurvey() {
             </p>
 
             <div className="space-y-8 mb-16">
-              {randomizedQuestions.map((q, idx) => {
-                const renderedQuestion = q.replace("{topic}", taskType); 
-              return (
-                <div
-                  key={q}
-                  ref={(el) => (questionRefs.current[q] = el)}
-                  className={`border-b pb-8 space-y-4 transition-all
-                    ${highlightQuestion === q ? "animate-flash border-2 border-red-500 rounded-lg p-4" : ""}`}
-                >
-                  <p className="font-medium text-[18px]">
-                    {idx + 1}. {renderedQuestion}
-                  </p>
-                  <div className="flex justify-between text-base text-gray-600">
-                    {Labels.map((label, i) => (
-                      <label key={label} className="flex flex-col items-center w-[100px]">
-                        <input
-                          type="radio"
-                          checked={responses[q] === i + 1}
-                          onChange={() => handleChange(q, i + 1)}
-                          className="w-7 h-7 accent-blue-600 hover:scale-110 transition-transform cursor-pointer"
-                        />
-                        <span>{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+              {randomizedQuestions.length === 0 ? (
+                <p className="text-gray-500 text-center">
+                  Loading questions...
+                </p>
+              ) : (
+                randomizedQuestions.map((q, idx) => {
+                  const renderedQuestion = q.replace("{topic}", taskType);
+
+                  return (
+                    <div
+                      key={q}
+                      ref={(el) => (questionRefs.current[q] = el)}
+                      className={`border-b pb-8 space-y-4 transition-all
+                        ${
+                          highlightQuestion === q
+                            ? "animate-flash border-2 border-red-500 rounded-lg p-4"
+                            : ""
+                        }`}
+                    >
+                      <p className="font-medium text-[18px]">
+                        {idx + 1}. {renderedQuestion}
+                      </p>
+
+                      <div className="flex justify-between text-base text-gray-600">
+                        {Labels.map((label, i) => (
+                          <label
+                            key={label}
+                            className="flex flex-col items-center w-[100px] cursor-pointer"
+                          >
+                            <input
+                              type="radio"
+                              checked={responses[q] === i + 1}
+                              onChange={() => handleChange(q, i + 1)}
+                              className="w-7 h-7 accent-blue-600 hover:scale-110 transition-transform"
+                            />
+                            <span>{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
+
 
             <div className="mt-16 text-center">
               <button
