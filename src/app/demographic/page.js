@@ -200,14 +200,15 @@ export default function DemographicSurvey() {
     if (formData.ideology_scale) fields.ideology_scale = formData.ideology_scale;
 
     // usage
+    if (formData.use_chatgpt) fields.use_chatgpt = formData.use_chatgpt;
     if (formData.use_gemini) fields.use_gemini = formData.use_gemini;
     if (formData.use_copilot) fields.use_copilot = formData.use_copilot;
-    if (formData.use_bing) fields.use_bing = formData.use_bing;
-
     if (formData.use_genai_other) fields.use_genai_other = formData.use_genai_other;
     if (formData.use_genai_other_name)
       fields.use_genai_other_name = formData.use_genai_other_name;
 
+    if (formData.use_google) fields.use_google = formData.use_google;
+    if (formData.use_bing) fields.use_bing = formData.use_bing;
     if (formData.use_search_other)
       fields.use_search_other = formData.use_search_other;
     if (formData.use_search_other_name)
