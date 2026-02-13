@@ -106,13 +106,6 @@ export default function ConsentPage() {
         {/* ===== Consent Content ===== */}
         <section className="space-y-6">
           <div>
-            <h3 className="text-xl font-semibold">Study Title</h3>
-            <p className="mt-1">
-              Search Behavior in Search Engines and Generative AI 
-            </p>
-          </div>
-
-          <div>
             <p className="mt-1">
               We are researchers at the University of Maryland, College Park. In this study, we are interested in understanding people's online search behavior using a search tool. In this survey, you will be asked about what you found interesting and valuable during the search session.
             </p>
