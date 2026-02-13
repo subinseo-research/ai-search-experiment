@@ -141,7 +141,7 @@ export default function ConsentPage() {
               onChange={(e) => setChecked(e.target.checked)}
             />
             <span className="text-sm leading-6">
-              I confirm that I am at least 18 years of age, have read this consent form (or had it read to me), my questions have been answered to my satisfaction, and I voluntarily agree to participate in this research study.
+              I confirm that I am at least 18 years of age, have read this consent form, and I voluntarily agree to participate in this research study.
             </span>
           </label>
 
