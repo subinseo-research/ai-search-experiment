@@ -155,7 +155,7 @@ export default function PostSurvey() {
     "I can do a good search and feel confident it will lead me to interesting information.",
     "The concept is too complex for me to explore through online search.",
     "I trust my ability to find new and interesting information.",
-  ];
+  ];2
 
   const sevenPointLabels = [
     "Strongly Disagree",

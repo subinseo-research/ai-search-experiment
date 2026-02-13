@@ -103,7 +103,7 @@ export default function ConsentPage() {
           <h2 className="text-3xl font-bold tracking-tight">Informed Consent</h2>
         </section>
 
-        {/* ===== Consent Cont6ent ===== */}
+        {/* ===== Consent Content ===== */}
         <section className="space-y-6">
           <div>
             <h3 className="text-xl font-semibold">Study Title</h3>
@@ -113,82 +113,28 @@ export default function ConsentPage() {
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold">Purpose of the Study</h3>
             <p className="mt-1">
-              This research is being conducted by Subin Seo, Dr. Yiwei Xu at the University of Maryland, College Park. We are inviting you to participate in this research project because you are an adult who regularly uses search systems to search information online. We seek to learn more about how people use different types of search systems, specifically conversational AI and traditional web search. This study aims to understand how different search systems shape users’ search behaviors and how this leads to varying search outcomes and user experiences.
+              We are researchers at the University of Maryland, College Park. In this study, we are interested in understanding people's online search behavior using a search tool. In this survey, you will be asked about what you found interesting and valuable during the search session.
             </p>
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold">Procedures</h3>
             <p className="mt-1">
-              The procedures involve participating in an online research study consisting of three parts: pre-survey, search session, and post-survey. The entire study will take approximately 10-12 minutes to complete.
-            </p>
-            <p className="mt-1">
-              In the pre-survey, you will be asked about your familiarity, goal clarity, and the clarity of their search plans related to the assigned search task. 
-            </p>
-            <p className="mt-1">
-              You will then be asked to complete a search task using either a search engine or generative AI. During the search session, you may enter multiple queries (search engine) or prompt (generative AI) to explore the given topic. It should take at least four minutes to complete, and you should submit several queries or prompts during the session.
-            </p>
-            <p className="mt-1">  
-              In the post-survey, you will be asked about your search experience, including any unexpected or interesting information you encountered, your emotional responses, your confidence in understanding the topic, and what you learned from the search.
-            </p>
-            <p className="mt-1">  
-              When you have completed the study, you will be automatically redirected to the linked Prolific page to receive your compensation.
+              This research is being conducted by Subin Seo, Dr. Yiwei Xu at the University of Maryland, College Park. We are inviting you to participate in this research project because you are an adult who regularly uses search systems to search information online. We seek to learn more about how people use different types of search systems, specifically conversational AI and traditional web search. This study aims to understand how different search systems shape users’ search behaviors and how this leads to varying search outcomes and user experiences. Please be assure that your responses will be kept confidential and anonymous.
             </p>
           </div>
 
           <div>
-            <h3 className="text-xl font-semibold">Potential Risks and Discomforts</h3>
             <p className="mt-1">
-              There are no known or foreseeable risks inherent in completing this study, with the exception of a potential breach of confidentiality. Additionally, some participants may experience mild frustration, confusion, or fatigue while completing the search task or reflecting on their search experience. Please keep in mind that you can choose not to answer any question(s) that make you uncomfortable and that you can exit the study at any point without penalty.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold">Potential Benefits</h3>
-            <p className="mt-1">
-              There are no direct benefits to you personally from participating in this research. However, we hope that the findings from this study will help researchers better understand how people search information and how search systems can be improved to support meaningful engagement with information.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold">Confidentiality</h3>
-            <p className="mt-1">
-              Any potential loss of confidentiality will be minimized by assigning you a participant ID number. We will not collect or store your name or any other identifying information with your survey responses. All survey data and analysis files will be accessible only to the research team and will be stored on password-protected computers. If we write a report or article about this research project, your identity will be protected to the maximum extent possible. Your information may be shared with representatives of the University of Maryland, College Park or governmental authorities if required by law or if there is concern about safety.
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold">Compensation</h3>
-            <p className="mt-1">
-              You will receive a $10 compensation for participating in this study and be responsible for any taxes associated with the compensation. At the end of the experiment, you will be automatically redirected to the linked Prolific page. Then, we will manually review your answer and search participation, and compensation will be processed sequentially. If there are no issues, your compensation will be issued within one week. 
-            </p>
-          </div>
-
-
-          <div>
-            <h3 className="text-xl font-semibold">Right to Withdraw and Questions</h3>
-            <p className="mt-1">
-              Your participation in this research is completely voluntary. You may choose not to take part at all. If you decide to participate in this research, you may stop participating at any time. If you decide not to participate in this study or if you stop participating at any time, you will not be penalized. 
-              If you have questions, concerns, or complaints about the study, or if you wish to withdraw, please contact the investigator:
-            </p>
-          </div>
-
-          <div>
-            <h3 className="text-xl font-semibold">Participants Rights</h3>
-            <p className="mt-1">
-              If you have questions about your rights as a research participant or wish to report a research-related injury, please contact: 
-              For more information regarding participant rights, please visit:
-              This research has been reviewed according to the University of Maryland, College Park IRB procedures for research involving human subjects. 
-            </p>
+              The study will take approximately 10–12 minutes to complete, and you will receive monetary compensation for your participation.Your participation in this research is voluntary. This means you can choose not to continue and you can click the do not consent button below. You also have the right to withdraw at any point during the study, for any reason, and without any prejudice by simply exiting the survey. If you would like to discuss this research and your participation, please contact the Principal Investigator through the Prolific messaging system (which ensures the anonymity of your personal identity). 
+            </p>        
           </div>
         </section>
 
         <hr className="my-10 border-gray-200" />
 
           <p className="mt-1">
-            By clicking 'continue' below, you indicate that you are at least 18 years of age, you have read this consent form or have had it read to you, your questions have been answered to your satisfaction, and you voluntarily agree to participate in this research study.
+            By clicking the button below, you acknowledge that your participation in the study is voluntary, that you are 18 years of age, and that you are aware that you may choose to terminate your participation in the study at any time and for any reason. You agree to proceed and participate in the study. 
           </p>
 
           {/* ===== Consent Checkbox ===== */}
