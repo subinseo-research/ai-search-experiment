@@ -91,8 +91,6 @@ export default function ConsentPage() {
           <div className="text-base text-gray-700 space-y-2 leading-relaxed">
             <p>
               Hello, my name is Subin Seo. I am a master’s student at the University of Maryland, College Park. 
-            </p>
-            <p>
               Please read the following information carefully before deciding whether to participate.
             </p>
           </div>
