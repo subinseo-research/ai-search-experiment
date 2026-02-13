@@ -172,7 +172,7 @@ export default function ConsentPage() {
                 : "bg-gray-900 hover:bg-black"
             }`}
           >
-            {isSubmitting ? "Saving consent…" : "Continue"}
+            {isSubmitting ? "Saving consent…" : "Consent"}
           </button>
         </div>
 
