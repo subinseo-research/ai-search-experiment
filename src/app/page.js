@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { WelcomePage } from "../app/check";
+import { WelcomePage } from "../components/welcome";
 
 export default function HomePage() {
   const router = useRouter();
