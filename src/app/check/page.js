@@ -12,14 +12,16 @@ export default function CheckPage() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-
     const pid = prolificId.trim();
-    if (!pid) {
-      setError("Please enter your Prolific ID.");
+    if (!pid) return setError("Please enter your Prolific ID.");
+    localStorage.setItem("participant_id", pid);
+
+    const hasParticipated = localStorage.getItem("hasParticipated") === "true";
+    if (hasParticipated) {
+      router.push("/duplicate");
       return;
     }
-
-    localStorage.setItem("participant_id", pid);
+    localStorage.setItem("hasParticipated", "true");
     router.push("/consent");
   };
 
