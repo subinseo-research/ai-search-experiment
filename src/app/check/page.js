@@ -1,28 +1,24 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 
 export default function CheckPage() {
-  const router = useRouter();
-
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const pid = prolificId.trim();
-    if (!pid) return setError("Please enter your Prolific ID.");
-    localStorage.setItem("participant_id", pid);
 
-    const hasParticipated = localStorage.getItem("hasParticipated") === "true";
-    if (hasParticipated) {
-      router.push("/duplicate");
+    const pid = prolificId.trim();
+    if (!pid) {
+      setError("Please enter your Prolific ID.");
       return;
     }
-    localStorage.setItem("hasParticipated", "true");
-    router.push("/consent");
+    localStorage.setItem("participant_id", pid);
+    setSaved(true);
+    setError("");
   };
 
   return (
@@ -43,6 +39,7 @@ export default function CheckPage() {
             onChange={(e) => {
               setProlificId(e.target.value);
               if (error) setError("");
+              if (saved) setSaved(false);
             }}
             placeholder="Prolific ID"
             className="w-full border rounded-lg px-4 py-2"
@@ -50,11 +47,17 @@ export default function CheckPage() {
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
+          {saved && (
+            <p className="text-green-600 text-sm">
+              Saved. You may now proceed to the next page.
+            </p>
+          )}
+
           <button
             type="submit"
             className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
           >
-            Continue
+            Save
           </button>
         </form>
       </div>
