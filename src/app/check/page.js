@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 
 export default function CheckPage() {
+  const router = useRouter();
+
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
-  const [saved, setSaved] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -16,9 +18,12 @@ export default function CheckPage() {
       setError("Please enter your Prolific ID.");
       return;
     }
+
+    // ✅ 저장
     localStorage.setItem("participant_id", pid);
-    setSaved(true);
-    setError("");
+
+    // ✅ 다음 페이지로 이동
+    router.push("/consent");
   };
 
   return (
@@ -39,7 +44,6 @@ export default function CheckPage() {
             onChange={(e) => {
               setProlificId(e.target.value);
               if (error) setError("");
-              if (saved) setSaved(false);
             }}
             placeholder="Prolific ID"
             className="w-full border rounded-lg px-4 py-2"
@@ -47,17 +51,11 @@ export default function CheckPage() {
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
-          {saved && (
-            <p className="text-green-600 text-sm">
-              Saved. You may now proceed to the next page.
-            </p>
-          )}
-
           <button
             type="submit"
             className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
           >
-            Save
+            Save and Continue
           </button>
         </form>
       </div>
