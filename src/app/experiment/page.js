@@ -177,44 +177,35 @@ export default function Experiment() {
         <span className="relative inline-block mx-0.5">
           <button
             onClick={(e) => {
-              e.preventDefault();
+              e.stopPropagation();
               setShowPopup(!showPopup);
             }}
-            className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-500 text-white rounded-md hover:bg-blue-700 transition-colors align-top"
+            className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-600 text-white rounded hover:bg-blue-800 transition shadow-sm align-middle"
           >
             {id}
           </button>
 
           {showPopup && (
-            <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-200 shadow-2xl rounded-lg p-3 z-50 animate-in fade-in slide-in-from-bottom-1">
-              <div className="flex justify-between items-start mb-2">
-                <span className="text-xs font-bold text-blue-600">Source [{id}]</span>
-                <button 
-                  onClick={() => setShowPopup(false)}
-                  className="text-gray-400 hover:text-gray-600 text-lg line-height-0"
-                >
-                  ×
-                </button>
-              </div>
-              <p className="text-sm font-semibold text-gray-800 mb-1 line-clamp-2">
-                {source.title}
-              </p>
-              <p className="text-xs text-gray-500 mb-2 line-clamp-3">
-                {source.snippet}
-              </p>
-              <a
-                href={source.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-blue-500 hover:underline break-all block border-t pt-2"
-              >
-                Sources →
-              </a>
-            </div>
-          )}
-        </span>
-      );
-    };
+                  <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left leading-normal animate-in fade-in slide-in-from-bottom-2">
+                    <div className="flex justify-between items-center mb-1">
+                      <span className="text-[10px] font-bold text-blue-600 uppercase">Citation [{id}]</span>
+                      <button onClick={() => setShowPopup(false)} className="text-gray-400 hover:text-gray-600 text-lg">×</button>
+                    </div>
+                    <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">{source.title}</h4>
+                    <p className="text-xs text-gray-600 line-clamp-3 mb-2">{source.snippet}</p>
+                    <a
+                      href={source.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[11px] text-blue-600 font-medium hover:underline flex items-center gap-1 border-t pt-2"
+                    >
+                      원본 사이트 방문하기 ↗
+                    </a>
+                  </div>
+                )}
+              </span>
+            );
+          };
   
   /* =========================
      Initial setup
