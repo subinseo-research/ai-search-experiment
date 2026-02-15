@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 import ReactMarkdown from "react-markdown";
@@ -9,13 +9,13 @@ const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
 /* =========================
-   1. CitationBadge 컴포넌트를 외부로 이동 (상태 유지를 위해 필수)
+   1. CitationBadge (외부 선언)
 ========================= */
 const CitationBadge = ({ displayId, sources }) => {
   const [showPopup, setShowPopup] = useState(false);
   const wrapperRef = useRef(null);
 
-  // Close popup when clicking outside
+  // 팝업 외부 클릭 시 닫기
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
@@ -43,6 +43,7 @@ const CitationBadge = ({ displayId, sources }) => {
       <button
         type="button"
         onClick={(e) => {
+          e.preventDefault();
           e.stopPropagation();
           setShowPopup((prev) => !prev);
         }}
@@ -53,7 +54,10 @@ const CitationBadge = ({ displayId, sources }) => {
       </button>
 
       {showPopup && (
-        <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
+        <div 
+          className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[9999] text-left"
+          onClick={(e) => e.stopPropagation()} 
+        >
           <div className="flex justify-between items-center mb-1">
             <span className="text-[10px] font-bold text-blue-600 uppercase">
               Citation [{numericId}]
@@ -79,7 +83,10 @@ const CitationBadge = ({ displayId, sources }) => {
             target="_blank"
             rel="noopener noreferrer"
             className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2 cursor-pointer"
-            onClick={(e) => e.stopPropagation()} 
+            onClick={(e) => {
+               // 링크 클릭 시 전파 중단 (팝업 유지하며 새창 열기)
+               e.stopPropagation(); 
+            }}
           >
             Visit Source ↗
           </a>
@@ -90,7 +97,7 @@ const CitationBadge = ({ displayId, sources }) => {
 };
 
 /* =========================
-   2. Helper Function도 외부로 이동
+   2. Helper Function (외부 선언)
 ========================= */
 const renderWithCitations = (content, sources) => {
   if (Array.isArray(content)) {
@@ -111,6 +118,74 @@ const renderWithCitations = (content, sources) => {
   });
 };
 
+/* =========================
+   3. ChatMessage Component (Memoized) - 핵심 수정 부분 ★
+   타이머가 돌아가도 이 컴포넌트는 리렌더링되지 않아 팝업이 유지됨
+========================= */
+const ChatMessage = memo(({ msg, onDragStart, onScrap }) => {
+  const isAssistant = msg.role === "assistant";
+  const allowChatDragRef = useRef(false);
+
+  return (
+    <div
+      className={`relative p-4 rounded-xl text-base leading-relaxed ${
+        isAssistant
+          ? "bg-white border cursor-text"
+          : "bg-blue-600 text-white ml-auto max-w-lg"
+      }`}
+      draggable // 항상 draggable로 두되 onDragStart에서 제어
+      onMouseDown={() => {
+        allowChatDragRef.current = false;
+      }}
+      onMouseUp={() => {
+        const selection = window.getSelection()?.toString().trim();
+        if (selection) {
+          allowChatDragRef.current = true;
+        }
+      }}
+      onDragStart={(e) => {
+        const selection = window.getSelection()?.toString().trim();
+        if (!selection) {
+          e.preventDefault();
+          return;
+        }
+        onDragStart(e, selection);
+      }}
+    >
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => (
+            <p className="mb-2 last:mb-0">
+              {renderWithCitations(children, msg.sources)}
+            </p>
+          ),
+          li: ({ children }) => (
+            <li className="mb-1 last:mb-0">
+              {renderWithCitations(children, msg.sources)}
+            </li>
+          ),
+        }}
+      >
+        {msg.content}
+      </ReactMarkdown>
+
+      {isAssistant && !msg.loading && (
+        <button
+          onClick={() => onScrap(msg.content)}
+          className="mt-4 self-end text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
+        >
+          📌 Scrap
+        </button>
+      )}
+    </div>
+  );
+});
+ChatMessage.displayName = "ChatMessage";
+
+
+/* =========================
+   Main Component
+========================= */
 export default function Experiment() {
   const router = useRouter();
 
@@ -138,7 +213,7 @@ export default function Experiment() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participant_id: participantId,
-          condition: systemType, // WebSearch | ConvSearch
+          condition: systemType,
           task_id: taskType,
           log_type,
           log_data: {
@@ -146,7 +221,7 @@ export default function Experiment() {
             timestamp_iso_ms: nowIso,
             timestamp_unix_ms: nowMs,
           },
-          timestamp: nowIso, // Airtable Date field
+          timestamp: nowIso,
         }),
       });
     } catch (err) {
@@ -161,7 +236,7 @@ export default function Experiment() {
         total_items: scraps.length,
         scraps: scraps.map((item, index) => ({
           index,
-          type: item.type,           // scrap | web | note
+          type: item.type,
           title: item.title || null,
           snippet: item.snippet || null,
           source: item.source || null,
@@ -247,7 +322,6 @@ export default function Experiment() {
       },
     ]);
   };
-  const allowChatDragRef = useRef(false);
 
   useEffect(() => {
     const onMove = (e) => {
@@ -273,7 +347,6 @@ export default function Experiment() {
   /* =========================
      Initial setup
   ========================= */
-
   useEffect(() => {
     const storedTaskType = localStorage.getItem("task_type");
     if (storedTaskType) setTaskType(storedTaskType);
@@ -287,28 +360,23 @@ export default function Experiment() {
     }
     setParticipantId(id);
 
-    // Load task assignment from TaskPage
     const storedCase = localStorage.getItem("search_case");
     const storedTask = localStorage.getItem("search_task");
     if (storedCase) setScenario(storedCase);
     if (storedTask) setTask(storedTask);
 
-    // Assign system type (persist)
     const storedSystem = localStorage.getItem("system_type");
     if (!storedSystem) {
-      // assignment missing → safety fallback
       window.location.href = "/task";
       return;
     }
-      setSystemType(storedSystem); // "WebSearch" | "ConvSearch"
+      setSystemType(storedSystem);
 
-    // Load scrapbook
     const savedScraps = localStorage.getItem("scrapbook");
     if (savedScraps) {
       try {
         setScraps(JSON.parse(savedScraps));
       } catch {
-        // ignore malformed
       }
     }
 
@@ -335,7 +403,6 @@ export default function Experiment() {
   /* =========================
      Page popstate and step
   ========================= */
-
   useEffect(() => {
     window.history.pushState({ step }, "");
 
@@ -354,7 +421,7 @@ export default function Experiment() {
   }, [step]);
 
   /* =========================
-     Search Engine (WebSearch)
+     Search Engine Handlers
   ========================= */
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -408,7 +475,7 @@ export default function Experiment() {
   };
 
   /* =========================
-     Gen AI (ChatSearch)
+     Gen AI Handlers
   ========================= */
   const handleGenAISubmit = async (e) => {
     e.preventDefault();
@@ -419,11 +486,8 @@ export default function Experiment() {
       log_data: { prompt: userInput },
     });
 
-
-    // Count only valid user questions
     setQuestionCount((prev) => prev + 1);
 
-    // Append user + loading assistant
     setChatHistory((prev) => [
       ...prev,
       { role: "user", content: userInput },
@@ -461,13 +525,12 @@ export default function Experiment() {
 
       setChatHistory((prev) => {
         const updated = [...prev];
-        // Replace the last "loading" assistant message safely
         const lastIdx = updated.length - 1;
         if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
           updated[lastIdx] = {
             role: "assistant",
             content: data?.text || "No response generated.",
-            sources: data?.sources || [] // Ensure sources are saved
+            sources: data?.sources || [] 
           };
         } else {
           updated.push({ 
@@ -503,7 +566,7 @@ export default function Experiment() {
 
 
   /* =========================
-     Scrapbook
+     Scrapbook & Log
   ========================= */
   const handleDrop = (e) => {
     e.preventDefault();
@@ -518,7 +581,6 @@ export default function Experiment() {
     }
       setScraps((prev) => [...prev, { ...dropped, comment: "" }]);
     } catch {
-      // ignore invalid payload
     }
   };
 
@@ -543,10 +605,10 @@ export default function Experiment() {
 
   const handleNext = async () => {
     try {
-      await logFinalScrapbook(); //final scrap & notes log
+      await logFinalScrapbook(); 
 
       await logEvent({
-        log_type: "session_end",    //session end time log 
+        log_type: "session_end",   
         log_data: {
           total_time_sec: seconds,
           total_questions: questionCount,
@@ -666,7 +728,6 @@ export default function Experiment() {
 
       {/* Timer */}
       <div className="fixed top-6 right-5 z-[60]">
-        {/* Timer Overlay */}
         <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
             Time: {Math.floor(seconds / 60)}:
             {(seconds % 60).toString().padStart(2, "0")}
@@ -709,7 +770,7 @@ export default function Experiment() {
           </div>
         </div>
 
-        {/* Intro Modal: blocks interaction until closed */}
+        {/* Intro Modal */}
         {showIntroModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg">
@@ -799,7 +860,6 @@ export default function Experiment() {
 
                 /* ===== After First Search ===== */
                 <>
-                  {/* search bar */}
                   <form onSubmit={handleSearch} className="flex p-3">
                     <input
                       value={searchQuery}
@@ -888,81 +948,33 @@ export default function Experiment() {
                 
               ) : (         
                 <div className="flex-1 p-4 overflow-y-auto pb-36">
-                {/* Chat history */}
-                <div className="mx-auto w-full max-w-3xl space-y-4">
-                  {chatHistory.map((msg, idx) => {
-                    const isAssistant = msg.role === "assistant";
-
-                    return (
-                      <div
+                  {/* Chat history (사용: Memoized ChatMessage) */}
+                  <div className="mx-auto w-full max-w-3xl space-y-4">
+                    {chatHistory.map((msg, idx) => (
+                      <ChatMessage
                         key={idx}
-                        className={`relative p-4 rounded-xl text-base leading-relaxed ${
-                          isAssistant
-                            ? "bg-white border cursor-text"
-                            : "bg-blue-600 text-white ml-auto max-w-lg"
-                        }`}
-                        draggable={allowChatDragRef.current}
-                        onMouseDown={() => {
-                          allowChatDragRef.current = false;
-                        }}
-                          onMouseUp={() => {
-                            const selection = window.getSelection()?.toString().trim();
-                            if (selection) {
-                              allowChatDragRef.current = true; 
-                            }
-                          }}
-                          onDragStart={(e) => {
-                            const selection = window.getSelection()?.toString().trim();
-                            if (!selection) {
-                              e.preventDefault();
-                              return;
-                            }
-                            e.dataTransfer.setData(
-                              "text/plain",
-                              JSON.stringify({
-                                type: "scrap",
-                                title: "ConvSearch",
-                                snippet: selection,
-                                source: "chat",
+                        msg={msg}
+                        onDragStart={(e, selection) => {
+                          e.dataTransfer.setData(
+                            "text/plain",
+                            JSON.stringify({
+                              type: "scrap",
+                              title: "ConvSearch",
+                              snippet: selection,
+                              source: "chat",
                             })
                           );
                         }}
-                      >
-                        <ReactMarkdown
-                          components={{
-                            p: ({ children }) => (
-                              <p className="mb-2 last:mb-0">
-                                {renderWithCitations(children, msg.sources)}
-                              </p>
-                            ),
-                            li: ({ children }) => (
-                              <li className="mb-1 last:mb-0">
-                                {renderWithCitations(children, msg.sources)}
-                              </li>
-                            ),
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
-
-                        {isAssistant && !msg.loading && (
-                          <button
-                            onClick={() =>
-                              addScrap({
-                                title: "ConvSearch",
-                                fullText: msg.content,
-                                source: "chat",
-                              })
-                            }
-                            className="mt-4 self-end text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
-                          >
-                            📌Scrap
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                        onScrap={(content) =>
+                          addScrap({
+                            title: "ConvSearch",
+                            fullText: content,
+                            source: "chat",
+                          })
+                        }
+                      />
+                    ))}
+                  </div>
                 </div>
               )}
 
