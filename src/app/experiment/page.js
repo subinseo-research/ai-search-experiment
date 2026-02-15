@@ -165,36 +165,21 @@ export default function Experiment() {
     };
   }, []);
 
+<<<<<<< HEAD
   const [openCitationId, setOpenCitationId] = useState(null);
   const CitationBadge = ({ displayId, sources, msgKey}) => {
     const wrapperRef = useRef(null);
+=======
+  const CitationBadge = ({ displayId, sources }) => {
+    const [showPopup, setShowPopup] = useState(false);
+>>>>>>> parent of cd108f3 (trial (pop up stability))
     
     const numericId = displayId.replace(/[^0-9]/g, "");
-    const popupId = `${msgKey}-${numericId}`;
-    const isOpen = openCitationId === popupId;
-
     const source = sources?.find((s) => s.id === numericId) || {
       title: "References",
       link: "#",
       snippet: "No details available.",
     };
-    
-    useEffect(() => {
-      if (!isOpen) return;
-
-      const onPointerDown = (e) => {
-        if (wrapperRef.current && wrapperRef.current.contains(e.target)) return;
-        setOpenCitationId(null);
-      };
-
-      document.addEventListener("mousedown", onPointerDown);
-      document.addEventListener("touchstart", onPointerDown);
-
-      return () => {
-        document.removeEventListener("mousedown", onPointerDown);
-        document.removeEventListener("touchstart", onPointerDown);
-      };
-    }, [isOpen]);
 
     return (
       <span ref={wrapperRef} className="relative inline-block mx-1 align-baseline">
@@ -202,7 +187,7 @@ export default function Experiment() {
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            setOpenCitationId((prev) => (prev === popupId ? null : popupId));
+            setShowPopup(!showPopup);
           }}
           className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm"
         >
@@ -210,20 +195,15 @@ export default function Experiment() {
           Source {numericId}
         </button>
 
-        {isOpen && (
-          <div  
-            className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left"
-            onClick={(e) => e.stopPropagation()}
-          > 
+        {showPopup && (
+          <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
             <div className="flex justify-between items-center mb-1">
               <span className="text-[10px] font-bold text-blue-600 uppercase">
                 Citation [{numericId}]
               </span>
               <button
-                type="button"
-                onClick={() => setOpenCitationId(null)}
+                onClick={() => setShowPopup(false)}
                 className="text-gray-400 hover:text-gray-600"
-                aria-label="Close"
               >
                 ×
               </button>
@@ -370,7 +350,7 @@ export default function Experiment() {
         }
         return updated;
       }); 
-
+      
       const results =
         data.items?.map((item, idx) => ({
           id: `search-${idx}`,
