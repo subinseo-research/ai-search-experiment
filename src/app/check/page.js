@@ -7,16 +7,12 @@ import ProgressBar from "../../components/ProgressBar";
 export default function CheckPage() {
   const router = useRouter();
 
-  // 1) participant_id 존재 여부 "체크만" (기능적 영향 없음)
-  const [hasParticipantId, setHasParticipantId] = useState(false);
-
-  // 2) Prolific ID 입력/수집
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
 
+  // ✅ /check 들어올 때마다 기존 값 제거 → 항상 다시 입력
   useEffect(() => {
-    const existing = localStorage.getItem("participant_id");
-    setHasParticipantId(Boolean(existing));
+    localStorage.removeItem("participant_id");
   }, []);
 
   const handleSubmit = (e) => {
@@ -28,10 +24,9 @@ export default function CheckPage() {
       return;
     }
 
-    // ✅ (2) 1번과 상관없이 "무조건" 수집/저장 (덮어쓰기)
+    // ✅ 무조건 새로 수집/저장
     localStorage.setItem("participant_id", pid);
 
-    // 다음 페이지로 이동
     router.push("/consent");
   };
 
@@ -45,14 +40,6 @@ export default function CheckPage() {
         <h1 className="text-xl font-semibold mb-4 text-center">
           Enter Your Prolific ID
         </h1>
-
-        {/* (1) participant_id check 결과: "표시만" (원치 않으면 이 블록 삭제) */}
-        <p className="text-xs text-gray-500 text-center mb-4">
-          Existing participant_id in this browser:{" "}
-          <span className="font-medium">
-            {hasParticipantId ? "Found" : "Not found"}
-          </span>
-        </p>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
@@ -72,7 +59,7 @@ export default function CheckPage() {
             type="submit"
             className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
           >
-            Continue
+            Save and Continue
           </button>
         </form>
       </div>
