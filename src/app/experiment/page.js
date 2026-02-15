@@ -167,6 +167,24 @@ export default function Experiment() {
 
   const CitationBadge = ({ displayId, sources }) => {
     const [showPopup, setShowPopup] = useState(false);
+    const wrapperRef = useRef(null);
+
+    // Close popup when clicking outside
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+          setShowPopup(false);
+        }
+      };
+
+      if (showPopup) {
+        document.addEventListener("mousedown", handleClickOutside);
+      }
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, [showPopup]);
+
     const numericId = displayId.replace(/[^0-9]/g, "");
     const source = sources?.find((s) => s.id === numericId) || {
       title: "References",
@@ -175,11 +193,12 @@ export default function Experiment() {
     };
 
     return (
-      <span className="relative inline-block mx-1 align-baseline">
+      <span ref={wrapperRef} className="relative inline-block mx-1 align-baseline">
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
-            setShowPopup(!showPopup);
+            setShowPopup((prev) => !prev);
           }}
           className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm"
         >
@@ -194,7 +213,10 @@ export default function Experiment() {
                 Citation [{numericId}]
               </span>
               <button
-                onClick={() => setShowPopup(false)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowPopup(false);
+                }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 ×
@@ -211,6 +233,7 @@ export default function Experiment() {
               target="_blank"
               rel="noopener noreferrer"
               className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2"
+              onClick={(e) => e.stopPropagation()}
             >
               Visit Source ↗
             </a>
@@ -403,7 +426,7 @@ export default function Experiment() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          maxTokens: 150,
+          maxTokens: 120,
         }),
       });
 
