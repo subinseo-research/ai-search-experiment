@@ -165,30 +165,32 @@ export default function Experiment() {
     };
   }, []);
 
-    const CitationBadge = ({ id, sources }) => {
+    const CitationBadge = ({ displayId, sources }) => {
       const [showPopup, setShowPopup] = useState(false);
-      const source = sources?.find(s => s.id === id) || { 
+      const numericId = displayId.replace("Sources ", "");
+      const source = sources?.find(s => s.id === numericId) || { 
         title: "References", 
         link: "#", 
         snippet: "상세 정보가 없습니다." 
       };
 
       return (
-        <span className="relative inline-block mx-0.5">
+        <span className="relative inline-block mx-1">
           <button
             onClick={(e) => {
               e.stopPropagation();
               setShowPopup(!showPopup);
             }}
-            className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-600 text-white rounded hover:bg-blue-800 transition shadow-sm align-middle"
+            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm align-middle"
           >
-            {id}
+            <span className="text-[10px]">🔗</span>
+            {displayId} 
           </button>
 
           {showPopup && (
                   <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left leading-normal animate-in fade-in slide-in-from-bottom-2">
                     <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] font-bold text-blue-600 uppercase">Citation [{id}]</span>
+                      <span className="text-[10px] font-bold text-blue-600 uppercase">Citation [{numericId}]</span>
                       <button onClick={() => setShowPopup(false)} className="text-gray-400 hover:text-gray-600 text-lg">×</button>
                     </div>
                     <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">{source.title}</h4>
@@ -306,7 +308,32 @@ export default function Experiment() {
     try {
       const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=40`);
       const data = await res.json();
+      logEvent({
+        log_type: "ai_response",
+        log_data: { response: data?.text || "" },
+      });
 
+      // [수정됨] 괄호가 닫히도록 수정했습니다.
+      setChatHistory((prev) => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
+          updated[lastIdx] = {
+            role: "assistant",
+            content: data?.text || "No response generated.",
+            sources: data?.sources || [] 
+          };
+        } else {
+          updated.push({ 
+            role: "assistant", 
+            content: data?.text || "No response generated.",
+            sources: data?.sources || [] 
+          });
+        }
+        return updated;
+      }); // <--- ★ 여기 }); 가 빠져 있었습니다!
+
+      // [수정됨] 검색 결과 처리 로직이 setChatHistory 밖으로 나왔습니다.
       const results =
         data.items?.map((item, idx) => ({
           id: `search-${idx}`,
@@ -317,6 +344,7 @@ export default function Experiment() {
 
       setSearchResults(results);
       setSearchQuery("");
+
     } catch (err) {
       console.error(err);
     }
@@ -352,8 +380,9 @@ export default function Experiment() {
       const prompt = `
         Please answer briefly and kindly, as if responding in a friendly and helpful manner.
         When necessary, use clear headings, bullet points, and formatting to organize the information.
-        Provide a detailed answer with in-text citations in the format [1], [2], etc.
-        At the end of your response, provide a list of sources used.
+        **IMPORTANT CITATION RULE:**
+          Provide a detailed answer with in-text citations. 
+          Each citation MUST be in the format: [Sources 1], [Sources 2], etc.
         User:
         ${userInput}
               `.trim();
@@ -363,7 +392,7 @@ export default function Experiment() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          maxTokens: 200,
+          maxTokens: 150,
         }),
       });
 
@@ -840,13 +869,14 @@ export default function Experiment() {
                         
                         <ReactMarkdown
                           components={{
-                            text({ content }) {
-                              const parts = content.split(/(\[\d+\])/g);
+                            text: ({ content }) => {
+                              if (!isAssistant) return content;
+                              const parts = content.split(/(\[Sources \d+\])/g);
                               return parts.map((part, i) => {
-                                const match = part.match(/\[(\d+)\]/);
-                                if (match && isAssistant) {
-                                  const id = match[1];
-                                  return <CitationBadge key={i} id={id} sources={msg.sources} />;
+                                const match = part.match(/\[(Sources \d+)\]/);
+                                if (match) {
+                                  const displayId = match[1];
+                                  return <CitationBadge key={i} displayId={displayId} sources={msg.sources} />;
                                 }
                                 return part;
                               });
