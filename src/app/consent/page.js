@@ -8,6 +8,7 @@ export default function ConsentPage() {
   const router = useRouter();
   const [checked, setChecked] = useState(false);
   const [participantId, setParticipantId] = useState(null);
+  const [prolificId, setProlificId] = useState(""); 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Load participant UUID
@@ -159,7 +160,7 @@ export default function ConsentPage() {
             spellCheck={false}
           />
         </section>
-        
+
         {/* ===== Action Buttons ===== */}
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
           <button
