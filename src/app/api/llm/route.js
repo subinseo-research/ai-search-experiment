@@ -1,75 +1,48 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req) {
   try {
     const { prompt } = await req.json();
 
     if (!prompt || !String(prompt).trim()) {
-      return NextResponse.json({ text: "Error: Prompt is empty", sources: [] });
+      return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
-      return NextResponse.json({ text: "Error: API Key missing in Environment Variables", sources: [] });
-    }
+    const ai = new GoogleGenAI(apiKey);
+    
+    // 모델 설정 (gemini-2.0-flash 혹은 사용 가능한 최신 모델 확인)
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" }); 
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-
-    const MODEL_NAME = "gemini-1.5-flash"; 
-
-    const model = genAI.getGenerativeModel({ 
-      model: MODEL_NAME,
-      generationConfig: {
-        responseMimeType: "application/json",
-      }
-    });
-
-    const enhancedPrompt = `
-      You are a helpful research assistant.
-      User Query: "${prompt}"
-
-      Instructions:
-      1. Answer the query comprehensively.
-      2. Generate a list of legitimate sources.
-      3. Cite sources as [Source 1], [Source 2], etc.
-      4. Return ONLY a valid JSON object.
+    // 시스템 지시문과 프롬프트 결합 (RAG 모사)
+    const refinedPrompt = `
+      You are a helpful research assistant. 
+      Based on the user's query, provide a detailed answer. 
+      If you use specific information, you MUST cite it using [1], [2] format in the text.
       
-      Response Format (JSON):
-      {
-        "text": "answer text...",
-        "sources": [{ "title": "...", "link": "...", "snippet": "..." }]
-      }
+      At the end of your response, you MUST provide a JSON-like structure for sources.
+      User Query: ${prompt}
     `;
 
-    const result = await model.generateContent(enhancedPrompt);
-    const response = await result.response;
-    const responseText = response.text();
+    // 실제로는 외부 검색 API(Serper, Google Custom Search 등) 결과가 여기 'contents'에 포함되어야 
+    // 정확한 [1], [2] 매칭이 가능합니다. 
+    // 여기서는 모델 자체 지식을 사용하되 'sources' 배열을 가공해서 보내는 구조를 제안합니다.
+    const result = await model.generateContent(refinedPrompt);
+    const responseText = result.response.text();
 
-    // JSON 추출 로직 강화
-    let parsedData;
-    try {
-      const jsonMatch = responseText.match(/\{[\s\S]*\}/); // JSON 형태만 추출
-      const cleanJson = jsonMatch ? jsonMatch[0] : responseText;
-      parsedData = JSON.parse(cleanJson);
-    } catch (parseError) {
-      console.error("JSON Parsing failed. Raw response:", responseText);
-      return NextResponse.json({ text: responseText, sources: [] });
-    }
-
+    // 프론트엔드 page.js가 기대하는 데이터 구조: { text: string, sources: Array }
+    // 시뮬레이션을 위해 더미 소스를 포함하거나, 실제 검색 결과를 fetch하여 전달해야 합니다.
     return NextResponse.json({
-      text: parsedData.text || "No text generated.",
-      sources: parsedData.sources || []
+      text: responseText,
+      sources: [
+        { title: "Academic Journal A", snippet: "Summary of evidence...", link: "https://example.com/1" },
+        { title: "Scientific Report B", snippet: "Data showing that...", link: "https://example.com/2" }
+      ]
     });
 
   } catch (e) {
-    console.error("Gemini API Error details:", e);
-    
-    // 배포 환경에서 구체적인 에러 원인을 파악하기 위한 응답
-    return NextResponse.json({ 
-      text: `Deployment Error: ${e.message}. (Model: gemini-2.5-flash)`, 
-      status: e.status || 500,
-      sources: [] 
-    }, { status: 500 });
+    console.error(e);
+    return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
