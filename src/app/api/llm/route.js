@@ -18,18 +18,59 @@ export async function POST(req) {
       );
     }
 
-    // The SDK picks up GEMINI_API_KEY from env in many examples,
-    // but being explicit is clearer for server code.
-    const ai = new GoogleGenAI({ apiKey });
+    const ai = new GoogleGenAI(apiKey);
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+    const enhancedPrompt = `
+      ${prompt}
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-      generationConfig: {maxOutputTokens: 80,  temperature: 0.5, topP: 0.9}, 
+      Instructions:
+            1. Answer the question detailly.
+            2. Provide a 'sources' array containing credible-looking references.
+            3. In the text, use [Source 1], [Source 2] to cite these references.
+            4. Return the response strictly in JSON format:
+              {
+                "text": "Your cited answer here...",
+                "sources": [
+                  {"title": "Source Title", "link": "https://...", "snippet": "Summary of source..."}
+                ]
+              }
+          `;
+
+    const result = await model.generateContent({
+      contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
+      generationConfig: { 
+        maxOutputTokens: 500, 
+        temperature: 0.5, 
+        topP: 0.9,
+        responseMimeType: "application/json" 
+      }, 
     });
 
-    return NextResponse.json({ text: response.text });
+    const responseText = result.response.text();
+
+    // 2. 응답 파싱: 텍스트 내 JSON만 추출 (혹시 모를 마크다운 방지)
+    try {
+      const cleanJson = responseText.includes("```json")
+        ? responseText.split("```json")[1].split("```")[0]
+        : responseText;
+      
+      const parsedData = JSON.parse(cleanJson);
+      
+      // page.js가 기대하는 형태로 반환
+      return NextResponse.json({
+        text: parsedData.text,
+        sources: parsedData.sources || []
+      });
+    } catch (parseError) {
+      // 파싱 실패 시 기본 텍스트라도 반환하는 fallback
+      return NextResponse.json({ 
+        text: responseText, 
+        sources: [] 
+      });
+    }
+
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
+

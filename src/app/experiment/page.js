@@ -416,30 +416,18 @@ export default function Experiment() {
     setIsGenerating(true);
 
     try {
-      const prompt = `
-        Please answer briefly and kindly, as if responding in a friendly and helpful manner.
-        When necessary, use clear headings, bullet points, and formatting to organize the information.
-        **IMPORTANT CITATION RULE:**
-          Provide a detailed answer with in-text citations. 
-          Each citation MUST be in the format: [Sources 1], [Sources 2], etc.
-        User:
-        ${userInput}
-              `.trim();
-
       const res = await fetch("/api/llm", {
-        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt,
-          maxTokens: 120,
+          prompt: userInput, 
+          // maxTokens는 route.js에서 제어하므로 여기서 보내지 않아도 됩니다.
         }),
       });
-
       const data = await res.json();
       logEvent({
-        log_type: "ai_response",
-        log_data: { response: data?.text || "" },
-      });
+            log_type: "ai_response",
+            log_data: { response: data?.text || "" },
+          });
 
       setChatHistory((prev) => {
         const updated = [...prev];
@@ -452,7 +440,7 @@ export default function Experiment() {
           };
         } else {
           // fallback: append if structure changed unexpectedly
-          updated.push({ role: "assistant", content: data?.text || "No response generated." });
+          updated.push({ role: "assistant", content: data?.text || "No response generated.", sources: data.sources ||[] });
         }
         return updated;
       });
@@ -465,13 +453,9 @@ export default function Experiment() {
           updated[lastIdx] = {
             role: "assistant",
             content: "An error occurred while generating the response.",
+            sources: []
           };
-        } else {
-          updated.push({
-            role: "assistant",
-            content: "An error occurred while generating the response.",
-          });
-        }
+        } 
         return updated;
       });
     } finally {
