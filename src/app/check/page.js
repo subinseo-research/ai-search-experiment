@@ -27,7 +27,11 @@ export default function CheckPage() {
       setError("Please enter your Prolific ID.");
       return;
     }
+
+    // ✅ (2) 1번과 상관없이 "무조건" 수집/저장 (덮어쓰기)
     localStorage.setItem("participant_id", pid);
+
+    // 다음 페이지로 이동
     router.push("/consent");
   };
 
