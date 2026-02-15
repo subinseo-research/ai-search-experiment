@@ -6,18 +6,8 @@ import ProgressBar from "../../components/ProgressBar";
 
 export default function CheckPage() {
   const router = useRouter();
-
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
-
-  // (선택) 이미 prolific_id & participant_id가 있으면 바로 consent로 보내고 싶으면 활성화
-  useEffect(() => {
-    const existingPid = localStorage.getItem("participant_id");
-    const existingProlific = localStorage.getItem("prolific_id");
-    if (existingPid && existingProlific) {
-      router.replace("/consent");
-    }
-  }, [router]);
 
   const generateUUID = () => {
     // modern browsers 지원 (https)
@@ -43,17 +33,9 @@ export default function CheckPage() {
 
     setError("");
 
-    // 1) prolific id 저장 (무조건 수집)
     localStorage.setItem("prolific_id", pid);
-
-    // 2) participant_id 생성/저장 (이미 있으면 재사용해도 됨)
-    let participantId = localStorage.getItem("participant_id");
-    if (!participantId) {
-      participantId = generateUUID();
-      localStorage.setItem("participant_id", participantId);
-    }
-
-    // 3) consent로 이동
+    const participantId = generateUUID();
+    localStorage.setItem("participant_id", participantId);
     router.push("/consent");
   };
 
