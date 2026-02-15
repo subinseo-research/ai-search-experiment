@@ -169,10 +169,11 @@ export default function Experiment() {
     const [showPopup, setShowPopup] = useState(false);
     
     const numericId = displayId.replace(/[^0-9]/g, "");
-    const source = sources?.find((s) => String(s.id) === numericId);
-    if (!source) {
-    return <span className="text-gray-500">{displayId}</span>;
-    }
+    const source = sources?.find((s) => s.id === numericId) || {
+      title: "References",
+      link: "#",
+      snippet: "No details available.",
+    };
 
     return (
       <span className="relative inline-block mx-1 align-baseline">
@@ -327,13 +328,21 @@ export default function Experiment() {
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
-        updated[lastIdx] = {
-          role: "assistant",
-          content: data?.text,
-          sources: data?.sources || [],
-        };
+        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
+          updated[lastIdx] = {
+            role: "assistant",
+            content: data?.text || "No response generated.",
+            sources: data?.sources || [] 
+          };
+        } else {
+          updated.push({ 
+            role: "assistant", 
+            content: data?.text || "No response generated.",
+            sources: data?.sources || [] 
+          });
+        }
         return updated;
-      });
+      }); 
       
       const results =
         data.items?.map((item, idx) => ({
