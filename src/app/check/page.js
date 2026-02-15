@@ -9,12 +9,8 @@ export default function CheckPage() {
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
 
-  // ✅ Always start a fresh flow when landing on /check
   useEffect(() => {
-    // remove the "passed check" token so user cannot skip steps by back/refresh
     localStorage.removeItem("check_ok");
-
-    // optional: clear previous ids so every visit forces re-entry (matches your intention)
     localStorage.removeItem("prolific_id");
     localStorage.removeItem("participant_id");
   }, []);
@@ -38,14 +34,14 @@ export default function CheckPage() {
     }
     setError("");
 
-    // ✅ Save prolific id (always)
+    // 1) Save prolific id (always)
     localStorage.setItem("prolific_id", pid);
 
-    // ✅ Create a new participant id (always)
+    // 2) Create a NEW participant id (always)
     const participantId = generateUUID();
     localStorage.setItem("participant_id", participantId);
 
-    // ✅ Mark that /check step is completed in this flow
+    // 3) Mark that /check was completed in this flow
     localStorage.setItem("check_ok", "1");
 
     router.push("/consent");
@@ -67,24 +63,3 @@ export default function CheckPage() {
           <div className="space-y-2">
             <label className="block font-medium">Prolific ID</label>
             <input
-              value={prolificId}
-              onChange={(e) => setProlificId(e.target.value)}
-              className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
-              placeholder="e.g., 5f2c1a3b9d..."
-              autoComplete="off"
-              inputMode="text"
-            />
-            {error && <p className="text-red-600 text-sm">{error}</p>}
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-black text-white rounded-lg py-3 font-medium hover:opacity-90"
-          >
-            Continue
-          </button>
-        </form>
-      </div>
-    </main>
-  );
-}
