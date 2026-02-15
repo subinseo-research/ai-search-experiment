@@ -85,7 +85,7 @@ export default function ConsentPage() {
         <ProgressBar progress={2} />
       </div>
 
-      <div className="mx-auto max-w-5xl px-6 py-12">
+      <div className="mx-auto max-w-4xl px-6 py-12">
         {/* ===== Welcome Section ===== */}
         <header className="mb-12 space-y-4">
           <h1 className="text-4xl font-bold tracking-tight">
