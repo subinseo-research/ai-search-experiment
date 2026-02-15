@@ -8,6 +8,109 @@ import ReactMarkdown from "react-markdown";
 const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
+/* =========================
+   1. CitationBadge 컴포넌트를 외부로 이동 (상태 유지를 위해 필수)
+========================= */
+const CitationBadge = ({ displayId, sources }) => {
+  const [showPopup, setShowPopup] = useState(false);
+  const wrapperRef = useRef(null);
+
+  // Close popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
+        setShowPopup(false);
+      }
+    };
+
+    if (showPopup) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showPopup]);
+
+  const numericId = displayId.replace(/[^0-9]/g, "");
+  const source = sources?.find((s) => s.id === numericId) || {
+    title: "References",
+    link: "#",
+    snippet: "No details available.",
+  };
+
+  return (
+    <span ref={wrapperRef} className="relative inline-block mx-1 align-baseline">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowPopup((prev) => !prev);
+        }}
+        className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm"
+      >
+        <span>🔗</span>
+        Source {numericId}
+      </button>
+
+      {showPopup && (
+        <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
+          <div className="flex justify-between items-center mb-1">
+            <span className="text-[10px] font-bold text-blue-600 uppercase">
+              Citation [{numericId}]
+            </span>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowPopup(false);
+              }}
+              className="text-gray-400 hover:text-gray-600"
+            >
+              ×
+            </button>
+          </div>
+          <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">
+            {source.title}
+          </h4>
+          <p className="text-xs text-gray-600 line-clamp-3 mb-2">
+            {source.snippet}
+          </p>
+          <a
+            href={source.link}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2 cursor-pointer"
+            onClick={(e) => e.stopPropagation()} 
+          >
+            Visit Source ↗
+          </a>
+        </div>
+      )}
+    </span>
+  );
+};
+
+/* =========================
+   2. Helper Function도 외부로 이동
+========================= */
+const renderWithCitations = (content, sources) => {
+  if (Array.isArray(content)) {
+    return content.map((child, idx) => (
+      <span key={idx}>{renderWithCitations(child, sources)}</span>
+    ));
+  }
+  if (typeof content !== "string") return content;
+
+  const regex = /(\[(?:Source|Sources?)\s+\d+\])/gi;
+  const parts = content.split(regex);
+
+  return parts.map((part, i) => {
+    if (part.match(/\[(?:Source|Sources?)\s+\d+\]/i)) {
+      return <CitationBadge key={i} displayId={part} sources={sources} />;
+    }
+    return part;
+  });
+};
+
 export default function Experiment() {
   const router = useRouter();
 
@@ -96,7 +199,6 @@ export default function Experiment() {
   const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
 
   // scrap
-  
   const addScrap = ({ title, fullText, source }) => {
     if (typeof window === "undefined") return;
     const selectedText = window.getSelection()?.toString().trim();
@@ -121,13 +223,16 @@ export default function Experiment() {
     ]);
     window.getSelection()?.removeAllRanges();
   };
+
   const handleDeleteScrap = (index) => {
-  setScraps((prev) => prev.filter((_, i) => i !== index));
+    setScraps((prev) => prev.filter((_, i) => i !== index));
   };
+
   const autoResizeTextarea = (el) => {
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
   };
+
   const [scrapWidth, setScrapWidth] = useState(24);
   const isDraggingRef = useRef(false);
   const addNote = () => {
@@ -164,84 +269,6 @@ export default function Experiment() {
       window.removeEventListener("mouseup", onUp);
     };
   }, []);
-
-  const CitationBadge = ({ displayId, sources }) => {
-    const [showPopup, setShowPopup] = useState(false);
-    const wrapperRef = useRef(null);
-
-    // Close popup when clicking outside
-    useEffect(() => {
-      const handleClickOutside = (event) => {
-        if (wrapperRef.current && !wrapperRef.current.contains(event.target)) {
-          setShowPopup(false);
-        }
-      };
-
-      if (showPopup) {
-        document.addEventListener("mousedown", handleClickOutside);
-      }
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
-    }, [showPopup]);
-
-    const numericId = displayId.replace(/[^0-9]/g, "");
-    const source = sources?.find((s) => s.id === numericId) || {
-      title: "References",
-      link: "#",
-      snippet: "No details available.",
-    };
-
-    return (
-      <span ref={wrapperRef} className="relative inline-block mx-1 align-baseline">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowPopup((prev) => !prev);
-          }}
-          className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm"
-        >
-          <span>🔗</span>
-          Source {numericId}
-        </button>
-
-        {showPopup && (
-          <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px] font-bold text-blue-600 uppercase">
-                Citation [{numericId}]
-              </span>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowPopup(false);
-                }}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
-            <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">
-              {source.title}
-            </h4>
-            <p className="text-xs text-gray-600 line-clamp-3 mb-2">
-              {source.snippet}
-            </p>
-            <a
-              href={source.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              Visit Source ↗
-            </a>
-          </div>
-        )}
-      </span>
-    );
-  };
   
   /* =========================
      Initial setup
@@ -294,7 +321,6 @@ export default function Experiment() {
 
   /* =========================
      TIMER (STEP 2)
-     Start only after intro modal is closed
   ========================= */
   useEffect(() => {
     if (step !== 2 || showIntroModal) return;
@@ -335,9 +361,8 @@ export default function Experiment() {
     const q = searchQuery.trim();
     if (!q) return;
 
-    // Count only valid queries
     setQuestionCount((prev) => prev + 1);
-    logEvent({ log_type: "query", log_data: { query: q } }); //save log data 
+    logEvent({ log_type: "query", log_data: { query: q } }); 
 
     try {
       const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=40`);
@@ -347,7 +372,6 @@ export default function Experiment() {
         log_data: { response: data?.text || "" },
       });
 
-      // [수정됨] 괄호가 닫히도록 수정했습니다.
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
@@ -365,9 +389,8 @@ export default function Experiment() {
           });
         }
         return updated;
-      }); // <--- ★ 여기 }); 가 빠져 있었습니다!
+      }); 
 
-      // [수정됨] 검색 결과 처리 로직이 setChatHistory 밖으로 나왔습니다.
       const results =
         data.items?.map((item, idx) => ({
           id: `search-${idx}`,
@@ -444,10 +467,14 @@ export default function Experiment() {
           updated[lastIdx] = {
             role: "assistant",
             content: data?.text || "No response generated.",
+            sources: data?.sources || [] // Ensure sources are saved
           };
         } else {
-          // fallback: append if structure changed unexpectedly
-          updated.push({ role: "assistant", content: data?.text || "No response generated." });
+          updated.push({ 
+            role: "assistant", 
+            content: data?.text || "No response generated.",
+            sources: data?.sources || []
+          });
         }
         return updated;
       });
@@ -472,24 +499,6 @@ export default function Experiment() {
     } finally {
       setIsGenerating(false);
     }
-  };
-  const renderWithCitations = (content, sources) => {
-    if (Array.isArray(content)) {
-      return content.map((child, idx) => (
-        <span key={idx}>{renderWithCitations(child, sources)}</span>
-      ));
-    }
-    if (typeof content !== "string") return content;
-
-    const regex = /(\[(?:Source|Sources?)\s+\d+\])/gi;
-    const parts = content.split(regex);
-
-    return parts.map((part, i) => {
-      if (part.match(/\[(?:Source|Sources?)\s+\d+\]/i)) {
-        return <CitationBadge key={i} displayId={part} sources={sources} />;
-      }
-      return part;
-    });
   };
 
 
