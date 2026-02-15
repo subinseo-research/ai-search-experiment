@@ -16,10 +16,7 @@ export async function POST(req) {
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    /** * [중요] 배포 환경의 API 키가 Vertex AI용이 아닌 AI Studio용이라면 
-     * 'gemini-2.5-flash' 대신 'gemini-1.5-flash'를 사용해야 404를 피할 수 있습니다.
-     */
-    const MODEL_NAME = "gemini-2.5-flash"; 
+    const MODEL_NAME = "gemini-1.5-flash"; 
 
     const model = genAI.getGenerativeModel({ 
       model: MODEL_NAME,
