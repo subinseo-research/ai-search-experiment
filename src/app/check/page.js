@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-
 
 export default function CheckPage() {
   const router = useRouter();
@@ -13,7 +12,11 @@ export default function CheckPage() {
 
     const trimmed = prolificId.trim();
     if (!trimmed) return;
+
+    // Prolific ID 저장
     localStorage.setItem("prolific_id", trimmed);
+
+    // Consent 페이지로 이동
     router.push("/consent");
   };
 
