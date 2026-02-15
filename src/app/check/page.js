@@ -9,6 +9,9 @@ export default function CheckPage() {
 
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
+  useEffect(() => {
+    localStorage.removeItem("participant_id");
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -18,11 +21,7 @@ export default function CheckPage() {
       setError("Please enter your Prolific ID.");
       return;
     }
-
-    // ✅ 저장
     localStorage.setItem("participant_id", pid);
-
-    // ✅ 다음 페이지로 이동
     router.push("/consent");
   };
 
