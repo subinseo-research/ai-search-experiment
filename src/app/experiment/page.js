@@ -165,49 +165,60 @@ export default function Experiment() {
     };
   }, []);
 
-    const CitationBadge = ({ displayId, sources }) => {
-      const [showPopup, setShowPopup] = useState(false);
-      const numericId = displayId.replace(/[^0-9]/g, "");
-      const source = sources?.find(s => s.id === numericId) || { 
-        title: "References", 
-        link: "#", 
-        snippet: "상세 정보가 없습니다." 
-      };
+  const CitationBadge = ({ displayId, sources }) => {
+    const [showPopup, setShowPopup] = useState(false);
+    const numericId = displayId.replace(/[^0-9]/g, "");
+    const source = sources?.find((s) => s.id === numericId) || {
+      title: "References",
+      link: "#",
+      snippet: "No details available.",
+    };
 
-      return (
-        <span className="relative inline-block mx-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              setShowPopup(!showPopup);
-            }}
-            className="inline-flex items-center gap-1 px-2.5 py-0.5 text-[11px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm align-middle"
-          >
-            <span className="text-[10px]">🔗</span>
-            {displayId} 
-          </button>
+    return (
+      <span className="relative inline-block mx-1 align-baseline">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowPopup(!showPopup);
+          }}
+          className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm"
+        >
+          <span>🔗</span>
+          Source {numericId}
+        </button>
 
-          {showPopup && (
-                  <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left leading-normal animate-in fade-in slide-in-from-bottom-2">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-[10px] font-bold text-blue-600 uppercase">Citation [{numericId}]</span>
-                      <button onClick={() => setShowPopup(false)} className="text-gray-400 hover:text-gray-600 text-lg">×</button>
-                    </div>
-                    <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">{source.title}</h4>
-                    <p className="text-xs text-gray-600 line-clamp-3 mb-2">{source.snippet}</p>
-                    <a
-                      href={source.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[11px] text-blue-600 font-medium hover:underline flex items-center gap-1 border-t pt-2"
-                    >
-                      원본 사이트 방문하기 ↗
-                    </a>
-                  </div>
-                )}
+        {showPopup && (
+          <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[10px] font-bold text-blue-600 uppercase">
+                Citation [{numericId}]
               </span>
-            );
-          };
+              <button
+                onClick={() => setShowPopup(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ×
+              </button>
+            </div>
+            <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">
+              {source.title}
+            </h4>
+            <p className="text-xs text-gray-600 line-clamp-3 mb-2">
+              {source.snippet}
+            </p>
+            <a
+              href={source.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2"
+            >
+              Visit Source ↗
+            </a>
+          </div>
+        )}
+      </span>
+    );
+  };
   
   /* =========================
      Initial setup
@@ -439,6 +450,25 @@ export default function Experiment() {
       setIsGenerating(false);
     }
   };
+  const renderWithCitations = (content, sources) => {
+    if (Array.isArray(content)) {
+      return content.map((child, idx) => (
+        <span key={idx}>{renderWithCitations(child, sources)}</span>
+      ));
+    }
+    if (typeof content !== "string") return content;
+
+    const regex = /(\[(?:Source|Sources?)\s+\d+\])/gi;
+    const parts = content.split(regex);
+
+    return parts.map((part, i) => {
+      if (part.match(/\[(?:Source|Sources?)\s+\d+\]/i)) {
+        return <CitationBadge key={i} displayId={part} sources={sources} />;
+      }
+      return part;
+    });
+  };
+
 
   /* =========================
      Scrapbook
@@ -866,21 +896,18 @@ export default function Experiment() {
                           );
                         }}
                       >
-                        
                         <ReactMarkdown
                           components={{
-                            text: ({ content }) => {
-                              if (!isAssistant) return content;
-                              const parts = content.split(/(\[Sources \d+\])/g);
-                              return parts.map((part, i) => {
-                                const match = part.match(/\[(Sources \d+)\]/);
-                                if (match) {
-                                  const displayId = match[1];
-                                  return <CitationBadge key={i} displayId={displayId} sources={msg.sources} />;
-                                }
-                                return part;
-                              });
-                            }
+                            p: ({ children }) => (
+                              <p className="mb-2 last:mb-0">
+                                {renderWithCitations(children, msg.sources)}
+                              </p>
+                            ),
+                            li: ({ children }) => (
+                              <li className="mb-1 last:mb-0">
+                                {renderWithCitations(children, msg.sources)}
+                              </li>
+                            ),
                           }}
                         >
                           {msg.content}
