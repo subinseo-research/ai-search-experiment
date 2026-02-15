@@ -14,8 +14,7 @@ export default function ConsentPage() {
   useEffect(() => {
     const id = localStorage.getItem("participant_id");
     if (!id) {
-      id = crypto.randomUUID();
-      localStorage.setItem("participant_id", id);
+      window.location.href = "/check";
     } else {
       setParticipantId(id);
     }
