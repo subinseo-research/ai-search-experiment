@@ -4,7 +4,7 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    const { participant_id, consent} = body;
+    const {prolific_id, participant_id, consent} = body;
 
     if (!participant_id) {
       throw new Error("participant_id is required");
@@ -14,6 +14,7 @@ export async function POST(req) {
     }
     
     const fields = {
+      prolific_id,
       participant_id,
       consent, // "yes" | "no" → Airtable Single select
     };

@@ -9,33 +9,61 @@ export default function CheckPage() {
   const router = useRouter();
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // ✅ participant_id는 무조건 생성/유지 (겹치든 말든 로컬 기준으로만)
-    let participantId = localStorage.getItem("participant_id");
-    if (!participantId) {
-      participantId = uuidv4();
-      localStorage.setItem("participant_id", participantId);
+    // ✅ participant_id는 무조건 생성/유지
+    let pid = localStorage.getItem("participant_id");
+    if (!pid) {
+      pid = uuidv4();
+      localStorage.setItem("participant_id", pid);
     }
 
-    // ✅ 재접속하면 Prolific ID는 무조건 다시 입력받기
+    // ✅ 매번 다시 prolific id 입력받기
     localStorage.removeItem("prolific_id");
 
-    // ✅ (중요) 예전 중복차단 흔적 제거
+    // ✅ 중복참여 차단 안함 (예전 흔적 제거)
     localStorage.removeItem("hasParticipated");
   }, []);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
-    const pid = prolificId.trim();
-    if (!pid) {
+    const entered = prolificId.trim();
+    if (!entered) {
       setError("Please enter your Prolific ID.");
       return;
     }
 
-    localStorage.setItem("prolific_id", pid);
-    router.push("/consent");
+    setIsSubmitting(true);
+    setError("");
+
+    const participantId = localStorage.getItem("participant_id") || uuidv4();
+    localStorage.setItem("participant_id", participantId);
+    localStorage.setItem("prolific_id", entered);
+
+    // ✅ Airtable에 "ID 수집" 로그 저장 (실패해도 UX는 진행)
+    try {
+      const res = await fetch("/api/airtable/check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participant_id: participantId,
+          prolific_id: entered,
+          source: "check_page",
+        }),
+      });
+
+      if (!res.ok) {
+        console.error("Airtable check log failed:", await res.text());
+      }
+    } catch (err) {
+      console.error("Airtable check log error:", err);
+    } finally {
+      router.push("/consent");
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -63,15 +91,19 @@ export default function CheckPage() {
           className="w-full border rounded-md px-3 py-2 text-sm"
           autoComplete="off"
           spellCheck={false}
+          disabled={isSubmitting}
         />
 
         {error && <p className="text-red-500 text-sm">{error}</p>}
 
         <button
           type="submit"
-          className="w-full bg-black text-white py-2 rounded-md text-sm"
+          disabled={isSubmitting}
+          className={`w-full py-2 rounded-md text-sm ${
+            isSubmitting ? "bg-gray-300" : "bg-black text-white"
+          }`}
         >
-          Continue
+          {isSubmitting ? "Saving..." : "Continue"}
         </button>
 
         <p className="text-xs text-gray-500 text-center">
