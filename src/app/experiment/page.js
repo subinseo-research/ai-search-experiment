@@ -188,45 +188,33 @@ export default function Experiment() {
         </button>
 
         {showPopup && (
-          <>
-          <div 
-            className="fixed inset-0 z-[90]" 
-            onClick={() => setShowPopup(false)} 
-          />
-          <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-gray-200 shadow-2xl rounded-lg p-4 z-[100] text-left animate-in fade-in slide-in-from-bottom-1">
-            <div className="flex justify-between items-start mb-2">
-              <span className="text-[10px] font-bold text-blue-600 tracking-wider uppercase">
-                Source {numericId}
+          <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[10px] font-bold text-blue-600 uppercase">
+                Citation [{numericId}]
               </span>
               <button
                 onClick={() => setShowPopup(false)}
-                className="text-gray-400 hover:text-gray-600 transition"
+                className="text-gray-400 hover:text-gray-600"
               >
-                ✕
+                ×
               </button>
             </div>
-            
-            <h4 className="text-sm font-bold text-gray-900 leading-snug mb-2 line-clamp-2">
+            <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">
               {source.title}
             </h4>
-            
-            <p className="text-xs text-gray-600 leading-relaxed mb-3 line-clamp-4">
+            <p className="text-xs text-gray-600 line-clamp-3 mb-2">
               {source.snippet}
             </p>
-            
-            <div className="pt-2 border-t border-gray-100">
-              <a
-                href={source.link}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] text-blue-600 font-semibold hover:underline flex items-center gap-1"
-                onClick={(e) => e.stopPropagation()} // 링크 클릭 시 팝업 닫힘 방지
-              >
-                자세히 보기 <span className="text-[9px]">↗</span>
-              </a>
-            </div>
+            <a
+              href={source.link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2"
+            >
+              Visit Source ↗
+            </a>
           </div>
-          </>
         )}
       </span>
     );
