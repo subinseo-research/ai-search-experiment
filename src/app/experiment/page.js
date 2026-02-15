@@ -173,11 +173,13 @@ export default function Experiment() {
     const popupId = `${msgKey}-${numericId}`;
     const isOpen = openCitationId === popupId;
 
-    const source = sources?.find((s) => s.id === numericId) || {
-      title: "References",
-      link: "#",
-      snippet: "No details available.",
-    };
+    const index = Number(numericId) - 1;
+    const source =
+      sources?.[index] || {
+        title: "References",
+        link: "#",
+        snippet: "No details available.",
+      };
     
     useEffect(() => {
       if (!isOpen) return;
@@ -484,7 +486,7 @@ export default function Experiment() {
     }
     if (typeof content !== "string") return content;
 
-    const regex = /(\[(?:Source|Sources?)\s+\d+\])/gi;
+    const regex = /(\bCITATION\s*\[\d+\]|\[(?:Source|Sources?)?\s*\d+\]|\[\d+\])/gi;
     const parts = content.split(regex);
 
     return parts.map((part, i) => {
