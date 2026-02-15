@@ -21,10 +21,11 @@ export default function ConsentPage() {
     }
   }, []);
 
-  const isContinueDisabled = !checked || isSubmitting;
+  const isContinueDisabled = 
+    !checked || !prolificId.trim() || isSubmitting;
 
   const handleContinue = async () => {
-    if (!participantId || isSubmitting) return;
+    if (!participantId || !checked || !prolificId.trim() || isSubmitting) return;
     setIsSubmitting(true);
 
     try {
