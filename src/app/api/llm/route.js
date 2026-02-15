@@ -1,7 +1,5 @@
-// route.js 수정본
-
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/genai"; // GoogleGenAI 대신 GoogleGenerativeAI 권장
+import { GoogleGenerativeAI } from "@google/genai";
 
 export async function POST(req) {
   try {
@@ -12,9 +10,16 @@ export async function POST(req) {
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
-    const genAI = new GoogleGenerativeAI(apiKey); 
+    if (!apiKey) {
+      return NextResponse.json({ text: "Error: API Key missing", sources: [] });
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+
+    // 모델명을 gemini-2.5-flash로 설정합니다.
+    // 만약 404 에러가 지속되면 라이브러리 업데이트(npm install @google/genai@latest)를 먼저 진행해주세요.
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-flash", 
       generationConfig: {
         responseMimeType: "application/json",
       }
@@ -34,21 +39,22 @@ export async function POST(req) {
       {
         "text": "Your answer text here with citations like [Source 1]...",
         "sources": [
-          { "title": "Title of Source 1", "link": "https://valid-url-1.com", "snippet": "Description of source 1..." }
+          { "title": "Title of Source 1", "link": "https://example.com", "snippet": "Description of source 1..." }
         ]
       }
     `;
 
-    // 수정 포인트 3: model.generateContent 사용
     const result = await model.generateContent(enhancedPrompt);
     const response = await result.response;
     const responseText = response.text();
 
     let parsedData;
     try {
+      // AI가 마크다운 블록(```json)을 포함할 경우를 대비한 정제 작업
       const cleanJson = responseText.replace(/```json|```/g, "").trim();
       parsedData = JSON.parse(cleanJson);
     } catch (parseError) {
+      console.error("JSON Parse Error:", parseError);
       return NextResponse.json({ text: responseText, sources: [] });
     }
 
@@ -59,6 +65,7 @@ export async function POST(req) {
 
   } catch (e) {
     console.error("Gemini API Error:", e);
+    // 에러 메시지에 모델 관련 정보가 포함되어 출력됩니다.
     return NextResponse.json({ 
       text: `Error generated: ${e.message}`, 
       sources: [] 
