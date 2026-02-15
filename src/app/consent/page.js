@@ -10,12 +10,12 @@ export default function ConsentPage() {
   const [participantId, setParticipantId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // ✅ Guard: must come from /check and must have ids
   useEffect(() => {
-    const checkOk = localStorage.getItem("check_ok"); // set in /check
+    const checkOk = localStorage.getItem("check_ok");
     const prolific = localStorage.getItem("prolific_id");
     const id = localStorage.getItem("participant_id");
 
-    // If user didn't pass /check in this flow, force back to /check
     if (checkOk !== "1" || !prolific || !id) {
       window.location.href = "/check";
       return;
@@ -43,6 +43,9 @@ export default function ConsentPage() {
       const data = await res.json();
       if (!data.success) throw new Error("Save failed");
 
+      // ✅ consume token so back/refresh can't skip /check
+      localStorage.removeItem("check_ok");
+
       router.push("/task");
     } catch (err) {
       console.error("Consent save error:", err);
@@ -53,6 +56,7 @@ export default function ConsentPage() {
 
   const handleDecline = async () => {
     if (!participantId || isSubmitting) return;
+    setIsSubmitting(true);
 
     try {
       await fetch("/api/airtable/consent", {
@@ -64,9 +68,14 @@ export default function ConsentPage() {
         }),
       });
 
+      // ✅ consume token so back/refresh can't skip /check
+      localStorage.removeItem("check_ok");
+
       router.push("/decline?status=declined");
     } catch (err) {
       console.error("Consent decline error:", err);
+      alert("Error saving response. Please try again.");
+      setIsSubmitting(false);
     }
   };
 
@@ -94,7 +103,7 @@ export default function ConsentPage() {
 
           <div className="text-base text-gray-700 space-y-2 leading-relaxed">
             <p>
-              Hello, my name is Subin Seo. I am a master’s student at the University of Maryland, College Park. 
+              Hello, my name is Subin Seo. I am a master’s student at the University of Maryland, College Park.
               Please read the following information carefully before deciding whether to participate.
             </p>
           </div>
@@ -121,33 +130,33 @@ export default function ConsentPage() {
 
           <div>
             <p className="mt-1">
-              The study will take approximately 10–12 minutes to complete, and you will receive monetary compensation for your participation.Your participation in this research is voluntary. This means you can choose not to continue and you can click the do not consent button below. You also have the right to withdraw at any point during the study, for any reason, and without any prejudice by simply exiting the survey. If you would like to discuss this research and your participation, please contact the Principal Investigator through the Prolific messaging system (which ensures the anonymity of your personal identity). 
-            </p>        
+              The study will take approximately 10–12 minutes to complete, and you will receive monetary compensation for your participation.Your participation in this research is voluntary. This means you can choose not to continue and you can click the do not consent button below. You also have the right to withdraw at any point during the study, for any reason, and without any prejudice by simply exiting the survey. If you would like to discuss this research and your participation, please contact the Principal Investigator through the Prolific messaging system (which ensures the anonymity of your personal identity).
+            </p>
           </div>
         </section>
 
         <hr className="my-10 border-gray-200" />
 
-          <p className="mt-1">
-            By clicking the button below, you acknowledge that your participation in the study is voluntary, that you are 18 years of age, and that you are aware that you may choose to terminate your participation in the study at any time and for any reason. You agree to proceed and participate in the study. 
-          </p>
+        <p className="mt-1">
+          By clicking the button below, you acknowledge that your participation in the study is voluntary, that you are 18 years of age, and that you are aware that you may choose to terminate your participation in the study at any time and for any reason. You agree to proceed and participate in the study.
+        </p>
 
-          {/* ===== Consent Checkbox ===== */}
-          <label
-            htmlFor="agree"
-            className="mt-6 flex items-start gap-3 rounded-xl border border-gray-200 p-4 cursor-pointer select-none hover:bg-gray-50"
-          >
-            <input
-              id="agree"
-              type="checkbox"
-              className="mt-1 h-5 w-5 rounded border-gray-300"
-              checked={checked}
-              onChange={(e) => setChecked(e.target.checked)}
-            />
-            <span className="text-sm leading-6">
-              I confirm that I am at least 18 years of age, have read this consent form, and I voluntarily agree to participate in this research study.
-            </span>
-          </label>
+        {/* ===== Consent Checkbox ===== */}
+        <label
+          htmlFor="agree"
+          className="mt-6 flex items-start gap-3 rounded-xl border border-gray-200 p-4 cursor-pointer select-none hover:bg-gray-50"
+        >
+          <input
+            id="agree"
+            type="checkbox"
+            className="mt-1 h-5 w-5 rounded border-gray-300"
+            checked={checked}
+            onChange={(e) => setChecked(e.target.checked)}
+          />
+          <span className="text-sm leading-6">
+            I confirm that I am at least 18 years of age, have read this consent form, and I voluntarily agree to participate in this research study.
+          </span>
+        </label>
 
         {/* ===== Action Buttons ===== */}
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
@@ -177,7 +186,6 @@ export default function ConsentPage() {
             {isSubmitting ? "Saving consent…" : "Consent"}
           </button>
         </div>
-
       </div>
     </main>
   );
