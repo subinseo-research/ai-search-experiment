@@ -10,14 +10,18 @@ export default function ConsentPage() {
   const [participantId, setParticipantId] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Load participant UUID
   useEffect(() => {
+    const checkOk = localStorage.getItem("check_ok"); // set in /check
+    const prolific = localStorage.getItem("prolific_id");
     const id = localStorage.getItem("participant_id");
-    if (!id) {
+
+    // If user didn't pass /check in this flow, force back to /check
+    if (checkOk !== "1" || !prolific || !id) {
       window.location.href = "/check";
-    } else {
-      setParticipantId(id);
+      return;
     }
+
+    setParticipantId(id);
   }, []);
 
   const isContinueDisabled = !checked || isSubmitting;

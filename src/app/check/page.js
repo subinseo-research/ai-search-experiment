@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 
@@ -9,12 +9,18 @@ export default function CheckPage() {
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
 
+  // ✅ Always start a fresh flow when landing on /check
+  useEffect(() => {
+    // remove the "passed check" token so user cannot skip steps by back/refresh
+    localStorage.removeItem("check_ok");
+
+    // optional: clear previous ids so every visit forces re-entry (matches your intention)
+    localStorage.removeItem("prolific_id");
+    localStorage.removeItem("participant_id");
+  }, []);
+
   const generateUUID = () => {
-    // modern browsers 지원 (https)
-    if (typeof crypto !== "undefined" && crypto.randomUUID) {
-      return crypto.randomUUID();
-    }
-    // fallback (드물게 필요)
+    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
       const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -30,12 +36,18 @@ export default function CheckPage() {
       setError("Please enter your Prolific ID.");
       return;
     }
-
     setError("");
 
+    // ✅ Save prolific id (always)
     localStorage.setItem("prolific_id", pid);
+
+    // ✅ Create a new participant id (always)
     const participantId = generateUUID();
     localStorage.setItem("participant_id", participantId);
+
+    // ✅ Mark that /check step is completed in this flow
+    localStorage.setItem("check_ok", "1");
+
     router.push("/consent");
   };
 
@@ -60,6 +72,7 @@ export default function CheckPage() {
               className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
               placeholder="e.g., 5f2c1a3b9d..."
               autoComplete="off"
+              inputMode="text"
             />
             {error && <p className="text-red-600 text-sm">{error}</p>}
           </div>
