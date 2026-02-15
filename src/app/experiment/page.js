@@ -166,7 +166,7 @@ export default function Experiment() {
   }, []);
 
   const [openCitationId, setOpenCitationId] = useState(null);
-  const CitationBadge = ({ displayId, sources }) => {
+  const CitationBadge = ({ displayId, sources, msgKey}) => {
     const wrapperRef = useRef(null);
     
     const numericId = displayId.replace(/[^0-9]/g, "");
@@ -197,8 +197,9 @@ export default function Experiment() {
     }, [isOpen]);
 
     return (
-      <span className="relative inline-block mx-1 align-baseline">
+      <span ref={wrapperRef} className="relative inline-block mx-1 align-baseline">
         <button
+          type="button"
           onClick={(e) => {
             e.stopPropagation();
             setOpenCitationId((prev) => (prev === popupId ? null : popupId));
@@ -475,10 +476,10 @@ export default function Experiment() {
       setIsGenerating(false);
     }
   };
-  const renderWithCitations = (content, sources) => {
+  const renderWithCitations = (content, sources, msgKey) => {
     if (Array.isArray(content)) {
       return content.map((child, idx) => (
-        <span key={idx}>{renderWithCitations(child, sources)}</span>
+        <span key={idx}>{renderWithCitations(child, sources, msgKey)}</span>
       ));
     }
     if (typeof content !== "string") return content;
@@ -488,7 +489,7 @@ export default function Experiment() {
 
     return parts.map((part, i) => {
       if (part.match(/\[(?:Source|Sources?)\s+\d+\]/i)) {
-        return <CitationBadge key={i} displayId={part} sources={sources} />;
+        return <CitationBadge key={`${msgKey}-${i}`} displayId={part} sources={sources} msgKey={msgKey} />;
       }
       return part;
     });
@@ -925,12 +926,12 @@ export default function Experiment() {
                           components={{
                             p: ({ children }) => (
                               <p className="mb-2 last:mb-0">
-                                {renderWithCitations(children, msg.sources)}
+                                {renderWithCitations(children, msg.sources, idx)}
                               </p>
                             ),
                             li: ({ children }) => (
                               <li className="mb-1 last:mb-0">
-                                {renderWithCitations(children, msg.sources)}
+                                {renderWithCitations(children, msg.sources, idx)}
                               </li>
                             ),
                           }}
