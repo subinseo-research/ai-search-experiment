@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 
@@ -9,6 +9,8 @@ export default function CheckPage() {
 
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
+
+  // ✅ /check에 들어오면 항상 새로 입력받도록 기존 ID 삭제
   useEffect(() => {
     localStorage.removeItem("participant_id");
   }, []);
@@ -21,6 +23,7 @@ export default function CheckPage() {
       setError("Please enter your Prolific ID.");
       return;
     }
+
     localStorage.setItem("participant_id", pid);
     router.push("/consent");
   };
