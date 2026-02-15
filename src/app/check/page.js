@@ -2,62 +2,40 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import ProgressBar from "../../components/ProgressBar";
+
 
 export default function CheckPage() {
   const router = useRouter();
-
   const [prolificId, setProlificId] = useState("");
-  const [error, setError] = useState("");
-
-  // ✅ /check 들어올 때마다 기존 값 제거 → 항상 다시 입력
-  useEffect(() => {
-    localStorage.removeItem("participant_id");
-  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const pid = prolificId.trim();
-    if (!pid) {
-      setError("Please enter your Prolific ID.");
-      return;
-    }
-
-    // ✅ 무조건 새로 수집/저장
-    localStorage.setItem("participant_id", pid);
-
+    const trimmed = prolificId.trim();
+    if (!trimmed) return;
+    localStorage.setItem("prolific_id", trimmed);
     router.push("/consent");
   };
 
   return (
-    <main className="relative flex flex-col items-center justify-center min-h-screen bg-gray-50 text-gray-800">
-      <div className="absolute top-0 left-0 w-full">
-        <ProgressBar progress={0} />
-      </div>
-
-      <div className="bg-white p-8 rounded-xl shadow-md w-[400px]">
-        <h1 className="text-xl font-semibold mb-4 text-center">
+    <main className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="bg-white p-8 rounded-xl shadow-md w-[400px] text-center">
+        <h1 className="text-xl font-semibold mb-6">
           Enter Your Prolific ID
         </h1>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
-            value={prolificId}
-            onChange={(e) => {
-              setProlificId(e.target.value);
-              if (error) setError("");
-            }}
             placeholder="Prolific ID"
-            className="w-full border rounded-lg px-4 py-2"
+            value={prolificId}
+            onChange={(e) => setProlificId(e.target.value)}
+            className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
           />
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
-            className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
+            className="w-full bg-black text-white py-2 rounded-md hover:opacity-90 transition"
           >
             Save and Continue
           </button>
