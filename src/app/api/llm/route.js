@@ -11,15 +11,18 @@ export async function POST(req) {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ text: "Error: API Key missing", sources: [] });
+      return NextResponse.json({ text: "Error: API Key missing in Environment Variables", sources: [] });
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
 
-    // 모델명을 gemini-2.5-flash로 설정합니다.
-    // 만약 404 에러가 지속되면 라이브러리 업데이트(npm install @google/genai@latest)를 먼저 진행해주세요.
+    /** * [중요] 배포 환경의 API 키가 Vertex AI용이 아닌 AI Studio용이라면 
+     * 'gemini-2.5-flash' 대신 'gemini-1.5-flash'를 사용해야 404를 피할 수 있습니다.
+     */
+    const MODEL_NAME = "gemini-2.5-flash"; 
+
     const model = genAI.getGenerativeModel({ 
-      model: "gemini-2.5-flash", 
+      model: MODEL_NAME,
       generationConfig: {
         responseMimeType: "application/json",
       }
@@ -31,16 +34,14 @@ export async function POST(req) {
 
       Instructions:
       1. Answer the query comprehensively.
-      2. Generate a list of legitimate-looking sources relevant to the answer.
-      3. Cite these sources in your text using the format [Source 1], [Source 2], etc.
+      2. Generate a list of legitimate sources.
+      3. Cite sources as [Source 1], [Source 2], etc.
       4. Return ONLY a valid JSON object.
       
       Response Format (JSON):
       {
-        "text": "Your answer text here with citations like [Source 1]...",
-        "sources": [
-          { "title": "Title of Source 1", "link": "https://example.com", "snippet": "Description of source 1..." }
-        ]
+        "text": "answer text...",
+        "sources": [{ "title": "...", "link": "...", "snippet": "..." }]
       }
     `;
 
@@ -48,27 +49,30 @@ export async function POST(req) {
     const response = await result.response;
     const responseText = response.text();
 
+    // JSON 추출 로직 강화
     let parsedData;
     try {
-      // AI가 마크다운 블록(```json)을 포함할 경우를 대비한 정제 작업
-      const cleanJson = responseText.replace(/```json|```/g, "").trim();
+      const jsonMatch = responseText.match(/\{[\s\S]*\}/); // JSON 형태만 추출
+      const cleanJson = jsonMatch ? jsonMatch[0] : responseText;
       parsedData = JSON.parse(cleanJson);
     } catch (parseError) {
-      console.error("JSON Parse Error:", parseError);
+      console.error("JSON Parsing failed. Raw response:", responseText);
       return NextResponse.json({ text: responseText, sources: [] });
     }
 
     return NextResponse.json({
-      text: parsedData.text || responseText,
+      text: parsedData.text || "No text generated.",
       sources: parsedData.sources || []
     });
 
   } catch (e) {
-    console.error("Gemini API Error:", e);
-    // 에러 메시지에 모델 관련 정보가 포함되어 출력됩니다.
+    console.error("Gemini API Error details:", e);
+    
+    // 배포 환경에서 구체적인 에러 원인을 파악하기 위한 응답
     return NextResponse.json({ 
-      text: `Error generated: ${e.message}`, 
+      text: `Deployment Error: ${e.message}. (Model: gemini-2.5-flash)`, 
+      status: e.status || 500,
       sources: [] 
-    });
+    }, { status: 500 });
   }
 }
