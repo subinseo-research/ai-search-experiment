@@ -169,11 +169,10 @@ export default function Experiment() {
     const [showPopup, setShowPopup] = useState(false);
     
     const numericId = displayId.replace(/[^0-9]/g, "");
-    const source = sources?.find((s) => s.id === numericId) || {
-      title: "References",
-      link: "#",
-      snippet: "No details available.",
-    };
+    const source = sources?.find((s) => String(s.id) === numericId);
+    if (!source) {
+    return <span className="text-gray-500">{displayId}</span>;
+    }
 
     return (
       <span className="relative inline-block mx-1 align-baseline">
@@ -189,33 +188,45 @@ export default function Experiment() {
         </button>
 
         {showPopup && (
-          <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px] font-bold text-blue-600 uppercase">
-                Citation [{numericId}]
+          <>
+          <div 
+            className="fixed inset-0 z-[90]" 
+            onClick={() => setShowPopup(false)} 
+          />
+          <div className="absolute bottom-full mb-2 left-0 w-72 bg-white border border-gray-200 shadow-2xl rounded-lg p-4 z-[100] text-left animate-in fade-in slide-in-from-bottom-1">
+            <div className="flex justify-between items-start mb-2">
+              <span className="text-[10px] font-bold text-blue-600 tracking-wider uppercase">
+                Source {numericId}
               </span>
               <button
                 onClick={() => setShowPopup(false)}
-                className="text-gray-400 hover:text-gray-600"
+                className="text-gray-400 hover:text-gray-600 transition"
               >
-                ×
+                ✕
               </button>
             </div>
-            <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">
+            
+            <h4 className="text-sm font-bold text-gray-900 leading-snug mb-2 line-clamp-2">
               {source.title}
             </h4>
-            <p className="text-xs text-gray-600 line-clamp-3 mb-2">
+            
+            <p className="text-xs text-gray-600 leading-relaxed mb-3 line-clamp-4">
               {source.snippet}
             </p>
-            <a
-              href={source.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2"
-            >
-              Visit Source ↗
-            </a>
+            
+            <div className="pt-2 border-t border-gray-100">
+              <a
+                href={source.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] text-blue-600 font-semibold hover:underline flex items-center gap-1"
+                onClick={(e) => e.stopPropagation()} // 링크 클릭 시 팝업 닫힘 방지
+              >
+                자세히 보기 <span className="text-[9px]">↗</span>
+              </a>
+            </div>
           </div>
+          </>
         )}
       </span>
     );
@@ -325,27 +336,17 @@ export default function Experiment() {
         log_data: { response: data?.text || "" },
       });
 
-      // [수정됨] 괄호가 닫히도록 수정했습니다.
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
-        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
-          updated[lastIdx] = {
-            role: "assistant",
-            content: data?.text || "No response generated.",
-            sources: data?.sources || [] 
-          };
-        } else {
-          updated.push({ 
-            role: "assistant", 
-            content: data?.text || "No response generated.",
-            sources: data?.sources || [] 
-          });
-        }
+        updated[lastIdx] = {
+          role: "assistant",
+          content: data?.text,
+          sources: data?.sources || [],
+        };
         return updated;
-      }); // <--- ★ 여기 }); 가 빠져 있었습니다!
-
-      // [수정됨] 검색 결과 처리 로직이 setChatHistory 밖으로 나왔습니다.
+      });
+      
       const results =
         data.items?.map((item, idx) => ({
           id: `search-${idx}`,
