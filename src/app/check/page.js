@@ -9,14 +9,23 @@ export default function CheckPage() {
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
 
+  // ✅ Always start a fresh flow when landing on /check
   useEffect(() => {
-    localStorage.removeItem("check_ok");
-    localStorage.removeItem("prolific_id");
-    localStorage.removeItem("participant_id");
+    try {
+      localStorage.removeItem("check_ok");
+      localStorage.removeItem("prolific_id");
+      localStorage.removeItem("participant_id");
+    } catch {
+      // ignore storage errors (rare: disabled storage)
+    }
   }, []);
 
   const generateUUID = () => {
-    if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+    try {
+      if (typeof crypto !== "undefined" && crypto.randomUUID) return crypto.randomUUID();
+    } catch {
+      // ignore and fall back
+    }
     return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
       const r = (Math.random() * 16) | 0;
       const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -34,15 +43,20 @@ export default function CheckPage() {
     }
     setError("");
 
-    // 1) Save prolific id (always)
-    localStorage.setItem("prolific_id", pid);
+    try {
+      // 1) Save prolific id (always)
+      localStorage.setItem("prolific_id", pid);
 
-    // 2) Create a NEW participant id (always)
-    const participantId = generateUUID();
-    localStorage.setItem("participant_id", participantId);
+      // 2) Create a NEW participant id (always)
+      const participantId = generateUUID();
+      localStorage.setItem("participant_id", participantId);
 
-    // 3) Mark that /check was completed in this flow
-    localStorage.setItem("check_ok", "1");
+      // 3) Mark that /check was completed in this flow
+      localStorage.setItem("check_ok", "1");
+    } catch {
+      setError("Storage is unavailable. Please allow cookies/site data and try again.");
+      return;
+    }
 
     router.push("/consent");
   };
@@ -63,3 +77,24 @@ export default function CheckPage() {
           <div className="space-y-2">
             <label className="block font-medium">Prolific ID</label>
             <input
+              value={prolificId}
+              onChange={(e) => setProlificId(e.target.value)}
+              className="w-full border rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-black"
+              placeholder="e.g., 5f2c1a3b9d..."
+              autoComplete="off"
+              inputMode="text"
+            />
+            {error && <p className="text-red-600 text-sm">{error}</p>}
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-black text-white rounded-lg py-3 font-medium hover:opacity-90"
+          >
+            Continue
+          </button>
+        </form>
+      </div>
+    </main>
+  );
+}
