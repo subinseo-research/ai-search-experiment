@@ -6,29 +6,28 @@ import ProgressBar from "../../components/ProgressBar";
 
 export default function CheckPage() {
   const router = useRouter();
+
+  // 1) participant_id 존재 여부 "체크만" (기능적 영향 없음)
+  const [hasParticipantId, setHasParticipantId] = useState(false);
+
+  // 2) Prolific ID 입력/수집
   const [prolificId, setProlificId] = useState("");
   const [error, setError] = useState("");
 
-  // 페이지 로드 시 기존에 저장된 ID가 있다면 삭제하여 새로 시작할 수 있게 함
   useEffect(() => {
-    localStorage.removeItem("participant_id");
+    const existing = localStorage.getItem("participant_id");
+    setHasParticipantId(Boolean(existing));
   }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
 
     const pid = prolificId.trim();
-    
-    // 입력값이 비어있는지만 확인
     if (!pid) {
       setError("Please enter your Prolific ID.");
       return;
     }
-
-    // [핵심] 중복 체크 로직 없이 무조건 로컬 스토리지에 덮어쓰기 저장
     localStorage.setItem("participant_id", pid);
-    
-    // 다음 단계(동의 페이지)로 이동
     router.push("/consent");
   };
 
@@ -43,6 +42,14 @@ export default function CheckPage() {
           Enter Your Prolific ID
         </h1>
 
+        {/* (1) participant_id check 결과: "표시만" (원치 않으면 이 블록 삭제) */}
+        <p className="text-xs text-gray-500 text-center mb-4">
+          Existing participant_id in this browser:{" "}
+          <span className="font-medium">
+            {hasParticipantId ? "Found" : "Not found"}
+          </span>
+        </p>
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
             type="text"
@@ -52,22 +59,18 @@ export default function CheckPage() {
               if (error) setError("");
             }}
             placeholder="Prolific ID"
-            className="w-full border rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-black"
+            className="w-full border rounded-lg px-4 py-2"
           />
 
           {error && <p className="text-red-500 text-sm">{error}</p>}
 
           <button
             type="submit"
-            className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition font-medium"
+            className="w-full bg-black text-white py-2 rounded-lg hover:bg-gray-800 transition"
           >
-            Save and Continue
+            Continue
           </button>
         </form>
-        
-        <p className="mt-4 text-xs text-gray-400 text-center">
-          Your ID will be recorded for this session.
-        </p>
       </div>
     </main>
   );
