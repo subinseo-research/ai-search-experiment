@@ -150,7 +150,7 @@ export default function ConsentPage() {
           </label>
 
         <section className="mt-8 mb-8 space-y-3">
-          <p className="font-medium">Please enter your prolific ID.</p>
+          <p className="font-medium">Please enter your prolific ID (Required for your compensation).</p>
           <input
             type="text"
             value={prolificId}

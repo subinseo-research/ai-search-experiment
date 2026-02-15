@@ -27,8 +27,8 @@ export default function Experiment() {
   // airtable 
   const logEvent = async ({ log_type, log_data }) => {
     try {
-      const nowIso = new Date().toISOString(); // ms 포함 ISO
-      const nowMs = Date.now();               // Unix ms
+      const nowIso = new Date().toISOString(); 
+      const nowMs = Date.now();               
 
       await fetch("/api/experiment-log", {
         method: "POST",
@@ -165,6 +165,38 @@ export default function Experiment() {
     };
   }, []);
 
+  const CitationButton = ({ id, sources }) => {
+    const [isOpen, setIsOpen] = useState(false);
+    const source = sources.find(s => s.id === id) || { title: "Source", link: "#" };
+    return (
+        <span className="relative inline-block mx-0.5">
+          <button
+            onClick={() => setIsOpen(!isOpen)}
+            className="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full hover:bg-blue-200 transition font-bold"
+          >
+            {id}
+          </button>
+          
+          {isOpen && (
+            <div className="absolute bottom-full mb-2 left-0 w-64 p-3 bg-white border shadow-xl rounded-lg z-[100] text-sm animate-in fade-in slide-in-from-bottom-2">
+              <div className="flex justify-between items-start mb-2">
+                <span className="font-bold text-gray-800">Source [{id}]</span>
+                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">×</button>
+              </div>
+              <p className="text-gray-600 text-xs mb-2 line-clamp-2">{source.title}</p>
+              <a
+                href={source.link}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline text-xs break-all block"
+              >
+                {source.link}
+              </a>
+            </div>
+          )}
+        </span>
+      );
+    };
   
   /* =========================
      Initial setup
@@ -309,19 +341,20 @@ export default function Experiment() {
 
     try {
       const prompt = `
-Please answer briefly and kindly, as if responding in a friendly and helpful manner.
-When necessary, use clear headings, bullet points, and formatting to organize the information.
-
-User:
-${userInput}
-      `.trim();
+        Please answer briefly and kindly, as if responding in a friendly and helpful manner.
+        When necessary, use clear headings, bullet points, and formatting to organize the information.
+        Provide a detailed answer with in-text citations in the format [1], [2], etc.
+        At the end of your response, provide a list of sources used.
+        User:
+        ${userInput}
+              `.trim();
 
       const res = await fetch("/api/llm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt,
-          maxTokens: 80,
+          maxTokens: 200,
         }),
       });
 
@@ -795,7 +828,24 @@ ${userInput}
                           );
                         }}
                       >
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        
+                        <ReactMarkdown
+                          components={{
+                            text: ({ content }) => {
+                              const parts = content.split(/(\[\d+\])/g);
+                              return parts.map((part, i) => {
+                                const match = part.match(/\[(\d+)\]/);
+                                if (match) {
+                                  const id = match[1];
+                                  return <CitationButton key={i} id={id} sources={msg.sources || []} />;
+                                }
+                                return part;
+                              });
+                            }
+                          }}
+                        >
+                          {msg.content}
+                        </ReactMarkdown>
 
                         {isAssistant && !msg.loading && (
                           <button
