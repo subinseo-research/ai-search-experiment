@@ -439,6 +439,7 @@ export default function Experiment() {
             sources: data.sources || []
           };
         } else {
+          // fallback: append if structure changed unexpectedly
           updated.push({ role: "assistant", content: data?.text || "No response generated.", sources: data.sources ||[] });
         }
         return updated;

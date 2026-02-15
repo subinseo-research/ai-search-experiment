@@ -1,6 +1,33 @@
 import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
+function tryParseJsonLoose(raw) {
+  if (!raw) return null;
+
+  // 1) ```json ... ``` 코드펜스 제거
+  const unfenced = raw
+    .replace(/^```json\s*/i, "")
+    .replace(/^```\s*/i, "")
+    .replace(/```$/i, "")
+    .trim();
+
+  // 2) 통째로 파싱 시도
+  try {
+    return JSON.parse(unfenced);
+  } catch {}
+
+  // 3) 텍스트 안에 JSON이 섞여 있으면 {...} 부분만 뽑아서 파싱
+  const first = unfenced.indexOf("{");
+  const last = unfenced.lastIndexOf("}");
+  if (first !== -1 && last !== -1 && last > first) {
+    const slice = unfenced.slice(first, last + 1);
+    try {
+      return JSON.parse(slice);
+    } catch {}
+  }
+  return null;
+}
+
 export async function POST(req) {
   console.log("Gemini API called");
   try {
@@ -20,23 +47,6 @@ export async function POST(req) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    // ✅ 모델에게 "인용은 반드시 아래 sources만 사용" + "JSON으로만 출력" 강제
-    const citationInstruction = `
-You must answer using ONLY the provided sources.
-Return ONLY valid JSON (no markdown, no extra text).
-Schema:
-{
-  "answer": "string with in-text citations like [1], [2] ...",
-  "citations": [
-    { "id": 1, "title": "string", "url": "string" }
-  ]
-}
-Rules:
-- Every bracket citation like [k] must exist in citations with matching id.
-- If a claim cannot be supported by sources, say so in the answer without inventing citations.
-`;
-
-    // sources를 모델이 보기 좋게 stringify해서 prompt에 포함 (가난한 방식)
     const sourcesBlock = JSON.stringify(
       sources.map((s, i) => ({
         id: i + 1,
@@ -48,7 +58,19 @@ Rules:
       2
     );
 
-    const fullPrompt = `${citationInstruction}
+    const instruction = `
+Return ONLY valid JSON (no markdown).
+Schema:
+{
+  "answer": "string with in-text citations like [1], [2] ...",
+  "citations": [{ "id": 1, "title": "string", "url": "string" }]
+}
+Rules:
+- Use ONLY provided sources.
+- Every [k] must exist in citations with matching id.
+`;
+
+    const fullPrompt = `${instruction}
 
 SOURCES:
 ${sourcesBlock}
@@ -60,26 +82,31 @@ ${prompt}
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: fullPrompt,
-      // ⚠️ 80 tokens는 citation까지 내기엔 너무 짧아서 올려야 합니다.
-      generationConfig: { maxOutputTokens: 600, temperature: 0.2, topP: 0.9 },
+      generationConfig: {
+        maxOutputTokens: 600,
+        temperature: 0.2,
+        topP: 0.9,
+      },
     });
 
-    const raw = response.text?.trim() || "";
+    const raw = (response.text || "").trim();
 
-    // ✅ JSON 파싱. 실패하면 raw도 같이 내려서 디버깅/폴백 가능하게.
-    let parsed = null;
-    try {
-      parsed = JSON.parse(raw);
-    } catch {
-      return NextResponse.json(
-        { error: "Model did not return valid JSON", raw },
-        { status: 502 }
-      );
+    // ✅ 여기서부터가 핵심: 파싱 실패해도 절대 막지 않기
+    const parsed = tryParseJsonLoose(raw);
+
+    if (parsed && typeof parsed === "object") {
+      return NextResponse.json({
+        answer: parsed.answer || "",
+        citations: Array.isArray(parsed.citations) ? parsed.citations : [],
+        raw, // 디버깅용 (원하면 나중에 제거)
+      });
     }
 
+    // ✅ JSON이 아니면 그냥 raw를 answer로 내려보내서 "NO response generated" 방지
     return NextResponse.json({
-      answer: parsed.answer || "",
-      citations: parsed.citations || [],
+      answer: raw,
+      citations: [],
+      raw,
     });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
