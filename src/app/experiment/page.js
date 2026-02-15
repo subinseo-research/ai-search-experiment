@@ -167,7 +167,7 @@ export default function Experiment() {
 
     const CitationBadge = ({ displayId, sources }) => {
       const [showPopup, setShowPopup] = useState(false);
-      const numericId = displayId.replace("Sources ", "");
+      const numericId = displayId.replace(/[^0-9]/g, "");
       const source = sources?.find(s => s.id === numericId) || { 
         title: "References", 
         link: "#", 
