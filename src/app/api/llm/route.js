@@ -1,7 +1,7 @@
 // route.js 전체 코드
 
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai"; // 또는 "@google/generative-ai" 사용 중인 라이브러리에 맞게
+import { GoogleGenAI } from "@google/genai"; 
 
 export async function POST(req) {
   console.log("Gemini API called");
@@ -9,24 +9,16 @@ export async function POST(req) {
     const { prompt } = await req.json();
 
     if (!prompt || !String(prompt).trim()) {
-      return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
+      return NextResponse.json({ text: "Error: Prompt is empty", sources: [] });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Server misconfigured: missing GEMINI_API_KEY" },
-        { status: 500 }
-      );
+      console.error("API Key missing");
+      return NextResponse.json({ text: "Error: Server missing API Key", sources: [] });
     }
 
-    // [수정] 최신 SDK 호환성을 위해 객체 형태로 apiKey 전달 권장
     const ai = new GoogleGenAI({ apiKey }); 
-    // 만약 구버전(@google/generative-ai)을 쓴다면: new GoogleGenerativeAI(apiKey);
-
-    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" }); // 모델명은 사용 가능한 최신 모델로 지정 (예: gemini-1.5-flash)
-
-    // JSON 응답을 위한 강력한 프롬프트
     const enhancedPrompt = `
       You are a helpful research assistant.
       User Query: "${prompt}"
@@ -46,39 +38,43 @@ export async function POST(req) {
         ]
       }
     `;
-
-    const result = await model.generateContent({
+    const response = await ai.models.generateContent({
+      model: "gemini-1.5-flash", // 1.5-flash로 변경 (안정성 확보)
       contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
-      generationConfig: { 
-        maxOutputTokens: 1000, 
-        temperature: 0.4,
-        responseMimeType: "application/json" // JSON 모드 활성화
-      }, 
+      config: {
+        responseMimeType: "application/json", // JSON 모드
+      },
     });
 
-    const responseText = result.response.text();
+const responseText = response.text();
+    console.log("Raw AI Response:", responseText.substring(0, 100) + "..."); // 로그 확인용
 
-    // JSON 파싱 (마크다운 백틱 제거 로직 포함)
     let parsedData;
     try {
+      // 마크다운 코드 블록(```json ... ```)이 있을 경우 제거
       const cleanJson = responseText.replace(/```json|```/g, "").trim();
       parsedData = JSON.parse(cleanJson);
     } catch (parseError) {
       console.error("JSON Parse Error:", parseError);
-      // 파싱 실패 시 일반 텍스트로 반환
+      // 파싱 실패 시 원본 텍스트라도 반환
       return NextResponse.json({ 
         text: responseText, 
         sources: [] 
       });
     }
 
+    // 정상 반환
     return NextResponse.json({
-      text: parsedData.text,
+      text: parsedData.text || responseText,
       sources: parsedData.sources || []
     });
 
   } catch (e) {
-    console.error("API Error:", e);
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    console.error("Gemini API Error:", e);
+    // [핵심] 에러 내용을 text로 보내서 채팅창에서 확인 가능하게 함
+    return NextResponse.json({ 
+      text: `Error generated: ${e.message}`, 
+      sources: [] 
+    });
   }
 }
