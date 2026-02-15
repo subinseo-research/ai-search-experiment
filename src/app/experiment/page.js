@@ -417,10 +417,10 @@ export default function Experiment() {
 
     try {
       const res = await fetch("/api/llm", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           prompt: userInput, 
-          // maxTokens는 route.js에서 제어하므로 여기서 보내지 않아도 됩니다.
         }),
       });
       const data = await res.json();
@@ -431,15 +431,14 @@ export default function Experiment() {
 
       setChatHistory((prev) => {
         const updated = [...prev];
-        // Replace the last "loading" assistant message safely
         const lastIdx = updated.length - 1;
         if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
           updated[lastIdx] = {
             role: "assistant",
             content: data?.text || "No response generated.",
+            sources: data.sources || []
           };
         } else {
-          // fallback: append if structure changed unexpectedly
           updated.push({ role: "assistant", content: data?.text || "No response generated.", sources: data.sources ||[] });
         }
         return updated;

@@ -1,5 +1,7 @@
+// route.js 전체 코드
+
 import { NextResponse } from "next/server";
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI } from "@google/genai"; // 또는 "@google/generative-ai" 사용 중인 라이브러리에 맞게
 
 export async function POST(req) {
   console.log("Gemini API called");
@@ -18,59 +20,65 @@ export async function POST(req) {
       );
     }
 
-    const ai = new GoogleGenAI(apiKey);
-    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
+    // [수정] 최신 SDK 호환성을 위해 객체 형태로 apiKey 전달 권장
+    const ai = new GoogleGenAI({ apiKey }); 
+    // 만약 구버전(@google/generative-ai)을 쓴다면: new GoogleGenerativeAI(apiKey);
+
+    const model = ai.getGenerativeModel({ model: "gemini-2.0-flash" }); // 모델명은 사용 가능한 최신 모델로 지정 (예: gemini-1.5-flash)
+
+    // JSON 응답을 위한 강력한 프롬프트
     const enhancedPrompt = `
-      ${prompt}
+      You are a helpful research assistant.
+      User Query: "${prompt}"
 
       Instructions:
-            1. Answer the question detailly.
-            2. Provide a 'sources' array containing credible-looking references.
-            3. In the text, use [Source 1], [Source 2] to cite these references.
-            4. Return the response strictly in JSON format:
-              {
-                "text": "Your cited answer here...",
-                "sources": [
-                  {"title": "Source Title", "link": "https://...", "snippet": "Summary of source..."}
-                ]
-              }
-          `;
+      1. Answer the query comprehensively.
+      2. Generate a list of legitimate-looking sources relevant to the answer.
+      3. Cite these sources in your text using the format [Source 1], [Source 2], etc.
+      4. **IMPORTANT**: Return ONLY a valid JSON object. Do not include markdown code blocks (like \`\`\`json).
+      
+      Response Format (JSON):
+      {
+        "text": "Your answer text here with citations like [Source 1]...",
+        "sources": [
+          { "title": "Title of Source 1", "link": "https://valid-url-1.com", "snippet": "Description of source 1..." },
+          { "title": "Title of Source 2", "link": "https://valid-url-2.com", "snippet": "Description of source 2..." }
+        ]
+      }
+    `;
 
     const result = await model.generateContent({
       contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
       generationConfig: { 
-        maxOutputTokens: 500, 
-        temperature: 0.5, 
-        topP: 0.9,
-        responseMimeType: "application/json" 
+        maxOutputTokens: 1000, 
+        temperature: 0.4,
+        responseMimeType: "application/json" // JSON 모드 활성화
       }, 
     });
 
     const responseText = result.response.text();
 
-    // 2. 응답 파싱: 텍스트 내 JSON만 추출 (혹시 모를 마크다운 방지)
+    // JSON 파싱 (마크다운 백틱 제거 로직 포함)
+    let parsedData;
     try {
-      const cleanJson = responseText.includes("```json")
-        ? responseText.split("```json")[1].split("```")[0]
-        : responseText;
-      
-      const parsedData = JSON.parse(cleanJson);
-      
-      // page.js가 기대하는 형태로 반환
-      return NextResponse.json({
-        text: parsedData.text,
-        sources: parsedData.sources || []
-      });
+      const cleanJson = responseText.replace(/```json|```/g, "").trim();
+      parsedData = JSON.parse(cleanJson);
     } catch (parseError) {
-      // 파싱 실패 시 기본 텍스트라도 반환하는 fallback
+      console.error("JSON Parse Error:", parseError);
+      // 파싱 실패 시 일반 텍스트로 반환
       return NextResponse.json({ 
         text: responseText, 
         sources: [] 
       });
     }
 
+    return NextResponse.json({
+      text: parsedData.text,
+      sources: parsedData.sources || []
+    });
+
   } catch (e) {
+    console.error("API Error:", e);
     return NextResponse.json({ error: e.message }, { status: 500 });
   }
 }
-
