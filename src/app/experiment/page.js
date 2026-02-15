@@ -165,32 +165,50 @@ export default function Experiment() {
     };
   }, []);
 
-  const CitationButton = ({ id, sources }) => {
-    const [isOpen, setIsOpen] = useState(false);
-    const source = sources.find(s => s.id === id) || { title: "Source", link: "#" };
-    return (
+    const CitationBadge = ({ id, sources }) => {
+      const [showPopup, setShowPopup] = useState(false);
+      const source = sources?.find(s => s.id === id) || { 
+        title: "References", 
+        link: "#", 
+        snippet: "상세 정보가 없습니다." 
+      };
+
+      return (
         <span className="relative inline-block mx-0.5">
           <button
-            onClick={() => setIsOpen(!isOpen)}
-            className="bg-blue-100 text-blue-700 text-xs px-1.5 py-0.5 rounded-full hover:bg-blue-200 transition font-bold"
+            onClick={(e) => {
+              e.preventDefault();
+              setShowPopup(!showPopup);
+            }}
+            className="px-1.5 py-0.5 text-[10px] font-bold bg-blue-500 text-white rounded-md hover:bg-blue-700 transition-colors align-top"
           >
             {id}
           </button>
-          
-          {isOpen && (
-            <div className="absolute bottom-full mb-2 left-0 w-64 p-3 bg-white border shadow-xl rounded-lg z-[100] text-sm animate-in fade-in slide-in-from-bottom-2">
+
+          {showPopup && (
+            <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-200 shadow-2xl rounded-lg p-3 z-50 animate-in fade-in slide-in-from-bottom-1">
               <div className="flex justify-between items-start mb-2">
-                <span className="font-bold text-gray-800">Source [{id}]</span>
-                <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-gray-600">×</button>
+                <span className="text-xs font-bold text-blue-600">Source [{id}]</span>
+                <button 
+                  onClick={() => setShowPopup(false)}
+                  className="text-gray-400 hover:text-gray-600 text-lg line-height-0"
+                >
+                  ×
+                </button>
               </div>
-              <p className="text-gray-600 text-xs mb-2 line-clamp-2">{source.title}</p>
+              <p className="text-sm font-semibold text-gray-800 mb-1 line-clamp-2">
+                {source.title}
+              </p>
+              <p className="text-xs text-gray-500 mb-2 line-clamp-3">
+                {source.snippet}
+              </p>
               <a
                 href={source.link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:underline text-xs break-all block"
+                className="text-[11px] text-blue-500 hover:underline break-all block border-t pt-2"
               >
-                {source.link}
+                Sources →
               </a>
             </div>
           )}
@@ -831,13 +849,13 @@ export default function Experiment() {
                         
                         <ReactMarkdown
                           components={{
-                            text: ({ content }) => {
+                            text({ content }) {
                               const parts = content.split(/(\[\d+\])/g);
                               return parts.map((part, i) => {
                                 const match = part.match(/\[(\d+)\]/);
-                                if (match) {
+                                if (match && isAssistant) {
                                   const id = match[1];
-                                  return <CitationButton key={i} id={id} sources={msg.sources || []} />;
+                                  return <CitationBadge key={i} id={id} sources={msg.sources} />;
                                 }
                                 return part;
                               });
