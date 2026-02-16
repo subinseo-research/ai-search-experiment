@@ -27,8 +27,8 @@ export default function Experiment() {
   // airtable 
   const logEvent = async ({ log_type, log_data }) => {
     try {
-      const nowIso = new Date().toISOString(); 
-      const nowMs = Date.now();               
+      const nowIso = new Date().toISOString(); // ms 포함 ISO
+      const nowMs = Date.now();               // Unix ms
 
       await fetch("/api/experiment-log", {
         method: "POST",
@@ -164,69 +164,6 @@ export default function Experiment() {
       window.removeEventListener("mouseup", onUp);
     };
   }, []);
-
-<<<<<<< HEAD
-  const [openCitationId, setOpenCitationId] = useState(null);
-  const CitationBadge = ({ displayId, sources, msgKey}) => {
-    const wrapperRef = useRef(null);
-=======
-  const CitationBadge = ({ displayId, sources }) => {
-    const [showPopup, setShowPopup] = useState(false);
->>>>>>> parent of cd108f3 (trial (pop up stability))
-    
-    const numericId = displayId.replace(/[^0-9]/g, "");
-    const source = sources?.find((s) => s.id === numericId) || {
-      title: "References",
-      link: "#",
-      snippet: "No details available.",
-    };
-
-    return (
-      <span ref={wrapperRef} className="relative inline-block mx-1 align-baseline">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            setShowPopup(!showPopup);
-          }}
-          className="inline-flex items-center gap-1 px-2 py-0.5 text-[10px] font-medium border border-gray-300 bg-white text-blue-600 rounded-full hover:bg-blue-50 transition shadow-sm"
-        >
-          <span>🔗</span>
-          Source {numericId}
-        </button>
-
-        {showPopup && (
-          <div className="absolute bottom-full mb-2 left-0 w-64 bg-white border border-gray-300 shadow-xl rounded-lg p-3 z-[100] text-left">
-            <div className="flex justify-between items-center mb-1">
-              <span className="text-[10px] font-bold text-blue-600 uppercase">
-                Citation [{numericId}]
-              </span>
-              <button
-                onClick={() => setShowPopup(false)}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            </div>
-            <h4 className="text-sm font-bold text-gray-900 line-clamp-2 mb-1">
-              {source.title}
-            </h4>
-            <p className="text-xs text-gray-600 line-clamp-3 mb-2">
-              {source.snippet}
-            </p>
-            <a
-              href={source.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-[11px] text-blue-600 font-medium hover:underline block border-t pt-2"
-            >
-              Visit Source ↗
-            </a>
-          </div>
-        )}
-      </span>
-    );
-  };
   
   /* =========================
      Initial setup
@@ -327,30 +264,7 @@ export default function Experiment() {
     try {
       const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=40`);
       const data = await res.json();
-      logEvent({
-        log_type: "ai_response",
-        log_data: { response: data?.text || "" },
-      });
 
-      setChatHistory((prev) => {
-        const updated = [...prev];
-        const lastIdx = updated.length - 1;
-        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
-          updated[lastIdx] = {
-            role: "assistant",
-            content: data?.text || "No response generated.",
-            sources: data?.sources || [] 
-          };
-        } else {
-          updated.push({ 
-            role: "assistant", 
-            content: data?.text || "No response generated.",
-            sources: data?.sources || [] 
-          });
-        }
-        return updated;
-      }); 
-      
       const results =
         data.items?.map((item, idx) => ({
           id: `search-${idx}`,
@@ -361,7 +275,6 @@ export default function Experiment() {
 
       setSearchResults(results);
       setSearchQuery("");
-
     } catch (err) {
       console.error(err);
     }
@@ -383,6 +296,21 @@ export default function Experiment() {
     // Count only valid user questions
     setQuestionCount((prev) => prev + 1);
 
+    // Fetch top N web results as sources (same as WebSearch)
+    const searchRes = await fetch(
+      `/api/SearchEngine?q=${encodeURIComponent(userInput)}&requestedTotal=8`
+    );
+    const searchData = await searchRes.json();
+
+    const sources =
+      searchData.items?.slice(0, 8).map((item, i) => ({
+        id: i + 1,
+        title: item.title,
+        url: item.link,
+        snippet: item.snippet,
+      })) || [];
+
+
     // Append user + loading assistant
     setChatHistory((prev) => [
       ...prev,
@@ -398,27 +326,23 @@ export default function Experiment() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          prompt: userInput, 
+          question: userInput,
+          sources,
         }),
       });
       const data = await res.json();
-      logEvent({
-            log_type: "ai_response",
-            log_data: { response: data?.text || "" },
-          });
-
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
+        const assistantMsg = {
+          role: "assistant",
+          content: data?.text || "No response generated.",
+          sources: data?.sources || sources,
+        };
         if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
-          updated[lastIdx] = {
-            role: "assistant",
-            content: data?.text || "No response generated.",
-            sources: data.sources || []
-          };
+          updated[lastIdx] = assistantMsg;
         } else {
-          // fallback: append if structure changed unexpectedly
-          updated.push({ role: "assistant", content: data?.text || "No response generated.", sources: data.sources ||[] });
+          updated.push(assistantMsg);
         }
         return updated;
       });
@@ -427,38 +351,22 @@ export default function Experiment() {
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
+        const errorMsg = {
+          role: "assistant",
+          content: "An error occurred while generating the response.",
+          sources,
+        };
         if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
-          updated[lastIdx] = {
-            role: "assistant",
-            content: "An error occurred while generating the response.",
-            sources: []
-          };
-        } 
+          updated[lastIdx] = errorMsg;
+        } else {
+          updated.push(errorMsg);
+        }
         return updated;
       });
     } finally {
       setIsGenerating(false);
     }
   };
-  const renderWithCitations = (content, sources, msgKey) => {
-    if (Array.isArray(content)) {
-      return content.map((child, idx) => (
-        <span key={idx}>{renderWithCitations(child, sources, msgKey)}</span>
-      ));
-    }
-    if (typeof content !== "string") return content;
-
-    const regex = /(\[(?:Source|Sources?)\s+\d+\])/gi;
-    const parts = content.split(regex);
-
-    return parts.map((part, i) => {
-      if (part.match(/\[(?:Source|Sources?)\s+\d+\]/i)) {
-        return <CitationBadge key={`${msgKey}-${i}`} displayId={part} sources={sources} msgKey={msgKey} />;
-      }
-      return part;
-    });
-  };
-
 
   /* =========================
      Scrapbook
@@ -886,22 +794,7 @@ export default function Experiment() {
                           );
                         }}
                       >
-                        <ReactMarkdown
-                          components={{
-                            p: ({ children }) => (
-                              <p className="mb-2 last:mb-0">
-                                {renderWithCitations(children, msg.sources, idx)}
-                              </p>
-                            ),
-                            li: ({ children }) => (
-                              <li className="mb-1 last:mb-0">
-                                {renderWithCitations(children, msg.sources, idx)}
-                              </li>
-                            ),
-                          }}
-                        >
-                          {msg.content}
-                        </ReactMarkdown>
+                        <ReactMarkdown>{msg.content}</ReactMarkdown>
 
                         {isAssistant && !msg.loading && (
                           <button

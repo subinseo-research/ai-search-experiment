@@ -4,19 +4,16 @@ import { GoogleGenAI } from "@google/genai";
 function tryParseJsonLoose(raw) {
   if (!raw) return null;
 
-  // 1) ```json ... ``` 코드펜스 제거
   const unfenced = raw
     .replace(/^```json\s*/i, "")
     .replace(/^```\s*/i, "")
     .replace(/```$/i, "")
     .trim();
 
-  // 2) 통째로 파싱 시도
   try {
     return JSON.parse(unfenced);
   } catch {}
 
-  // 3) 텍스트 안에 JSON이 섞여 있으면 {...} 부분만 뽑아서 파싱
   const first = unfenced.indexOf("{");
   const last = unfenced.lastIndexOf("}");
   if (first !== -1 && last !== -1 && last > first) {
@@ -31,10 +28,21 @@ function tryParseJsonLoose(raw) {
 export async function POST(req) {
   console.log("Gemini API called");
   try {
-    const { prompt, sources = [] } = await req.json();
+    // ✅ Accept both {question} and legacy {prompt}
+    const body = await req.json();
+    const userQuestion = String(body.question ?? body.prompt ?? "").trim();
+    const sources = Array.isArray(body.sources) ? body.sources : [];
 
-    if (!prompt || !String(prompt).trim()) {
-      return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
+    if (!userQuestion) {
+      return NextResponse.json({ error: "Missing question" }, { status: 400 });
+    }
+
+    // ✅ ConvSearch citation mode: sources are REQUIRED
+    if (sources.length === 0) {
+      return NextResponse.json(
+        { error: "Missing sources: citation mode requires sources" },
+        { status: 400 }
+      );
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
@@ -58,6 +66,7 @@ export async function POST(req) {
       2
     );
 
+    // ✅ Stronger instruction: ONLY sources, cite as [n], no invented sources
     const instruction = `
 Return ONLY valid JSON (no markdown).
 Schema:
@@ -66,47 +75,48 @@ Schema:
   "citations": [{ "id": 1, "title": "string", "url": "string" }]
 }
 Rules:
-- Use ONLY provided sources.
-- Every [k] must exist in citations with matching id.
+- You MUST use ONLY the provided sources to answer.
+- Every factual claim should be supported by at least one citation [n].
+- Do NOT invent or add sources. Do NOT cite numbers that are not in the source list.
+- If the sources are insufficient to answer, cite the closest relevant source(s).
 `;
-
     const fullPrompt = `${instruction}
 
-SOURCES:
+SOURCES (numbered):
 ${sourcesBlock}
 
-USER PROMPT:
-${prompt}
+QUESTION:
+${userQuestion}
 `;
 
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash",
       contents: fullPrompt,
       generationConfig: {
-        maxOutputTokens: 600,
-        temperature: 0.2,
+        maxOutputTokens: 120,
+        temperature: 0.3,
         topP: 0.9,
       },
     });
 
     const raw = (response.text || "").trim();
-
-    // ✅ 여기서부터가 핵심: 파싱 실패해도 절대 막지 않기
     const parsed = tryParseJsonLoose(raw);
 
-    if (parsed && typeof parsed === "object") {
-      return NextResponse.json({
-        answer: parsed.answer || "",
-        citations: Array.isArray(parsed.citations) ? parsed.citations : [],
-        raw, // 디버깅용 (원하면 나중에 제거)
-      });
-    }
+    const text =
+      parsed && typeof parsed === "object"
+        ? String(parsed.answer || "").trim()
+        : raw;
 
-    // ✅ JSON이 아니면 그냥 raw를 answer로 내려보내서 "NO response generated" 방지
+    const citations =
+      parsed && typeof parsed === "object" && Array.isArray(parsed.citations)
+        ? parsed.citations
+        : [];
+
     return NextResponse.json({
-      answer: raw,
-      citations: [],
-      raw,
+      text,
+      citations,
+      sources, 
+      raw,     
     });
   } catch (e) {
     return NextResponse.json({ error: e.message }, { status: 500 });
