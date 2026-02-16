@@ -8,6 +8,112 @@ import ReactMarkdown from "react-markdown";
 const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
+function CitationPill({ n, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="
+        inline-flex items-center gap-2
+        px-3 py-1.5
+        rounded-full
+        border border-gray-200
+        bg-gray-50 hover:bg-gray-100
+        text-xs font-medium text-gray-700
+        align-middle
+        mx-0.5
+      "
+      aria-label={`Open source ${n}`}
+    >
+      <span aria-hidden className="text-gray-500">🔗</span>
+      <span>[{n}]</span>
+    </button>
+  );
+}
+
+function ReferenceModal({ open, source, onClose }) {
+  if (!open || !source) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4"
+      onClick={onClose} 
+    >
+      <div
+        className="w-full max-w-lg rounded-xl bg-white shadow-lg border p-5"
+        onClick={(e) => e.stopPropagation()} 
+      >
+        <div className="flex items-start justify-between gap-4">
+          <div className="min-w-0">
+            <div className="text-sm font-semibold text-gray-900 break-words">
+              {source.title || "Source"}
+            </div>
+            {source.url && (
+              <a
+                href={source.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-block text-xs text-blue-600 hover:underline break-all"
+              >
+                {source.url}
+              </a>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="shrink-0 text-gray-500 hover:text-gray-800 text-xl leading-none"
+            aria-label="Close"
+          >
+            ×
+          </button>
+        </div>
+
+        {source.snippet && (
+          <p className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
+            {source.snippet}
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function CitedText({ content, sources = [], onOpenSource }) {
+  const parts = String(content).split(/(\[[0-9,\s]+\])/g);
+
+  return (
+    <div className="whitespace-pre-wrap">
+      {parts.map((part, idx) => {
+        const m = part.match(/^\[([0-9,\s]+)\]$/);
+        if (!m) return <span key={idx}>{part}</span>;
+
+        const nums = m[1]
+          .split(",")
+          .map((s) => Number(s.trim()))
+          .filter((n) => Number.isFinite(n) && n > 0);
+        return (
+          <span key={idx} className="inline">
+            {nums.map((n, j) => {
+              const src = sources?.[n - 1];
+              if (!src) return <span key={`${n}-${j}`}>[{n}]</span>;
+              return (
+                <CitationPill
+                  key={`${n}-${j}`}
+                  n={n}
+                  onClick={() => onOpenSource(src)}
+                />
+              );
+            })}
+          </span>
+        );
+      })}
+    </div>
+  );
+}
+
+
 export default function Experiment() {
   const router = useRouter();
 
@@ -92,7 +198,17 @@ export default function Experiment() {
   const [seconds, setSeconds] = useState(0);
   const [taskOpen, setTaskOpen] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [refOpen, setRefOpen] = useState(false);
+  const [activeSource, setActiveSource] = useState(null);
 
+  const openSource = (src) => {
+    setActiveSource(src);
+    setRefOpen(true);
+  };
+  const closeSource = () => {
+    setRefOpen(false);
+    setActiveSource(null);
+  };
   const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
 
   // scrap
@@ -794,7 +910,15 @@ export default function Experiment() {
                           );
                         }}
                       >
-                        <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        {isAssistant ? (
+                          <CitedText
+                            content={msg.content}
+                            sources={msg.sources}
+                            onOpenSource={openSource}
+                          />
+                        ) : (
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        )}
 
                         {isAssistant && !msg.loading && (
                           <button
@@ -816,6 +940,8 @@ export default function Experiment() {
                 </div>
                 </div>
               )}
+              
+              <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} />
 
               {/* Input area */}
               <form
