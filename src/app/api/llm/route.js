@@ -66,7 +66,7 @@ export async function POST(req) {
       2
     );
 
-    // ✅ Stronger instruction: ONLY sources, cite as [n], no invented sources
+    // ✅ instruction: ONLY sources, no invented sources (no hallucination!)
     const instruction = `
 Return ONLY valid JSON (no markdown).
 Schema:
@@ -79,6 +79,11 @@ Rules:
 - Every factual claim should be supported by at least one citation [n].
 - Do NOT invent or add sources. Do NOT cite numbers that are not in the source list.
 - If the sources are insufficient to answer, cite the closest relevant source(s).
+
+Answering style requirements:
+- Provide a clear, multi-sentence explanation.
+- Use clear headings, bullet points, and formatting to organize the information.
+- When appropriate, explain background, implications, or contrasts found in the sources.
 `;
     const fullPrompt = `${instruction}
 

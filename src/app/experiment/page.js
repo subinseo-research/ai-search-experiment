@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 import ReactMarkdown from "react-markdown";
@@ -14,10 +14,10 @@ function CitationPill({ n, onClick }) {
       type="button"
       onClick={onClick}
       className="
-        inline-flex items-center gap-2
-        px-3 py-1.5
+        inline-flex items-center gap-1
+        px-2 py-1.5
         rounded-full
-        border border-gray-200
+        border border-gray-300
         bg-gray-50 hover:bg-gray-100
         text-xs font-medium text-gray-700
         align-middle
@@ -25,8 +25,8 @@ function CitationPill({ n, onClick }) {
       "
       aria-label={`Open source ${n}`}
     >
-      <span aria-hidden className="text-gray-500">🔗</span>
-      <span>[{n}]</span>
+      <span aria-hidden className="text-gray-400">🔗</span>
+      <span>source {n}</span>
     </button>
   );
 }
@@ -36,16 +36,16 @@ function ReferenceModal({ open, source, onClose }) {
 
   return (
     <div
-      className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-4"
+      className="fixed inset-0 z-[80] bg-black/40 flex items-center justify-center p-8"
       onClick={onClose} 
     >
       <div
-        className="w-full max-w-lg rounded-xl bg-white shadow-lg border p-5"
+        className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-6"
         onClick={(e) => e.stopPropagation()} 
       >
-        <div className="flex items-start justify-between gap-4">
+        <div className="flex items-start justify-between gap-6">
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-gray-900 break-words">
+            <div className="text-lg font-semibold text-gray-900 break-words">
               {source.title || "Source"}
             </div>
             {source.url && (
@@ -53,7 +53,7 @@ function ReferenceModal({ open, source, onClose }) {
                 href={source.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1 inline-block text-xs text-blue-600 hover:underline break-all"
+                className="mt-2 inline-block text-sm text-blue-600 hover:underline break-all"
               >
                 {source.url}
               </a>
@@ -63,56 +63,105 @@ function ReferenceModal({ open, source, onClose }) {
           <button
             type="button"
             onClick={onClose}
-            className="shrink-0 text-gray-500 hover:text-gray-800 text-xl leading-none"
-            aria-label="Close"
+            className="text-gray-400 hover:text-gray-700 text-3xl leading-none"
           >
             ×
           </button>
         </div>
 
         {source.snippet && (
-          <p className="mt-3 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">
-            {source.snippet}
-          </p>
+          <div className="mt-5 pt-4 border-t border-gray-100">
+            <p className="mt-3 text-base text-gray-700 leading-relaxed whitespace-pre-wrap">
+              {source.snippet}
+            </p>
+          </div>
         )}
       </div>
     </div>
   );
 }
 
-function CitedText({ content, sources = [], onOpenSource }) {
-  const parts = String(content).split(/(\[[0-9,\s]+\])/g);
 
-  return (
-    <div className="whitespace-pre-wrap">
-      {parts.map((part, idx) => {
-        const m = part.match(/^\[([0-9,\s]+)\]$/);
-        if (!m) return <span key={idx}>{part}</span>;
+function renderInlineCitations(children, sources = [], onOpenSource) {
+  const childArray = React.Children.toArray(children);
+  return childArray.map((child, idx) => {
+    if (typeof child !== "string") return <span key={idx}>{child}</span>;
 
-        const nums = m[1]
-          .split(",")
-          .map((s) => Number(s.trim()))
-          .filter((n) => Number.isFinite(n) && n > 0);
-        return (
-          <span key={idx} className="inline">
-            {nums.map((n, j) => {
-              const src = sources?.[n - 1];
-              if (!src) return <span key={`${n}-${j}`}>[{n}]</span>;
-              return (
-                <CitationPill
-                  key={`${n}-${j}`}
-                  n={n}
-                  onClick={() => onOpenSource(src)}
-                />
-              );
-            })}
-          </span>
-        );
-      })}
-    </div>
-  );
+    const parts = child.split(/(\[[0-9,\s]+\])/g);
+
+    return (
+      <span key={idx}>
+        {parts.map((part, i) => {
+          const m = part.match(/^\[([0-9,\s]+)\]$/);
+          if (!m) return <span key={`${idx}-${i}`}>{part}</span>;
+
+          const nums = m[1]
+            .split(",")
+            .map((s) => Number(s.trim()))
+            .filter((n) => Number.isFinite(n) && n > 0);
+
+          return (
+            <span key={`${idx}-${i}`} className="inline">
+              {nums.map((n, j) => {
+                const src = sources?.[n - 1];
+                if (!src) return <span key={`${n}-${j}`}>[{n}]</span>;
+
+                return (
+                  <CitationPill
+                    key={`${n}-${j}`}
+                    n={n}
+                    onClick={() => onOpenSource(src)}
+                  />
+                );
+              })}
+            </span>
+          );
+        })}
+      </span>
+    );
+  });
 }
 
+function MarkdownWithCitations({ content, sources, onOpenSource }) {
+  return (
+    <ReactMarkdown
+      components={{
+        p: ({ children }) => (
+          <p className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-li:marker:text-gray-600">
+            {renderInlineCitations(children, sources, onOpenSource)}
+          </p>
+        ),
+        li: ({ children }) => (
+          <li>{renderInlineCitations(children, sources, onOpenSource)}</li>
+        ),
+        h1: ({ children }) => (
+        <h1 className="mt-6 mb-2 text-lg font-bold text-gray-900 border-b pb-1">
+          {renderInlineCitations(children, sources, onOpenSource)}
+        </h1>),
+        h2: ({ children }) => (
+        <h2 className="mt-6 mb-2 text-lg font-bold text-gray-900 border-b pb-1">
+          {renderInlineCitations(children, sources, onOpenSource)}
+        </h2>),
+        h3: ({ children }) => (
+        <h3 className="mt-6 mb-2 text-lg font-bold text-gray-900 border-b pb-1">
+          {renderInlineCitations(children, sources, onOpenSource)}
+          </h3>),
+        ul: ({ children }) => (
+          <ul className="list-disc list-inside space-y-2">
+            {children}
+          </ul>
+        ),
+        ol: ({ children }) => (
+          <ol className="list-decimal list-inside space-y-2">
+            {children}
+          </ol>
+        ),
+      }}
+    >
+      {String(content || "")}
+    </ReactMarkdown>
+  );
+}
 
 export default function Experiment() {
   const router = useRouter();
@@ -911,7 +960,7 @@ export default function Experiment() {
                         }}
                       >
                         {isAssistant ? (
-                          <CitedText
+                          <MarkdownWithCitations
                             content={msg.content}
                             sources={msg.sources}
                             onOpenSource={openSource}
