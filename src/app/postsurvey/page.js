@@ -55,6 +55,216 @@ function LikertRow({
   );
 }
 
+function LikertMatrix({ items, labels, responses, onChange }) {
+  const gridStyle = {
+    display: "grid",
+    gridTemplateColumns: "minmax(360px, 520px) repeat(7, minmax(110px, 1fr))",
+    columnGap: "14px",
+    alignItems: "center",
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="space-y-10 min-w-[980px] pt-2">
+        {/* Header row (same 7 labels) */}
+        <div
+          style={gridStyle}
+          className="sticky top-[54px] bg-white z-30 pt-2 pb-3 border-b border-gray-200"
+        >
+          <div />
+          {labels.map((h, i) => (
+            <div
+              key={i}
+              style={{ backgroundColor: COL_BG[i] }}
+              className="text-center text-[13px] font-medium text-gray-700 py-2 rounded-lg"
+            >
+              {h}
+            </div>
+          ))}
+        </div>
+
+        {/* Items */}
+        {items.map((q, idx) => {
+          const key = typeof q === "string" ? q : q.key; // 안전장치
+          const value = responses[key];
+
+          return (
+            <div
+              key={key}
+              className="py-5 border-b border-gray-200 rounded-xl px-2 transition-colors hover:bg-gray-50/60"
+            >
+              <div style={gridStyle} className="mt-2">
+                <div className="pr-6 text-lg text-gray-800 leading-snug">
+                  <span className="font-medium">{idx + 1}.</span>{" "}
+                  {typeof q === "string" ? q : q.text}
+                </div>
+
+                {Array.from({ length: 7 }).map((_, i) => {
+                  const selected = value === i + 1;
+
+                  return (
+                    <label
+                      key={i}
+                      style={{
+                        backgroundColor: selected ? COL_BG_SELECTED[i] : COL_BG[i],
+                      }}
+                      className={[
+                        "flex justify-center items-center",
+                        "py-2 rounded-lg cursor-pointer",
+                        "transition-colors duration-150",
+                        "hover:brightness-[0.98]",
+                        "focus-within:ring-2 focus-within:ring-blue-300",
+                      ].join(" ")}
+                      title={`Select ${labels[i]}`}
+                    >
+                      <input
+                        type="radio"
+                        name={key}
+                        checked={selected}
+                        onChange={() => onChange(key, i + 1)}
+                        className={[
+                          "w-5 h-5 accent-blue-600",
+                          "transition-transform",
+                          selected ? "scale-110" : "",
+                        ].join(" ")}
+                      />
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+
+const COMMON_7_HEADERS = [
+  "Extremely",
+  "Moderately",
+  "Slightly",
+  "Neither",
+  "Slightly",
+  "Moderately",
+  "Extremely",
+];
+
+const COL_BG = [
+  "rgba(239, 68, 68, 0.18)",  // 1 red (진)
+  "rgba(239, 68, 68, 0.12)",  // 2
+  "rgba(239, 68, 68, 0.07)",  // 3 red (연)
+  "rgba(107, 114, 128, 0.06)",// 4 gray
+  "rgba(59, 130, 246, 0.07)", // 5 blue (연)
+  "rgba(59, 130, 246, 0.12)", // 6
+  "rgba(59, 130, 246, 0.18)", // 7 blue (진)
+];
+
+const COL_BG_SELECTED = [
+  "rgba(239, 68, 68, 0.30)",
+  "rgba(239, 68, 68, 0.24)",
+  "rgba(239, 68, 68, 0.18)",
+  "rgba(107, 114, 128, 0.18)",
+  "rgba(59, 130, 246, 0.18)",
+  "rgba(59, 130, 246, 0.24)",
+  "rgba(59, 130, 246, 0.30)",
+];
+
+function BipolarMatrix({ items, responses, onChange }) {
+  const gridStyle = {
+    display: "grid",
+    gridTemplateColumns: "minmax(360px, 520px) repeat(7, minmax(110px, 1fr))",
+    columnGap: "14px",
+    alignItems: "center",
+  };
+
+  return (
+    <div className="overflow-x-auto">
+      <div className="space-y-10 min-w-[980px] pt-6">
+        <div style={gridStyle} className="sticky top-[54px] bg-white z-30 pt-3 pb-3 border-b border-gray-200">
+          <div /> {/* questions column */}
+            {COMMON_7_HEADERS.map((h, i) => (
+              <div
+                key={i}
+                style={{ backgroundColor: COL_BG[i] }}
+                className="text-center text-[13px] font-medium text-gray-700 py-2 rounded-lg"
+              >
+                {h}
+              </div>
+            ))}
+        </div>
+      {/* ===== questions rows ===== */}
+      {items.map((item, idx) => {
+        const value = responses[item.key];
+
+        return (
+          <div
+            key={item.key}
+            className="py-5 border-b border-gray-200 rounded-xl px-2 transition-colors hover:bg-gray-50/60"
+          >
+            {/* Row A */}
+            <div style={gridStyle} className="mt-4">
+              <div className="pr-6 text-lg text-gray-800 leading-snug">
+                <span className="font-medium">{idx + 1}.</span>{" "}
+                {item.text}
+              </div>
+
+              {Array.from({ length: 7 }).map((_, i) => {
+                const selected = value === i + 1;
+
+                return (
+                  <label
+                    key={i}
+                    style={{ backgroundColor: selected ? COL_BG_SELECTED[i] : COL_BG[i] }}
+                    className={[
+                      "flex justify-center items-center",
+                      "py-2 rounded-lg cursor-pointer",
+                      "transition-colors duration-150",
+                      "hover:brightness-[0.98]",   // hover 시 아주 살짝만 강조
+                      "focus-within:ring-2 focus-within:ring-blue-300",
+                    ].join(" ")}
+                    title={`Select ${COMMON_7_HEADERS[i]}`}
+                  >
+                    <input
+                      type="radio"
+                      name={item.key}
+                      checked={selected}
+                      onChange={() => onChange(item.key, i + 1)}
+                      className={[
+                        "w-5 h-5 accent-blue-600",
+                        "transition-transform",
+                        selected ? "scale-110" : "",
+                      ].join(" ")}
+                    />
+                  </label>
+                );
+              })}
+            </div>
+
+            {/* Row B */}
+            <div style={gridStyle} className="mt-2">
+              <div /> {/* 질문 column */}
+              <div className="text-center text-[12px] text-gray-600">
+                {item.left}
+              </div>
+              <div />
+              <div />
+              <div />
+              <div />
+              <div />
+              <div className="text-center text-[12px] text-gray-600">
+                {item.right}
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  </div>
+  );
+}
+
 export default function PostSurvey() {
   const router = useRouter();
   const questionRefs = useRef({});
@@ -138,16 +348,76 @@ export default function PostSurvey() {
   ];
 
   const evaluationQuestions = [
-    "My overall experience with search (bad / good)",
-    "Your understanding of information (insufficient / sufficient)",
-    "Your feelings of participating in search (negative / positive)",
-    "Attitude of search engines/chat AI (cooperative / belligerent)",
-    "Communication with the search engines/chat AI (destructive / productive)",
-    "Reliability of output information (high / low)",
-    "Relevancy of output information (relevant / irrelevant)",
-    "Accuracy of output information (inaccurate / accurate)",
-    "Precision of output information (definite / uncertain)",
-    "Completeness of the output information (adequate / inadequate)",
+    {
+      key: "overall",
+      text: "My overall experience with search",
+      left: "bad",
+      right: "good",
+      neutral: "Neither good nor bad",
+    },
+    {
+      key: "understanding",
+      text: "Your understanding of information",
+      left: "insufficient",
+      right: "sufficient",
+      neutral: "Neither sufficient nor insufficient",
+    },
+    {
+      key: "feelings",
+      text: "Your feelings of participating in search",
+      left: "negative",
+      right: "positive",
+      neutral: "Neither positive nor negative",
+    },
+    {
+      key: "attitude",
+      text: "Attitude of search engines/chat AI",
+      left: "belligerent",
+      right: "cooperative",
+      neutral: "Neither cooperative nor belligerent",
+    },
+    {
+      key: "communication",
+      text: "Communication with the search engines/chat AI",
+      left: "destructive",
+      right: "productive",
+      neutral: "Neither productive nor destructive",
+    },
+    {
+      key: "reliability",
+      text: "Reliability of output information",
+      left: "low",
+      right: "high",
+      neutral: "Neither high nor low",
+    },
+    {
+      key: "relevancy",
+      text: "Relevancy of output information",
+      left: "irrelevant",
+      right: "relevant",
+      neutral: "Neither relevant nor irrelevant",
+    },
+    {
+      key: "accuracy",
+      text: "Accuracy of output information",
+      left: "inaccurate",
+      right: "accurate",
+      neutral: "Neither accurate nor inaccurate",
+    },
+    {
+      key: "precision",
+      text: "Precision of output information",
+      left: "uncertain",
+      right: "definite",
+      neutral: "Neither definite nor uncertain",
+    },
+    {
+      key: "completeness",
+      text: "Completeness of the output information",
+      left: "inadequate",
+      right: "adequate",
+      neutral: "Neither adequate nor inadequate",
+    },
   ];
 
   const selfEfficacyQuestions = [
@@ -155,7 +425,7 @@ export default function PostSurvey() {
     "I can do a good search and feel confident it will lead me to interesting information.",
     "The concept is too complex for me to explore through online search.",
     "I trust my ability to find new and interesting information.",
-  ];2
+  ];
 
   const sevenPointLabels = [
     "Strongly Disagree",
@@ -237,9 +507,10 @@ export default function PostSurvey() {
     const questions = shuffledQuestionsByPage[page - 1] || [];
     const currentResponses = sectionResponses[section];
 
-    const unanswered = questions.filter(
-      (q) => currentResponses[q] === undefined
-    );
+    const unanswered = questions.filter((q) => {
+      const k = typeof q === "string" ? q : q.key;
+      return currentResponses[k] === undefined;
+    });
 
     if (unanswered.length > 0) {
       setShowWarningModal(true);
@@ -271,28 +542,42 @@ export default function PostSurvey() {
       {/* Main layout */}
       <div className="flex min-h-[calc(100vh-56px)]">
         {/* Survey */}
-        <div className="flex-1 flex justify-center overflow-y-auto">
-          <div className="max-w-[900px] w-full bg-white px-8 py-12">
-            <h1 className="text-3xl font-semibold mb-4 text-center">Survey</h1>
+        <div className="flex-1 overflow-y-auto">
+          <div className="w-full bg-white px-10 lg:px-16 pt-2 pb-10">
             <h2 className="text-xl font-semibold mb-10 text-center">
               {pages[page - 1].title}
             </h2>
 
             {questions.length > 0 && (
-              <div className="space-y-8">
-                {questions.map((q) => (
-                  <LikertRow
-                    key={q}
-                    index={qIndex++}
-                    question={q}
-                    labels={sevenPointLabels}
-                    value={sectionResponses[section][q]}
-                    onChange={(v) => handleChange(section, q, v)}
-                    highlightRef={(el) => (questionRefs.current[q] = el)}
-                    highlight={highlightQuestion === q}
-                  />
-                ))}
-              </div>
+              section === "emotion" ? (
+                <BipolarMatrix
+                  items={questions}
+                  responses={sectionResponses[section]}
+                  onChange={(key, v) => handleChange(section, key, v)}
+                />
+              ) : section === "serendipity" || section === "selfEfficacy" ? (
+                <LikertMatrix
+                  items={questions}
+                  labels={sevenPointLabels}
+                  responses={sectionResponses[section]}
+                  onChange={(key, v) => handleChange(section, key, v)}
+                />
+              ) : (
+                <div className="space-y-8">
+                  {questions.map((q) => (
+                    <LikertRow
+                      key={q}
+                      index={qIndex++}
+                      question={q}
+                      labels={sevenPointLabels}
+                      value={sectionResponses[section][q]}
+                      onChange={(v) => handleChange(section, q, v)}
+                      highlightRef={(el) => (questionRefs.current[q] = el)}
+                      highlight={highlightQuestion === q}
+                    />
+                  ))}
+                </div>
+              )
             )}
 
             {page === pages.length && (
@@ -416,9 +701,10 @@ export default function PostSurvey() {
 
               <button
                 onClick={() => {
-                  const firstUnanswered = questions.find(
-                    (q) => sectionResponses[section][q] === undefined
-                  );
+                  const firstUnanswered = questions.find((q) => {
+                    const k = typeof q === "string" ? q : q.key;
+                    return sectionResponses[section][k] === undefined;
+                  });
                   if (firstUnanswered && questionRefs.current[firstUnanswered]) {
                     questionRefs.current[firstUnanswered].scrollIntoView({
                       behavior: "smooth",
