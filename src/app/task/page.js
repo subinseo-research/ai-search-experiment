@@ -14,8 +14,8 @@ export default function TaskPage() {
      Factorial design settings
      ========================= */
   const TASKS = ["Nanotechnology", "GMO", "Cultivated Meat"];
-  const SYSTEMS = ["WebSearch", "ConvSearch"];
-  const MAX_PER_CELL = 9; // ~50 participants → 6 cells (50명 참가자 기준)
+  const SYSTEMS = ["WebSearch", "RAGSearch", "GenSearch"];
+  const MAX_PER_CELL = 55; 
 
   /* =========================
      Highlight helper

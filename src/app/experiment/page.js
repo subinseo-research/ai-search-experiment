@@ -4,9 +4,21 @@ import React, { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 import ReactMarkdown from "react-markdown";
+import { useSearchParams } from "next/navigation";
 
 const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
+
+function getFaviconUrl(pageUrl) {
+  try {
+    const u = new URL(pageUrl);
+    const domain = u.hostname;
+    // Google favicon service
+    return `https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=64`;
+  } catch {
+    return "https://www.google.com/s2/favicons?domain=example.com&sz=64";
+  }
+}
 
 function CitationPill({ n, onClick }) {
   return (
@@ -44,20 +56,40 @@ function ReferenceModal({ open, source, onClose }) {
         onClick={(e) => e.stopPropagation()} 
       >
         <div className="flex items-start justify-between gap-6">
-          <div className="min-w-0">
-            <div className="text-lg font-semibold text-gray-900 break-words">
-              {source.title || "Source"}
+          <div className="flex items-start gap-3 min-w-0">
+            {/* ✅ favicon */}
+            {source.url ? (
+              <div className="h-8 w-8 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 mt-0.5">
+                <img
+                  src={getFaviconUrl(source.url)}
+                  alt=""
+                  className="h-8 w-8 object-contain"
+                  loading="lazy"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      "https://www.google.com/s2/favicons?domain=example.com&sz=64";
+                  }}
+                />
+              </div>
+            ) : null}
+
+            <div className="min-w-0">
+              <div className="text-lg font-semibold text-gray-900 break-words">
+                {source.title || "Source"}
+              </div>
+
+              {source.url && (
+                <a
+                  href={source.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-2 inline-block text-sm text-blue-600 hover:underline break-all"
+                >
+                  {source.url}
+                </a>
+              )}
             </div>
-            {source.url && (
-              <a
-                href={source.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-2 inline-block text-sm text-blue-600 hover:underline break-all"
-              >
-                {source.url}
-              </a>
-            )}
           </div>
 
           <button
@@ -122,7 +154,15 @@ function renderInlineCitations(children, sources = [], onOpenSource) {
   });
 }
 
+function cleanMarkdown(md) {
+  return String(md || "")
+    .replace(/^\s*[-*•]\s*$/gm, "")
+    .replace(/^\s*[-*•]\s+(?=\n|$)/gm, "")
+    .trim();
+}
+
 function MarkdownWithCitations({ content, sources, onOpenSource }) {
+  const cleaned = cleanMarkdown(content);
   return (
     <ReactMarkdown
       components={{
@@ -164,7 +204,23 @@ function MarkdownWithCitations({ content, sources, onOpenSource }) {
 }
 
 export default function Experiment() {
-  const router = useRouter();
+  const router = useRouter(); 
+  const searchParams = useSearchParams(); 
+  useEffect(() => {
+    const pid = searchParams.get("pid");
+    const system = searchParams.get("system");
+    const topic = searchParams.get("topic");
+
+    if (pid) localStorage.setItem("participant_id", pid);
+
+    if (system) {
+      const normalized =
+        system === "ConvSearch" ? "GenSearch" : system;
+      localStorage.setItem("system_type", normalized);
+    }
+
+    if (topic) localStorage.setItem("task_type", topic);
+  }, [searchParams]);
 
   const [questionCount, setQuestionCount] = useState(0);
   const [showIntroModal, setShowIntroModal] = useState(true);
@@ -178,19 +234,22 @@ export default function Experiment() {
   const [taskType, setTaskType] = useState("");
   const topic = taskType;
   const taskPanelAnchorRef = useRef(null);
+  
+  const isWeb = systemType === "WebSearch";
+  const isRAG = systemType === "RAGSearch";
+  const isGen = systemType === "GenSearch";
 
   // airtable 
   const logEvent = async ({ log_type, log_data }) => {
     try {
       const nowIso = new Date().toISOString(); // ms 포함 ISO
       const nowMs = Date.now();               // Unix ms
-
       await fetch("/api/experiment-log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participant_id: participantId,
-          condition: systemType, // WebSearch | ConvSearch
+          condition: systemType, // WebSearch | RAGSearch |GenSearch
           task_id: taskType,
           log_type,
           log_data: {
@@ -225,8 +284,10 @@ export default function Experiment() {
 
   const instructionMessage = systemType
     ? systemType === "WebSearch"
-      ? `You will use search engines to conduct the search about the given topic. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
-      : `You will use Chat AI to conduct the search about the given topic. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+      ? `You will use search engines to conduct the search. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+      : systemType === "RAGSearch"
+        ? `You will use Chat AI to conduct the search. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+        : `You will use Chat AI to conduct the search. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
     : "";
 
 
@@ -329,6 +390,8 @@ export default function Experiment() {
       window.removeEventListener("mouseup", onUp);
     };
   }, []);
+
+  const chatTitle = isRAG ? "RAGSearch" : "ConvSearch";
   
   /* =========================
      Initial setup
@@ -360,7 +423,7 @@ export default function Experiment() {
       window.location.href = "/task";
       return;
     }
-      setSystemType(storedSystem); // "WebSearch" | "ConvSearch"
+      setSystemType(storedSystem); // "WebSearch" | "RAGSearch" | "GenSearch"
 
     // Load scrapbook
     const savedScraps = localStorage.getItem("scrapbook");
@@ -446,9 +509,9 @@ export default function Experiment() {
   };
 
   /* =========================
-     Gen AI (ChatSearch)
+     Gen AI + Web (RAGSearch)
   ========================= */
-  const handleGenAISubmit = async (e) => {
+  const handleRAGSubmit = async (e) => {
     e.preventDefault();
     const userInput = searchQuery.trim();
     if (!userInput || isGenerating) return;
@@ -487,7 +550,7 @@ export default function Experiment() {
     setIsGenerating(true);
 
     try {
-      const res = await fetch("/api/llm", {
+      const res = await fetch("/api/llm-rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -516,18 +579,64 @@ export default function Experiment() {
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
-        const errorMsg = {
-          role: "assistant",
-          content: "An error occurred while generating the response.",
-          sources,
-        };
         if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
-          updated[lastIdx] = errorMsg;
+          updated[lastIdx] = { role: "assistant", content: "An error occurred while generating the response." };
         } else {
-          updated.push(errorMsg);
+          updated.push({ role: "assistant", content: "An error occurred while generating the response." });
         }
         return updated;
       });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  /* =========================
+     Gen AI (GenSearch)
+  ========================= */
+  const handleGenSubmit = async (e) => {
+    e.preventDefault();
+    const userInput = searchQuery.trim();
+    if (!userInput || isGenerating) return;
+
+    logEvent({ log_type: "prompt", log_data: { prompt: userInput } });
+    setQuestionCount((prev) => prev + 1);
+
+    setChatHistory((prev) => [
+      ...prev,
+      { role: "user", content: userInput },
+      { role: "assistant", content: "Generating response...", loading: true },
+    ]);
+
+    setSearchQuery("");
+    setIsGenerating(true);
+
+    try {
+      const res = await fetch("/api/llm", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({      
+          prompt: userInput,      
+        }),
+      });
+      const data = await res.json();
+
+      setChatHistory((prev) => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        const assistantMsg = {
+          role: "assistant",
+          content: data?.text || "No response generated.",
+        };
+        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
+          updated[lastIdx] = assistantMsg;
+        } else {
+          updated.push(assistantMsg);
+        }
+        return updated;
+      });
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsGenerating(false);
     }
@@ -850,45 +959,62 @@ export default function Experiment() {
 
                   <div className="flex-1 p-4 bg-gray-50 overflow-y-auto">
                     {searchResults.map((r) => (
-                      <div
+                      <a
                         key={r.id}
-                        draggable
-                        onDragStart={(e) => e.dataTransfer.setData("text/plain", JSON.stringify({type: "web", title: r.title, link: r.link}))}
-                        className="bg-white border p-3 mb-3 rounded cursor-grab"
+                        href={r.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="block"
+                        onClick={() => {
+                          logEvent({
+                            log_type: "click",
+                            log_data: {
+                              title: r.title,
+                              snippet: r.snippet,
+                              link: r.link,
+                              rank: searchResults.findIndex(x => x.id === r.id) + 1,
+                            },
+                          });
+                        }}
                       >
-                        
-                        <h3 className="font-semibold text-blue-700 hover:underline">
-                          <a
-                            href={r.link}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              logEvent({
-                                log_type: "click",
-                                log_data: {
-                                  title: r.title,
-                                  snippet: r.snippet,
-                                  link: r.link,
-                                  rank: searchResults.findIndex(x => x.id === r.id) + 1, 
-                                },
-                            });
-                          }}
-                          >
-                            {r.title}
-                          </a>
-                        </h3>
-                        <p className="text-sm mt-1">{r.snippet}</p>
-                        <a
-                          href={r.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-xs text-green-700 break-all hover:underline mt-1 inline-block"
-                          onClick={(e) => e.stopPropagation()}
+                        <div
+                          draggable
+                          onDragStart={(e) =>
+                            e.dataTransfer.setData(
+                              "text/plain",
+                              JSON.stringify({ type: "web", title: r.title, link: r.link })
+                            )
+                          }
+                          className="
+                            bg-white border p-3 mb-3 rounded
+                            cursor-pointer hover:bg-gray-50
+                            transition
+                          "
                         >
-                          {r.link}
-                        </a>
-                      </div>
+                          <div className="flex items-start gap-3">
+                            {/* favicon */}
+                            <div className="h-8 w-8 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 mt-0.5">
+                              <img
+                                src={getFaviconUrl(r.link)}
+                                alt=""
+                                className="h-6 w-7 object-contain block"
+                                loading="lazy"
+                                referrerPolicy="no-referrer"
+                              />
+                            </div>
+
+                            <div className="min-w-0">
+                              <h3 className="font-semibold text-blue-700">
+                                {r.title}
+                              </h3>
+
+                              <p className="text-sm mt-1 text-gray-800">
+                                {r.snippet}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </a>
                     ))}
                   </div>
                 </>
@@ -952,7 +1078,7 @@ export default function Experiment() {
                               "text/plain",
                               JSON.stringify({
                                 type: "scrap",
-                                title: "ConvSearch",
+                                title: chatTitle,
                                 snippet: selection,
                                 source: "chat",
                             })
@@ -962,39 +1088,40 @@ export default function Experiment() {
                         {isAssistant ? (
                           <MarkdownWithCitations
                             content={msg.content}
-                            sources={msg.sources}
+                            sources={msg.sources || []}   // GenSearch: []
                             onOpenSource={openSource}
                           />
                         ) : (
                           <ReactMarkdown>{msg.content}</ReactMarkdown>
                         )}
-
-                        {isAssistant && !msg.loading && (
-                          <button
-                            onClick={() =>
-                              addScrap({
-                                title: "ConvSearch",
-                                fullText: msg.content,
-                                source: "chat",
-                              })
-                            }
-                            className="mt-4 self-end text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
-                          >
-                            📌Scrap
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-                </div>
-              )}
+                          {isAssistant && !msg.loading && (
+                            <button
+                              onClick={() =>
+                                addScrap({
+                                  title: chatTitle, 
+                                  fullText: msg.content,
+                                  source: "chat",
+                                })
+                              }
+                              className="mt-4 self-end text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
+                            >
+                              📌Scrap
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                  </div>
+                )}
               
-              <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} />
+              {isRAG && (
+                <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} />
+                )}
 
               {/* Input area */}
               <form
-                onSubmit={handleGenAISubmit}
+                onSubmit={isRAG ? handleRAGSubmit : handleGenSubmit}
                 className="bg-white py-4 flex justify-center"
               >
                 <div className="w-full max-w-xl flex items-center gap-2">
