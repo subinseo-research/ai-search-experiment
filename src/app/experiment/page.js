@@ -1671,3 +1671,11 @@ export default function Experiment() {
       </div>
   );
 }
+
+export default function Experiment() {
+  return (
+    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <ExperimentInner />
+    </React.Suspense>
+  );
+}
