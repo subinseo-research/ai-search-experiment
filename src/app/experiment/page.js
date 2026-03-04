@@ -9,8 +9,6 @@ import { useSearchParams } from "next/navigation";
 const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
-const HIGHLIGHT_BG = "rgba(250, 204, 21, 0.35)";      // yellow (bg)
-const HIGHLIGHT_BORDER = "rgba(234, 179, 8, 0.55)";   // yellow (border)
 
 function getFaviconUrl(pageUrl) {
   try {
@@ -369,13 +367,7 @@ function ExperimentContent() {
   const suppressRestoreRef = useRef(false); 
 
   const chatScrollRef = useRef(null);
-  const [hlRects, setHlRects] = useState([]);     // [{left, top, width, height}]
-  const [hlOpen, setHlOpen] = useState(false);
-
-  const clearHighlight = () => {
-    setHlOpen(false);
-    setHlRects([]);
-  };
+  const clearHighlight = () => {};
 
   const openSource = (src) => {
     setActiveSource(src);
@@ -573,44 +565,7 @@ function ExperimentContent() {
     return containerEl.contains(startNode) && containerEl.contains(endNode);
   };
 
-  const setHighlightFromRange = (range) => {
-    const scroller = chatScrollRef.current;
-    if (!scroller || !range) return;
-    let r;
-    try { r = range.cloneRange(); } catch { return; }
-
-    const containerRect = scroller.getBoundingClientRect();
-    // LINE_HEIGHT_MAX: any rect taller than this is a block container (ul/li/div),
-    // not an actual text line. We skip those entirely to prevent "selects upward" bug.
-    const LINE_HEIGHT_MAX = 40;
-
-    let rects = Array.from(r.getClientRects())
-      .filter((cr) => cr.width >= 2 && cr.height >= 4 && cr.height <= LINE_HEIGHT_MAX)
-      .map((cr) => ({
-        left:   cr.left   - containerRect.left + scroller.scrollLeft,
-        top:    cr.top    - containerRect.top  + scroller.scrollTop,
-        width:  cr.width,
-        height: cr.height,
-      }));
-
-    if (rects.length === 0) return;
-    rects.sort((a, b) => (a.top - b.top) || (a.left - b.left));
-
-    // Merge rects on the same line
-    const merged = [];
-    for (const cur of rects) {
-      const last = merged[merged.length - 1];
-      if (last && Math.abs(cur.top - last.top) < 6 && cur.left <= last.left + last.width + 8) {
-        const right = Math.max(last.left + last.width, cur.left + cur.width);
-        last.width  = right - last.left;
-        last.height = Math.max(last.height, cur.height);
-      } else {
-        merged.push({ ...cur });
-      }
-    }
-    setHlRects(merged);
-    setHlOpen(true);
-  };
+  const setHighlightFromRange = () => {};
     
   /* =========================
      Initial setup
@@ -1370,25 +1325,6 @@ function ExperimentContent() {
                 
               ) : (         
                 <div ref={chatScrollRef} className="relative flex-1 p-4 overflow-y-auto pb-36">
-                  {hlOpen && hlRects.length > 0 && (
-                    <div className="pointer-events-none absolute inset-0 z-[30]">
-                      {hlRects.map((r, i) => (
-                        <div
-                          key={i}
-                          className="absolute rounded-sm"
-                          style={{
-                            left: r.left,
-                            top: r.top,
-                            width: r.width,
-                            height: r.height,
-                            backgroundColor: HIGHLIGHT_BG,
-                            outline: `1px solid ${HIGHLIGHT_BORDER}`,
-                            borderRadius: 2,
-                          }}
-                        />
-                      ))}
-                    </div>
-                  )}
 
                 {/* Chat history */}
                 <div ref={chatAreaRef} className="mx-auto w-full max-w-3xl space-y-4">
