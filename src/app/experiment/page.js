@@ -60,7 +60,7 @@ function ReferenceModal({ open, source, onClose, onScrap }) {
       >
         <div className="flex items-start justify-between gap-6">
           <div className="flex items-start gap-3 min-w-0">
-            {/* favicon */}
+            {/* ✅ favicon */}
             {source.url ? (
               <div className="h-8 w-8 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 mt-0.5">
                 <img
@@ -111,8 +111,6 @@ function ReferenceModal({ open, source, onClose, onScrap }) {
             </p>
           </div>
         )}
-
-        {/* Scrap button */}
         <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
           <button
             type="button"
@@ -407,7 +405,6 @@ export default function Experiment() {
     }
     const rawText = (forced || selection || fullText || "").trim();
     if (!rawText) return;
-
     const citedNums = [...new Set(
       [...rawText.matchAll(/\[(\d[\d,\s]*)\]/g)]
         .flatMap(m => m[1].split(",").map(s => Number(s.trim())))
@@ -416,28 +413,21 @@ export default function Experiment() {
     const links = (msgSources && citedNums.length > 0)
       ? citedNums.map(n => ({ n, ...(msgSources[n - 1] || {}) })).filter(s => s.url)
       : [];
-
     const snippet = cleanSnippet(rawText);
     if (!snippet) return;
-
     setScraps((prev) => [
       ...prev,
       { type: "scrap", title, snippet, source, comment: "", links },
     ]);
     logEvent({
       log_type: "scrap",
-      log_data: { title, snippet, source, links, ...(meta || {}) },
+      log_data: { title, snippet, source, links, system: systemType || "", ...(meta || {}) },
     });
   };
 
   const addWebScrap = (source) => {
     if (!source?.url) return;
-    const item = {
-      type: "web",
-      title: source.title || source.url,
-      link: source.url,
-      comment: "",
-    };
+    const item = { type: "web", title: source.title || source.url, link: source.url, comment: "" };
     setScraps((prev) => [...prev, item]);
     logEvent({
       log_type: "scrap",
@@ -446,6 +436,7 @@ export default function Experiment() {
         snippet: source.snippet || "",
         source: "rag_reference",
         link: source.url,
+        system: systemType || "",
       },
     });
   };
@@ -462,16 +453,20 @@ export default function Experiment() {
   const isSelectingRef = useRef(false);
   const chatAreaRef = useRef(null);
   const addNote = () => {
-    setScraps((prev) => [
-      ...prev,
-      {
-        type: "note",
-        title: "Note",
-        snippet: "",
-        source: "note",
-        comment: "",
-      },
-    ]);
+    setScraps((prev) => {
+      logEvent({
+        log_type: "note",
+        log_data: {
+          action: "add",
+          index: prev.length,
+          system: systemType || "",
+        },
+      });
+      return [
+        ...prev,
+        { type: "note", title: "Note", snippet: "", source: "note", comment: "" },
+      ];
+    });
   };
 
   useEffect(() => {
@@ -985,6 +980,7 @@ export default function Experiment() {
             action: "update",
             index,
             content: value,
+            system: systemType || "",
           },
         });
       }
@@ -1169,7 +1165,13 @@ export default function Experiment() {
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
             <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg">
               <button
-                onClick={() => setShowIntroModal(false)}
+                onClick={() => {
+                  setShowIntroModal(false);
+                  logEvent({
+                    log_type: "session_start",
+                    log_data: { system: systemType || "" },
+                  });
+                }}
                 className="absolute top-3 right-3 text-gray-500 text-xl"
                 aria-label="Close"
               >
