@@ -46,7 +46,7 @@ function CitationPill({ n, onClick }) {
   );
 }
 
-function ReferenceModal({ open, source, onClose }) {
+function ReferenceModal({ open, source, onClose, onScrap }) {
   if (!open || !source) return null;
 
   return (
@@ -60,7 +60,7 @@ function ReferenceModal({ open, source, onClose }) {
       >
         <div className="flex items-start justify-between gap-6">
           <div className="flex items-start gap-3 min-w-0">
-            {/* ✅ favicon */}
+            {/* favicon */}
             {source.url ? (
               <div className="h-8 w-8 rounded-full border border-gray-200 bg-white flex items-center justify-center overflow-hidden shrink-0 mt-0.5">
                 <img
@@ -111,6 +111,17 @@ function ReferenceModal({ open, source, onClose }) {
             </p>
           </div>
         )}
+
+        {/* Scrap button */}
+        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-end">
+          <button
+            type="button"
+            onClick={() => { onScrap(source); onClose(); }}
+            className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-yellow-50 hover:bg-yellow-100 border border-yellow-200 text-sm font-medium text-gray-700 transition"
+          >
+            📌 Scrap this source
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -157,58 +168,30 @@ function renderInlineCitations(children, sources = [], onOpenSource) {
   });
 }
 
-// parseInline: used by the flat markdown renderer below.
-// Splits a plain text line into citation pills + inline styled spans.
-// Citation logic mirrors the original renderInlineCitations exactly
-// (same regex, Number.isFinite check, CitationPill).
 function parseInline(text, sources, onOpenSource, keyPrefix) {
   if (!text) return null;
-
-  // Split on citation refs like [1] or [1,2,3]
   const parts = text.split(/(\[[0-9,\s]+\])/g);
   const nodes = [];
-
   parts.forEach((part, i) => {
     const m = part.match(/^\[([0-9,\s]+)\]$/);
     if (m) {
-      // Citation — exact same logic as original renderInlineCitations
-      const nums = m[1]
-        .split(",")
-        .map((s) => Number(s.trim()))
-        .filter((n) => Number.isFinite(n) && n > 0);
+      const nums = m[1].split(",").map(s => Number(s.trim())).filter(n => Number.isFinite(n) && n > 0);
       nums.forEach((n, j) => {
-        const src = sources?.[n - 1];
-        if (!src) {
-          nodes.push(<span key={`${keyPrefix}-${i}-${j}`}>[{n}]</span>);
-          return;
-        }
-        nodes.push(
-          <CitationPill
-            key={`${keyPrefix}-${i}-${j}`}
-            n={n}
-            onClick={() => onOpenSource(src)}
-          />
-        );
+        const s2 = sources?.[n - 1];
+        if (!s2) { nodes.push(<span key={`${keyPrefix}-${i}-${j}`}>[{n}]</span>); return; }
+        nodes.push(<CitationPill key={`${keyPrefix}-${i}-${j}`} n={n} onClick={() => onOpenSource(s2)} />);
       });
       return;
     }
-
-    // Inline formatting: bold, italic, inline code
-    const inlineParts = part.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
-    inlineParts.forEach((ip, ii) => {
+    const ip = part.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+    ip.forEach((x, ii) => {
       const k = `${keyPrefix}-${i}-${ii}`;
-      if (/^\*\*([^*]+)\*\*$/.test(ip)) {
-        nodes.push(<strong key={k}>{ip.slice(2, -2)}</strong>);
-      } else if (/^\*([^*]+)\*$/.test(ip)) {
-        nodes.push(<em key={k}>{ip.slice(1, -1)}</em>);
-      } else if (/^`([^`]+)`$/.test(ip)) {
-        nodes.push(<code key={k} className="bg-gray-100 rounded px-1 text-sm font-mono">{ip.slice(1, -1)}</code>);
-      } else if (ip) {
-        nodes.push(<span key={k}>{ip}</span>);
-      }
+      if (/^\*\*([^*]+)\*\*$/.test(x)) nodes.push(<strong key={k}>{x.slice(2,-2)}</strong>);
+      else if (/^\*([^*]+)\*$/.test(x)) nodes.push(<em key={k}>{x.slice(1,-1)}</em>);
+      else if (/^`([^`]+)`$/.test(x)) nodes.push(<code key={k} className="bg-gray-100 rounded px-1 text-sm font-mono">{x.slice(1,-1)}</code>);
+      else if (x) nodes.push(<span key={k}>{x}</span>);
     });
   });
-
   return nodes;
 }
 
@@ -216,68 +199,26 @@ function MarkdownWithCitations({ content, sources, onOpenSource }) {
   if (!content) return null;
   const lines = String(content).split("\n");
   const blocks = [];
-  let olCounter = 0;
-  let inCodeBlock = false;
-  let codeLines = [];
-
+  let olCounter = 0; let inCode = false; let codeLines = [];
   lines.forEach((line, i) => {
     if (line.trim().startsWith("```")) {
-      if (!inCodeBlock) { inCodeBlock = true; codeLines = []; }
-      else {
-        inCodeBlock = false;
-        blocks.push(
-          <pre key={`code-${i}`} className="bg-gray-100 rounded p-3 my-2 text-sm font-mono overflow-x-auto whitespace-pre-wrap">
-            {codeLines.join("\n")}
-          </pre>
-        );
-        codeLines = [];
-      }
+      if (!inCode) { inCode = true; codeLines = []; }
+      else { inCode = false; blocks.push(<pre key={`code-${i}`} className="bg-gray-100 rounded p-3 my-2 text-sm font-mono overflow-x-auto whitespace-pre-wrap">{codeLines.join("\n")}</pre>); codeLines = []; }
       return;
     }
-    if (inCodeBlock) { codeLines.push(line); return; }
-
-    if (!line.trim()) {
-      olCounter = 0;
-      blocks.push(<div key={`gap-${i}`} className="h-2" />);
-      return;
-    }
-    const h1 = line.match(/^#\s+(.*)/);
-    if (h1) { olCounter = 0; blocks.push(<div key={`h1-${i}`} className="mt-4 mb-1 text-lg font-bold text-gray-900 border-b border-gray-200 pb-1">{parseInline(h1[1], sources, onOpenSource, `h1-${i}`)}</div>); return; }
-    const h2 = line.match(/^##\s+(.*)/);
-    if (h2) { olCounter = 0; blocks.push(<div key={`h2-${i}`} className="mt-4 mb-1 text-base font-bold text-gray-900 border-b border-gray-200 pb-1">{parseInline(h2[1], sources, onOpenSource, `h2-${i}`)}</div>); return; }
-    const h3 = line.match(/^###\s+(.*)/);
-    if (h3) { olCounter = 0; blocks.push(<div key={`h3-${i}`} className="mt-3 mb-1 text-sm font-bold text-gray-800">{parseInline(h3[1], sources, onOpenSource, `h3-${i}`)}</div>); return; }
-
-    const ul = line.match(/^[\s]*[-*\u2022]\s+(.*)/);
-    if (ul) {
-      olCounter = 0;
-      blocks.push(
-        <div key={`ul-${i}`} className="flex gap-2 my-0.5 leading-relaxed">
-          <span className="mt-2 shrink-0 w-1.5 h-1.5 rounded-full bg-gray-500 inline-block" />
-          <span>{parseInline(ul[1], sources, onOpenSource, `ul-${i}`)}</span>
-        </div>
-      );
-      return;
-    }
+    if (inCode) { codeLines.push(line); return; }
+    if (!line.trim()) { olCounter = 0; blocks.push(<div key={`gap-${i}`} className="h-2" />); return; }
+    const h1 = line.match(/^#\s+(.*)/);   if (h1) { olCounter=0; blocks.push(<div key={`h1-${i}`} className="mt-4 mb-1 text-lg font-bold text-gray-900 border-b border-gray-200 pb-1">{parseInline(h1[1],sources,onOpenSource,`h1-${i}`)}</div>); return; }
+    const h2 = line.match(/^##\s+(.*)/);  if (h2) { olCounter=0; blocks.push(<div key={`h2-${i}`} className="mt-4 mb-1 text-base font-bold text-gray-900 border-b border-gray-200 pb-1">{parseInline(h2[1],sources,onOpenSource,`h2-${i}`)}</div>); return; }
+    const h3 = line.match(/^###\s+(.*)/); if (h3) { olCounter=0; blocks.push(<div key={`h3-${i}`} className="mt-3 mb-1 text-sm font-bold text-gray-800">{parseInline(h3[1],sources,onOpenSource,`h3-${i}`)}</div>); return; }
+    const ul = line.match(/^[\s]*[-*\u2022]\s+(.*)/u);
+    if (ul) { olCounter=0; blocks.push(<div key={`ul-${i}`} className="flex gap-2 my-0.5 leading-relaxed"><span className="mt-2 shrink-0 w-1.5 h-1.5 rounded-full bg-gray-500 inline-block" /><span>{parseInline(ul[1],sources,onOpenSource,`ul-${i}`)}</span></div>); return; }
     const ol = line.match(/^[\s]*(\d+)[.)]\s+(.*)/);
-    if (ol) {
-      olCounter++;
-      blocks.push(
-        <div key={`ol-${i}`} className="flex gap-2 my-0.5 leading-relaxed">
-          <span className="shrink-0 text-gray-600 font-medium min-w-[1.2rem]">{olCounter}.</span>
-          <span>{parseInline(ol[2], sources, onOpenSource, `ol-${i}`)}</span>
-        </div>
-      );
-      return;
-    }
-    if (/^---+$/.test(line.trim())) { olCounter = 0; blocks.push(<hr key={`hr-${i}`} className="my-3 border-gray-200" />); return; }
-    const bq = line.match(/^>\s+(.*)/);
-    if (bq) { olCounter = 0; blocks.push(<div key={`bq-${i}`} className="border-l-4 border-gray-300 pl-3 my-1 text-gray-600 italic">{parseInline(bq[1], sources, onOpenSource, `bq-${i}`)}</div>); return; }
-
-    olCounter = 0;
-    blocks.push(<div key={`p-${i}`} className="my-0.5 leading-relaxed">{parseInline(line, sources, onOpenSource, `p-${i}`)}</div>);
+    if (ol) { olCounter++; blocks.push(<div key={`ol-${i}`} className="flex gap-2 my-0.5 leading-relaxed"><span className="shrink-0 text-gray-600 font-medium min-w-[1.2rem]">{olCounter}.</span><span>{parseInline(ol[2],sources,onOpenSource,`ol-${i}`)}</span></div>); return; }
+    if (/^---+$/.test(line.trim())) { olCounter=0; blocks.push(<hr key={`hr-${i}`} className="my-3 border-gray-200" />); return; }
+    const bq = line.match(/^>\s+(.*)/); if (bq) { olCounter=0; blocks.push(<div key={`bq-${i}`} className="border-l-4 border-gray-300 pl-3 my-1 text-gray-600 italic">{parseInline(bq[1],sources,onOpenSource,`bq-${i}`)}</div>); return; }
+    olCounter=0; blocks.push(<div key={`p-${i}`} className="my-0.5 leading-relaxed">{parseInline(line,sources,onOpenSource,`p-${i}`)}</div>);
   });
-
   return <div className="text-sm text-gray-800">{blocks}</div>;
 }
 function makeMessageId(prefix = "m") {
@@ -416,7 +357,7 @@ export default function Experiment() {
   const [loading, setLoading] = useState(true);
   const [refOpen, setRefOpen] = useState(false);
   const [activeSource, setActiveSource] = useState(null);
-  const [scrapPopup, setScrapPopup] = useState({open: false,x: 0, y: 0, text: "", meta: null,});
+  const [scrapPopup, setScrapPopup] = useState({open: false, x: 0, y: 0, text: "", meta: null, msgSources: null});
   const generatingRef = useRef(false);
   const selectionRangeRef = useRef(null);    
   const suppressRestoreRef = useRef(false); 
@@ -440,27 +381,71 @@ export default function Experiment() {
   };
   const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
 
+  const cleanSnippet = (raw) => {
+    if (!raw) return "";
+    return raw
+      .split("\n")
+      .filter(line => {
+        const t = line.trim();
+        if (!t) return false;
+        if (/^source\s+\d+$/i.test(t)) return false;
+        if (/^[\p{Emoji}\p{So}\p{Sk}\s]+$/u.test(t)) return false;
+        if (/^[.\s]+$/.test(t)) return false;
+        return true;
+      })
+      .join("\n")
+      .replace(/\s*\[\d[\d,\s]*\]/g, "")
+      .trim();
+  };
+
   // scrap
-  const addScrap = ({ title, fullText = "", source, meta, snippetOverride }) => {
+  const addScrap = ({ title, fullText = "", source, meta, snippetOverride, msgSources }) => {
     const forced = (snippetOverride || "").trim();
     let selection = "";
     if (!forced && typeof window !== "undefined") {
       selection = window.getSelection()?.toString()?.trim() || "";
     }
-    const snippet = (forced || selection || fullText || "").trim();
+    const rawText = (forced || selection || fullText || "").trim();
+    if (!rawText) return;
+
+    const citedNums = [...new Set(
+      [...rawText.matchAll(/\[(\d[\d,\s]*)\]/g)]
+        .flatMap(m => m[1].split(",").map(s => Number(s.trim())))
+        .filter(n => Number.isFinite(n) && n > 0)
+    )];
+    const links = (msgSources && citedNums.length > 0)
+      ? citedNums.map(n => ({ n, ...(msgSources[n - 1] || {}) })).filter(s => s.url)
+      : [];
+
+    const snippet = cleanSnippet(rawText);
     if (!snippet) return;
 
     setScraps((prev) => [
       ...prev,
-      { type: "scrap", title, snippet, source, comment: "" },
+      { type: "scrap", title, snippet, source, comment: "", links },
     ]);
     logEvent({
       log_type: "scrap",
+      log_data: { title, snippet, source, links, ...(meta || {}) },
+    });
+  };
+
+  const addWebScrap = (source) => {
+    if (!source?.url) return;
+    const item = {
+      type: "web",
+      title: source.title || source.url,
+      link: source.url,
+      comment: "",
+    };
+    setScraps((prev) => [...prev, item]);
+    logEvent({
+      log_type: "scrap",
       log_data: {
-        title,
-        snippet,
-        source,
-        ...(meta || {}),
+        title: source.title || "web",
+        snippet: source.snippet || "",
+        source: "rag_reference",
+        link: source.url,
       },
     });
   };
@@ -513,7 +498,7 @@ export default function Experiment() {
   const chatTitle = systemType;
 
   const closeScrapPopup = () =>
-  setScrapPopup({ open: false, x: 0, y: 0, text: "", meta: null });
+  setScrapPopup({ open: false, x: 0, y: 0, text: "", meta: null, msgSources: null });
 
   const maybeOpenScrapPopup = (msg) => {
     if (typeof window === "undefined") return;
@@ -531,6 +516,7 @@ export default function Experiment() {
     selectionRangeRef.current = range.cloneRange();
     suppressRestoreRef.current = false;
 
+    // position:fixed → viewport coords only, no scrollX/Y offset
     const x = Math.min(rect.right + 6, window.innerWidth - 130);
     const y = Math.max(rect.top - 42, 8);
 
@@ -544,11 +530,16 @@ export default function Experiment() {
         turn_index: msg.turn_index,
         message_id: msg.message_id,
       },
+      msgSources: msg.sources || null,
     });
   };
   
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    // Bubble phase (no capture flag) so React synthetic events fire first.
+    // Never call removeAllRanges() here — that kills drag-select in progress.
+    // Only close UI chrome (popup + highlight overlay) when clicking outside.
     const onDocMouseDown = (e) => {
       const el = e.target instanceof Element ? e.target : null;
       if (el?.closest?.('[data-scrap-popup="1"]')) return;
@@ -556,6 +547,7 @@ export default function Experiment() {
       closeScrapPopup();
       clearHighlight();
     };
+
     document.addEventListener("mousedown", onDocMouseDown);
     return () => document.removeEventListener("mousedown", onDocMouseDown);
   }, []);
@@ -582,33 +574,32 @@ export default function Experiment() {
     const scroller = chatScrollRef.current;
     if (!scroller || !range) return;
     let r;
-    try {
-      r = range.cloneRange();
-    } catch {
-      return;
-    }
+    try { r = range.cloneRange(); } catch { return; }
+
     const containerRect = scroller.getBoundingClientRect();
+    // LINE_HEIGHT_MAX: any rect taller than this is a block container (ul/li/div),
+    // not an actual text line. We skip those entirely to prevent "selects upward" bug.
+    const LINE_HEIGHT_MAX = 40;
 
     let rects = Array.from(r.getClientRects())
+      .filter((cr) => cr.width >= 2 && cr.height >= 4 && cr.height <= LINE_HEIGHT_MAX)
       .map((cr) => ({
-        left: cr.left - containerRect.left + scroller.scrollLeft,
-        top: cr.top - containerRect.top + scroller.scrollTop,
-        width: cr.width,
+        left:   cr.left   - containerRect.left + scroller.scrollLeft,
+        top:    cr.top    - containerRect.top  + scroller.scrollTop,
+        width:  cr.width,
         height: cr.height,
-      }))
-      .filter((x) => x.width >= 2 && x.height >= 8);
+      }));
+
     if (rects.length === 0) return;
     rects.sort((a, b) => (a.top - b.top) || (a.left - b.left));
+
+    // Merge rects on the same line
     const merged = [];
     for (const cur of rects) {
       const last = merged[merged.length - 1];
-      if (
-        last &&
-        Math.abs(cur.top - last.top) < 4 &&              
-        cur.left <= last.left + last.width + 6         
-      ) {
+      if (last && Math.abs(cur.top - last.top) < 6 && cur.left <= last.left + last.width + 8) {
         const right = Math.max(last.left + last.width, cur.left + cur.width);
-        last.width = right - last.left;
+        last.width  = right - last.left;
         last.height = Math.max(last.height, cur.height);
       } else {
         merged.push({ ...cur });
@@ -1405,16 +1396,24 @@ export default function Experiment() {
                 
                         onMouseUp={(e) => {
                           if (!isAssistant || msg.loading) return;
+                          // Ignore mouseup on citation buttons / links
                           if (e.target?.closest?.("button, a")) return;
+
                           const sel = window.getSelection();
                           if (!sel || sel.rangeCount === 0) return;
                           const text = sel.toString().trim();
                           if (!text || text.length < 2) return;
+
                           const range = sel.getRangeAt(0);
+                          // Only check that selection START is inside this message.
+                          // We don't restrict the end — multi-line selections across
+                          // <li> / <h2> / <p> boundaries must all work.
                           const startNode = range.startContainer.nodeType === 3
                             ? range.startContainer.parentElement
                             : range.startContainer;
                           if (!e.currentTarget.contains(startNode)) return;
+
+                          setHighlightFromRange(range);
                           maybeOpenScrapPopup(msg);
                         }}
                       >
@@ -1446,6 +1445,7 @@ export default function Experiment() {
                               fullText: msg.content,
                               source: "chat",
                               snippetOverride: msg.content,
+                              msgSources: msg.sources,
                               meta: {
                                 request_id: msg.request_id,
                                 turn_index: msg.turn_index,
@@ -1467,7 +1467,7 @@ export default function Experiment() {
               )}
               
               {isRAG && (
-                <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} />
+                <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} onScrap={addWebScrap} />
                 )}
 
               {/* Input area */}
@@ -1538,8 +1538,23 @@ export default function Experiment() {
                 </button>
 
                 {item.type === "scrap" && (
-                  <div className="whitespace-pre-wrap text-sm text-gray-800">
-                    {item.snippet}
+                  <div>
+                    <div className="whitespace-pre-wrap text-sm text-gray-800">
+                      {item.snippet}
+                    </div>
+                    {item.links && item.links.length > 0 && (
+                      <div className="mt-2 pt-2 border-t border-gray-100 space-y-0.5">
+                        {item.links.map((lk, li) => (
+                          <div key={li} className="flex gap-1 text-xs">
+                            <span className="shrink-0 font-medium text-gray-500">[{lk.n}]</span>
+                            <a href={lk.url} target="_blank" rel="noopener noreferrer"
+                               className="break-all text-blue-500 hover:underline">
+                              {lk.url}
+                            </a>
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1638,6 +1653,7 @@ export default function Experiment() {
                   fullText: "",
                   snippetOverride: scrapPopup.text,
                   meta: scrapPopup.meta,
+                  msgSources: scrapPopup.msgSources,
                 });
                 suppressRestoreRef.current = true;
                 selectionRangeRef.current = null;
