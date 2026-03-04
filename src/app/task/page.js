@@ -69,25 +69,23 @@ export default function TaskPage() {
   function pickBalancedCell() {
     const counts = getCellCounts();
     const available = [];
-
-    TASKS.forEach((task) => {
-      SYSTEMS.forEach((system) => {
+    for (const task of TASKS) {
+      for (const system of SYSTEMS) {
         const key = `${task}__${system}`;
-        if (counts[key] < MAX_PER_CELL) {
-          available.push({ task, system });
+        const n = counts[key] ?? 0;
+        if (n < MAX_PER_CELL) available.push({ task, system, n });
         }
-      });
-    });
-
-    const pool =
-      available.length > 0
-        ? available
-        : TASKS.flatMap((t) =>
-            SYSTEMS.map((s) => ({ task: t, system: s }))
-          );
-
-    return pool[Math.floor(Math.random() * pool.length)];
-  }
+      }
+    if (available.length === 0) {
+      const pool = TASKS.flatMap((t) => SYSTEMS.map((s) => ({ task: t, system: s })));
+      const picked = pool[Math.floor(Math.random() * pool.length)];
+      return { ...picked, overflow: true };
+    }
+  const minCount = Math.min(...available.map((x) => x.n));
+  const minPool = available.filter((x) => x.n === minCount);
+  const picked = minPool[Math.floor(Math.random() * minPool.length)];
+  return { task: picked.task, system: picked.system, overflow: false };
+}
 
   /* =========================
      1. Load participant_id
@@ -135,11 +133,14 @@ export default function TaskPage() {
     const savedTask = localStorage.getItem("task_type");
     const savedSystem = localStorage.getItem("system_type");
 
-    if (savedTask && savedSystem) {
-      const existingScenario = scenarios.find(
-        (s) => s.condition === savedTask
-      );
+    const isValidTask = TASKS.includes(savedTask);
+    const isValidSystem = SYSTEMS.includes(savedSystem);
+
+    if (isValidTask && isValidSystem) {
+      const existingScenario = scenarios.find((s) => s.condition === savedTask);
       if (existingScenario) {
+        localStorage.setItem("search_case", existingScenario.searchCase);
+        localStorage.setItem("search_task", existingScenario.searchTask);
         setAssignedScenario(existingScenario);
         setLoading(false);
         return;
@@ -147,15 +148,18 @@ export default function TaskPage() {
     }
 
     /* ===== Balanced factorial assignment ===== */
-    const { task, system } = pickBalancedCell();
+    const { task, system, overflow } = pickBalancedCell();
     const scenario = scenarios.find((s) => s.condition === task);
-
-    incrementCell(task, system);
 
     localStorage.setItem("task_type", task);
     localStorage.setItem("system_type", system);
     localStorage.setItem("search_case", scenario.searchCase);
     localStorage.setItem("search_task", scenario.searchTask);
+
+    localStorage.setItem("is_overflow", overflow ? "1" : "0");
+    if (!overflow) {
+      incrementCell(task, system);
+    }
 
     setAssignedScenario(scenario);
     setLoading(false);

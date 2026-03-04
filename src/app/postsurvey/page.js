@@ -145,20 +145,20 @@ const COMMON_7_HEADERS = [
   "Extremely",
   "Moderately",
   "Slightly",
-  "Neither",
+  "Neutral",
   "Slightly",
   "Moderately",
   "Extremely",
 ];
 
 const COL_BG = [
-  "rgba(239, 68, 68, 0.18)",  // 1 red (진)
+  "rgba(239, 68, 68, 0.18)",  // 1 red 
   "rgba(239, 68, 68, 0.12)",  // 2
-  "rgba(239, 68, 68, 0.07)",  // 3 red (연)
+  "rgba(239, 68, 68, 0.07)",  // 3 red
   "rgba(107, 114, 128, 0.06)",// 4 gray
-  "rgba(59, 130, 246, 0.07)", // 5 blue (연)
+  "rgba(59, 130, 246, 0.07)", // 5 blue 
   "rgba(59, 130, 246, 0.12)", // 6
-  "rgba(59, 130, 246, 0.18)", // 7 blue (진)
+  "rgba(59, 130, 246, 0.18)", // 7 blue 
 ];
 
 const COL_BG_SELECTED = [
@@ -473,7 +473,7 @@ export default function PostSurvey() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participant_id: participantId,
-          condition: systemType, // WebSearch | ConvSearch
+          condition: systemType, // WebSearch | GenSearch | RAGSearch
           task_id: taskType,
           serendipity_responses: serendipityResponses,
           emotion_responses: emotionResponses,

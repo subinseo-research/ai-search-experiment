@@ -214,9 +214,7 @@ export default function Experiment() {
     if (pid) localStorage.setItem("participant_id", pid);
 
     if (system) {
-      const normalized =
-        system === "ConvSearch" ? "GenSearch" : system;
-      localStorage.setItem("system_type", normalized);
+      localStorage.setItem("system_type", system);
     }
 
     if (topic) localStorage.setItem("task_type", topic);
@@ -391,7 +389,7 @@ export default function Experiment() {
     };
   }, []);
 
-  const chatTitle = isRAG ? "RAGSearch" : "ConvSearch";
+  const chatTitle = systemType;
   
   /* =========================
      Initial setup
