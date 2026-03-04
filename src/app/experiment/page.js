@@ -239,6 +239,14 @@ function nextTurnIndex(chatHistory = []) {
 }
 
 export default function Experiment() {
+  return (
+    <React.Suspense fallback={null}>
+      <ExperimentContent />
+    </React.Suspense>
+  );
+}
+
+function ExperimentContent() {
   const router = useRouter(); 
   const searchParams = useSearchParams(); 
   useEffect(() => {
@@ -1669,13 +1677,5 @@ export default function Experiment() {
           </div>
         )}
       </div>
-  );
-}
-
-export default function Experiment() {
-  return (
-    <React.Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
-      <ExperimentInner />
-    </React.Suspense>
   );
 }
