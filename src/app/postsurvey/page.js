@@ -504,7 +504,8 @@ export default function PostSurvey() {
 
   const handleNext = () => {
     const { section } = pages[page - 1];
-    const questions = shuffledQuestionsByPage[page - 1] || [];
+    const questions = 
+      shuffledQuestionsByPage[page - 1] || pages[page - 1].questions || [];
     const currentResponses = sectionResponses[section];
 
     const unanswered = questions.filter((q) => {

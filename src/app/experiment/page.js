@@ -9,6 +9,9 @@ import { useSearchParams } from "next/navigation";
 const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
+const HIGHLIGHT_BG = "rgba(250, 204, 21, 0.35)";      // yellow (bg)
+const HIGHLIGHT_BORDER = "rgba(234, 179, 8, 0.55)";   // yellow (border)
+
 function getFaviconUrl(pageUrl) {
   try {
     const u = new URL(pageUrl);
@@ -154,53 +157,146 @@ function renderInlineCitations(children, sources = [], onOpenSource) {
   });
 }
 
-function cleanMarkdown(md) {
-  return String(md || "")
-    .replace(/^\s*[-*•]\s*$/gm, "")
-    .replace(/^\s*[-*•]\s+(?=\n|$)/gm, "")
-    .trim();
+// parseInline: used by the flat markdown renderer below.
+// Splits a plain text line into citation pills + inline styled spans.
+// Citation logic mirrors the original renderInlineCitations exactly
+// (same regex, Number.isFinite check, CitationPill).
+function parseInline(text, sources, onOpenSource, keyPrefix) {
+  if (!text) return null;
+
+  // Split on citation refs like [1] or [1,2,3]
+  const parts = text.split(/(\[[0-9,\s]+\])/g);
+  const nodes = [];
+
+  parts.forEach((part, i) => {
+    const m = part.match(/^\[([0-9,\s]+)\]$/);
+    if (m) {
+      // Citation — exact same logic as original renderInlineCitations
+      const nums = m[1]
+        .split(",")
+        .map((s) => Number(s.trim()))
+        .filter((n) => Number.isFinite(n) && n > 0);
+      nums.forEach((n, j) => {
+        const src = sources?.[n - 1];
+        if (!src) {
+          nodes.push(<span key={`${keyPrefix}-${i}-${j}`}>[{n}]</span>);
+          return;
+        }
+        nodes.push(
+          <CitationPill
+            key={`${keyPrefix}-${i}-${j}`}
+            n={n}
+            onClick={() => onOpenSource(src)}
+          />
+        );
+      });
+      return;
+    }
+
+    // Inline formatting: bold, italic, inline code
+    const inlineParts = part.split(/(\*\*[^*]+\*\*|\*[^*]+\*|`[^`]+`)/g);
+    inlineParts.forEach((ip, ii) => {
+      const k = `${keyPrefix}-${i}-${ii}`;
+      if (/^\*\*([^*]+)\*\*$/.test(ip)) {
+        nodes.push(<strong key={k}>{ip.slice(2, -2)}</strong>);
+      } else if (/^\*([^*]+)\*$/.test(ip)) {
+        nodes.push(<em key={k}>{ip.slice(1, -1)}</em>);
+      } else if (/^`([^`]+)`$/.test(ip)) {
+        nodes.push(<code key={k} className="bg-gray-100 rounded px-1 text-sm font-mono">{ip.slice(1, -1)}</code>);
+      } else if (ip) {
+        nodes.push(<span key={k}>{ip}</span>);
+      }
+    });
+  });
+
+  return nodes;
 }
 
 function MarkdownWithCitations({ content, sources, onOpenSource }) {
-  const cleaned = cleanMarkdown(content);
-  return (
-    <ReactMarkdown
-      components={{
-        p: ({ children }) => (
-          <p className="prose prose-sm max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-li:marker:text-gray-600">
-            {renderInlineCitations(children, sources, onOpenSource)}
-          </p>
-        ),
-        li: ({ children }) => (
-          <li>{renderInlineCitations(children, sources, onOpenSource)}</li>
-        ),
-        h1: ({ children }) => (
-        <h1 className="mt-6 mb-2 text-lg font-bold text-gray-900 border-b pb-1">
-          {renderInlineCitations(children, sources, onOpenSource)}
-        </h1>),
-        h2: ({ children }) => (
-        <h2 className="mt-6 mb-2 text-lg font-bold text-gray-900 border-b pb-1">
-          {renderInlineCitations(children, sources, onOpenSource)}
-        </h2>),
-        h3: ({ children }) => (
-        <h3 className="mt-6 mb-2 text-lg font-bold text-gray-900 border-b pb-1">
-          {renderInlineCitations(children, sources, onOpenSource)}
-          </h3>),
-        ul: ({ children }) => (
-          <ul className="list-disc list-inside space-y-2">
-            {children}
-          </ul>
-        ),
-        ol: ({ children }) => (
-          <ol className="list-decimal list-inside space-y-2">
-            {children}
-          </ol>
-        ),
-      }}
-    >
-      {String(content || "")}
-    </ReactMarkdown>
-  );
+  if (!content) return null;
+  const lines = String(content).split("\n");
+  const blocks = [];
+  let olCounter = 0;
+  let inCodeBlock = false;
+  let codeLines = [];
+
+  lines.forEach((line, i) => {
+    if (line.trim().startsWith("```")) {
+      if (!inCodeBlock) { inCodeBlock = true; codeLines = []; }
+      else {
+        inCodeBlock = false;
+        blocks.push(
+          <pre key={`code-${i}`} className="bg-gray-100 rounded p-3 my-2 text-sm font-mono overflow-x-auto whitespace-pre-wrap">
+            {codeLines.join("\n")}
+          </pre>
+        );
+        codeLines = [];
+      }
+      return;
+    }
+    if (inCodeBlock) { codeLines.push(line); return; }
+
+    if (!line.trim()) {
+      olCounter = 0;
+      blocks.push(<div key={`gap-${i}`} className="h-2" />);
+      return;
+    }
+    const h1 = line.match(/^#\s+(.*)/);
+    if (h1) { olCounter = 0; blocks.push(<div key={`h1-${i}`} className="mt-4 mb-1 text-lg font-bold text-gray-900 border-b border-gray-200 pb-1">{parseInline(h1[1], sources, onOpenSource, `h1-${i}`)}</div>); return; }
+    const h2 = line.match(/^##\s+(.*)/);
+    if (h2) { olCounter = 0; blocks.push(<div key={`h2-${i}`} className="mt-4 mb-1 text-base font-bold text-gray-900 border-b border-gray-200 pb-1">{parseInline(h2[1], sources, onOpenSource, `h2-${i}`)}</div>); return; }
+    const h3 = line.match(/^###\s+(.*)/);
+    if (h3) { olCounter = 0; blocks.push(<div key={`h3-${i}`} className="mt-3 mb-1 text-sm font-bold text-gray-800">{parseInline(h3[1], sources, onOpenSource, `h3-${i}`)}</div>); return; }
+
+    const ul = line.match(/^[\s]*[-*\u2022]\s+(.*)/);
+    if (ul) {
+      olCounter = 0;
+      blocks.push(
+        <div key={`ul-${i}`} className="flex gap-2 my-0.5 leading-relaxed">
+          <span className="mt-2 shrink-0 w-1.5 h-1.5 rounded-full bg-gray-500 inline-block" />
+          <span>{parseInline(ul[1], sources, onOpenSource, `ul-${i}`)}</span>
+        </div>
+      );
+      return;
+    }
+    const ol = line.match(/^[\s]*(\d+)[.)]\s+(.*)/);
+    if (ol) {
+      olCounter++;
+      blocks.push(
+        <div key={`ol-${i}`} className="flex gap-2 my-0.5 leading-relaxed">
+          <span className="shrink-0 text-gray-600 font-medium min-w-[1.2rem]">{olCounter}.</span>
+          <span>{parseInline(ol[2], sources, onOpenSource, `ol-${i}`)}</span>
+        </div>
+      );
+      return;
+    }
+    if (/^---+$/.test(line.trim())) { olCounter = 0; blocks.push(<hr key={`hr-${i}`} className="my-3 border-gray-200" />); return; }
+    const bq = line.match(/^>\s+(.*)/);
+    if (bq) { olCounter = 0; blocks.push(<div key={`bq-${i}`} className="border-l-4 border-gray-300 pl-3 my-1 text-gray-600 italic">{parseInline(bq[1], sources, onOpenSource, `bq-${i}`)}</div>); return; }
+
+    olCounter = 0;
+    blocks.push(<div key={`p-${i}`} className="my-0.5 leading-relaxed">{parseInline(line, sources, onOpenSource, `p-${i}`)}</div>);
+  });
+
+  return <div className="text-sm text-gray-800">{blocks}</div>;
+}
+function makeMessageId(prefix = "m") {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return `${prefix}_${crypto.randomUUID()}`;
+  }
+  // fallback
+  return `${prefix}_${Date.now()}_${Math.random().toString(16).slice(2)}`;
+}
+
+function countWords(text = "") {
+  const t = String(text).trim();
+  if (!t) return 0;
+  return t.split(/\s+/).filter(Boolean).length;
+}
+
+function nextTurnIndex(chatHistory = []) {
+  const assistantCount = chatHistory.filter((m) => m.role === "assistant").length;
+  return assistantCount + 1;
 }
 
 export default function Experiment() {
@@ -232,30 +328,42 @@ export default function Experiment() {
   const [taskType, setTaskType] = useState("");
   const topic = taskType;
   const taskPanelAnchorRef = useRef(null);
-  
-  const isWeb = systemType === "WebSearch";
+
   const isRAG = systemType === "RAGSearch";
-  const isGen = systemType === "GenSearch";
+
 
   // airtable 
   const logEvent = async ({ log_type, log_data }) => {
     try {
-      const nowIso = new Date().toISOString(); // ms 포함 ISO
-      const nowMs = Date.now();               // Unix ms
+      const nowIso = new Date().toISOString();
+      const nowMs = Date.now();
+
+      const pid =
+        participantId || (typeof window !== "undefined" ? localStorage.getItem("participant_id") : null);
+      const condition =
+        systemType || (typeof window !== "undefined" ? localStorage.getItem("system_type") : null);
+      const taskid =
+        taskType || (typeof window !== "undefined" ? localStorage.getItem("task_type") : null);
+
+      if (!pid) {
+        console.warn("[logEvent] missing participant_id; skipped:", { log_type, log_data });
+        return;
+      }
+
       await fetch("/api/experiment-log", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          participant_id: participantId,
-          condition: systemType, // WebSearch | RAGSearch |GenSearch
-          task_id: taskType,
+          participant_id: pid,
+          condition: condition || "",
+          task_id: taskid || "",
           log_type,
           log_data: {
             ...log_data,
             timestamp_iso_ms: nowIso,
             timestamp_unix_ms: nowMs,
           },
-          timestamp: nowIso, // Airtable Date field
+          timestamp: nowIso,
         }),
       });
     } catch (err) {
@@ -308,6 +416,19 @@ export default function Experiment() {
   const [loading, setLoading] = useState(true);
   const [refOpen, setRefOpen] = useState(false);
   const [activeSource, setActiveSource] = useState(null);
+  const [scrapPopup, setScrapPopup] = useState({open: false,x: 0, y: 0, text: "", meta: null,});
+  const generatingRef = useRef(false);
+  const selectionRangeRef = useRef(null);    
+  const suppressRestoreRef = useRef(false); 
+
+  const chatScrollRef = useRef(null);
+  const [hlRects, setHlRects] = useState([]);     // [{left, top, width, height}]
+  const [hlOpen, setHlOpen] = useState(false);
+
+  const clearHighlight = () => {
+    setHlOpen(false);
+    setHlRects([]);
+  };
 
   const openSource = (src) => {
     setActiveSource(src);
@@ -320,31 +441,30 @@ export default function Experiment() {
   const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
 
   // scrap
-  
-  const addScrap = ({ title, fullText, source }) => {
-    if (typeof window === "undefined") return;
-    const selectedText = window.getSelection()?.toString().trim();
+  const addScrap = ({ title, fullText = "", source, meta, snippetOverride }) => {
+    const forced = (snippetOverride || "").trim();
+    let selection = "";
+    if (!forced && typeof window !== "undefined") {
+      selection = window.getSelection()?.toString()?.trim() || "";
+    }
+    const snippet = (forced || selection || fullText || "").trim();
+    if (!snippet) return;
+
+    setScraps((prev) => [
+      ...prev,
+      { type: "scrap", title, snippet, source, comment: "" },
+    ]);
     logEvent({
       log_type: "scrap",
       log_data: {
         title,
-        snippet: selectedText || fullText,
+        snippet,
         source,
+        ...(meta || {}),
       },
     });
-
-    setScraps((prev) => [
-      ...prev,
-      {
-        type: "scrap",
-        title,
-        snippet: selectedText || fullText,
-        source,
-        comment: "",
-      },
-    ]);
-    window.getSelection()?.removeAllRanges();
   };
+
   const handleDeleteScrap = (index) => {
   setScraps((prev) => prev.filter((_, i) => i !== index));
   };
@@ -354,6 +474,8 @@ export default function Experiment() {
   };
   const [scrapWidth, setScrapWidth] = useState(24);
   const isDraggingRef = useRef(false);
+  const isSelectingRef = useRef(false);
+  const chatAreaRef = useRef(null);
   const addNote = () => {
     setScraps((prev) => [
       ...prev,
@@ -366,7 +488,6 @@ export default function Experiment() {
       },
     ]);
   };
-  const allowChatDragRef = useRef(false);
 
   useEffect(() => {
     const onMove = (e) => {
@@ -390,7 +511,113 @@ export default function Experiment() {
   }, []);
 
   const chatTitle = systemType;
+
+  const closeScrapPopup = () =>
+  setScrapPopup({ open: false, x: 0, y: 0, text: "", meta: null });
+
+  const maybeOpenScrapPopup = (msg) => {
+    if (typeof window === "undefined") return;
+
+    const sel = window.getSelection();
+    if (!sel || sel.rangeCount === 0) return;
+
+    const text = sel.toString().trim();
+    if (!text) return;
+
+    const range = sel.getRangeAt(0);
+    const rect = range.getBoundingClientRect();
+    if (!rect || (rect.width === 0 && rect.height === 0)) return;
+
+    selectionRangeRef.current = range.cloneRange();
+    suppressRestoreRef.current = false;
+
+    const x = Math.min(rect.right + 6, window.innerWidth - 130);
+    const y = Math.max(rect.top - 42, 8);
+
+    setScrapPopup({
+      open: true,
+      x,
+      y,
+      text,
+      meta: {
+        request_id: msg.request_id,
+        turn_index: msg.turn_index,
+        message_id: msg.message_id,
+      },
+    });
+  };
   
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onDocMouseDown = (e) => {
+      const el = e.target instanceof Element ? e.target : null;
+      if (el?.closest?.('[data-scrap-popup="1"]')) return;
+      if (el?.closest?.('[data-selectable="1"]')) return;
+      closeScrapPopup();
+      clearHighlight();
+    };
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, []);
+
+  const isRangeFullyInside = (containerEl, range) => {
+    if (!containerEl || !range) return false;
+
+    const startNode =
+      range.startContainer?.nodeType === 1
+        ? range.startContainer
+        : range.startContainer?.parentElement;
+
+    const endNode =
+      range.endContainer?.nodeType === 1
+        ? range.endContainer
+        : range.endContainer?.parentElement;
+
+    if (!startNode || !endNode) return false;
+
+    return containerEl.contains(startNode) && containerEl.contains(endNode);
+  };
+
+  const setHighlightFromRange = (range) => {
+    const scroller = chatScrollRef.current;
+    if (!scroller || !range) return;
+    let r;
+    try {
+      r = range.cloneRange();
+    } catch {
+      return;
+    }
+    const containerRect = scroller.getBoundingClientRect();
+
+    let rects = Array.from(r.getClientRects())
+      .map((cr) => ({
+        left: cr.left - containerRect.left + scroller.scrollLeft,
+        top: cr.top - containerRect.top + scroller.scrollTop,
+        width: cr.width,
+        height: cr.height,
+      }))
+      .filter((x) => x.width >= 2 && x.height >= 8);
+    if (rects.length === 0) return;
+    rects.sort((a, b) => (a.top - b.top) || (a.left - b.left));
+    const merged = [];
+    for (const cur of rects) {
+      const last = merged[merged.length - 1];
+      if (
+        last &&
+        Math.abs(cur.top - last.top) < 4 &&              
+        cur.left <= last.left + last.width + 6         
+      ) {
+        const right = Math.max(last.left + last.width, cur.left + cur.width);
+        last.width = right - last.left;
+        last.height = Math.max(last.height, cur.height);
+      } else {
+        merged.push({ ...cur });
+      }
+    }
+    setHlRects(merged);
+    setHlOpen(true);
+  };
+    
   /* =========================
      Initial setup
   ========================= */
@@ -512,14 +739,26 @@ export default function Experiment() {
   const handleRAGSubmit = async (e) => {
     e.preventDefault();
     const userInput = searchQuery.trim();
-    if (!userInput || isGenerating) return;
-    logEvent({
+    if (!userInput) return;
+    if (generatingRef.current) return; 
+    generatingRef.current = true;  
+    setIsGenerating(true);
+
+    const request_id = makeMessageId("req");
+    const turn_index = nextTurnIndex(chatHistory);
+    const prompt_message_id = makeMessageId("p");     
+
+    await logEvent({
       log_type: "prompt",
-      log_data: { prompt: userInput },
+      log_data: {
+        system: "RAGSearch",
+        request_id,
+        turn_index,
+        message_id: prompt_message_id,
+        prompt: userInput,
+        prompt_word_count: countWords(userInput),
+      },
     });
-
-
-    // Count only valid user questions
     setQuestionCount((prev) => prev + 1);
 
     // Fetch top N web results as sources (same as WebSearch)
@@ -540,8 +779,8 @@ export default function Experiment() {
     // Append user + loading assistant
     setChatHistory((prev) => [
       ...prev,
-      { role: "user", content: userInput },
-      { role: "assistant", content: "Generating response...", loading: true },
+      { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
+      { role: "assistant", content: "Generating response...", loading: true, request_id, turn_index },
     ]);
 
     setSearchQuery("");
@@ -556,13 +795,39 @@ export default function Experiment() {
           sources,
         }),
       });
+
       const data = await res.json();
+      // AI answer log (RAGSearch)
+      const answerText = data?.text || "";
+      const answer_message_id = makeMessageId("rag");
+      const word_count = countWords(answerText);
+      await logEvent({
+        log_type: "ai_answer",
+        log_data: {
+          system: "RAGSearch",
+          request_id,
+          turn_index,
+          message_id: answer_message_id,
+          prompt: userInput,
+          answer: answerText,
+          word_count,
+          sources_used: (data?.sources || sources || []).map((s, i) => ({
+            index: i + 1,
+            title: s.title || null,
+            url: s.url || null,
+          })),
+        },
+      });
+
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
         const assistantMsg = {
           role: "assistant",
           content: data?.text || "No response generated.",
+          request_id,
+          turn_index,
+          message_id: answer_message_id,
           sources: data?.sources || sources,
         };
         if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
@@ -586,6 +851,7 @@ export default function Experiment() {
       });
     } finally {
       setIsGenerating(false);
+      generatingRef.current = false;
     }
   };
 
@@ -595,15 +861,31 @@ export default function Experiment() {
   const handleGenSubmit = async (e) => {
     e.preventDefault();
     const userInput = searchQuery.trim();
-    if (!userInput || isGenerating) return;
+    if (!userInput) return;
+    if (generatingRef.current) return;
+    generatingRef.current = true;    
+    setIsGenerating(true); 
 
-    logEvent({ log_type: "prompt", log_data: { prompt: userInput } });
+    const request_id = makeMessageId("req");
+    const turn_index = nextTurnIndex(chatHistory);
+    const prompt_message_id = makeMessageId("p");
+
+    await logEvent({
+      log_type: "prompt",
+      log_data: {
+        system: "GenSearch",
+        request_id,
+        turn_index,
+        message_id: prompt_message_id,
+        prompt: userInput,
+      },
+    });
+
     setQuestionCount((prev) => prev + 1);
-
     setChatHistory((prev) => [
       ...prev,
-      { role: "user", content: userInput },
-      { role: "assistant", content: "Generating response...", loading: true },
+      { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
+      { role: "assistant", content: "Generating response...", loading: true, request_id, turn_index },
     ]);
 
     setSearchQuery("");
@@ -619,12 +901,32 @@ export default function Experiment() {
       });
       const data = await res.json();
 
+      // AI answer logging (GenSearch)
+      const answerText = data?.text || "";
+      const answer_message_id = makeMessageId("gen");
+      const word_count = countWords(answerText);
+      await logEvent({
+        log_type: "ai_answer",
+        log_data: {
+          system: "GenSearch",
+          request_id,
+          turn_index,
+          message_id: answer_message_id,
+          prompt_message_id,
+          answer: answerText,
+          word_count,
+        },
+      });
+
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
         const assistantMsg = {
           role: "assistant",
           content: data?.text || "No response generated.",
+          request_id,
+          turn_index,
+          message_id: answer_message_id,
         };
         if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
           updated[lastIdx] = assistantMsg;
@@ -637,6 +939,7 @@ export default function Experiment() {
       console.error(err);
     } finally {
       setIsGenerating(false);
+      generatingRef.current = false;
     }
   };
 
@@ -651,14 +954,37 @@ export default function Experiment() {
     try {
       const dropped = JSON.parse(raw);
       if (dropped.type === "web") {
-        setScraps((prev) => [...prev, {type: "web", title: dropped.title, link: dropped.link, comment: ""}]);
+        const item = { type: "web", title: dropped.title, link: dropped.link, comment: "" };
+        setScraps((prev) => [...prev, item]);
+        logEvent({
+          log_type: "scrap",
+          log_data: {
+            title: dropped.title || "web",
+            snippet: dropped.title || "",
+            source: "web",
+            link: dropped.link || "",
+          },
+        });
       return;
     }
-      setScraps((prev) => [...prev, { ...dropped, comment: "" }]);
-    } catch {
-      // ignore invalid payload
+    if (dropped.type === "scrap") {
+      const item = { ...dropped, comment: "" };
+      setScraps((prev) => [...prev, item]);
+
+      logEvent({
+        log_type: "scrap",
+        log_data: {
+          title: dropped.title || "chat",
+          snippet: dropped.snippet || "",
+          source: dropped.source || "chat",
+          ...(dropped.meta || {}),
+        },
+      });
+      return;
     }
-  };
+  } catch {
+  }
+};
 
   const handleUpdateScrapComment = (index, value) => {
       if (value.length % 10 === 0) {
@@ -1042,9 +1368,29 @@ export default function Experiment() {
                 </div>
                 
               ) : (         
-                <div className="flex-1 p-4 overflow-y-auto pb-36">
+                <div ref={chatScrollRef} className="relative flex-1 p-4 overflow-y-auto pb-36">
+                  {hlOpen && hlRects.length > 0 && (
+                    <div className="pointer-events-none absolute inset-0 z-[30]">
+                      {hlRects.map((r, i) => (
+                        <div
+                          key={i}
+                          className="absolute rounded-sm"
+                          style={{
+                            left: r.left,
+                            top: r.top,
+                            width: r.width,
+                            height: r.height,
+                            backgroundColor: HIGHLIGHT_BG,
+                            outline: `1px solid ${HIGHLIGHT_BORDER}`,
+                            borderRadius: 2,
+                          }}
+                        />
+                      ))}
+                    </div>
+                  )}
+
                 {/* Chat history */}
-                <div className="mx-auto w-full max-w-3xl space-y-4">
+                <div ref={chatAreaRef} className="mx-auto w-full max-w-3xl space-y-4">
                   {chatHistory.map((msg, idx) => {
                     const isAssistant = msg.role === "assistant";
 
@@ -1056,62 +1402,69 @@ export default function Experiment() {
                             ? "bg-white border cursor-text"
                             : "bg-blue-600 text-white ml-auto max-w-lg"
                         }`}
-                        draggable={allowChatDragRef.current}
-                        onMouseDown={() => {
-                          allowChatDragRef.current = false;
-                        }}
-                          onMouseUp={() => {
-                            const selection = window.getSelection()?.toString().trim();
-                            if (selection) {
-                              allowChatDragRef.current = true; 
-                            }
-                          }}
-                          onDragStart={(e) => {
-                            const selection = window.getSelection()?.toString().trim();
-                            if (!selection) {
-                              e.preventDefault();
-                              return;
-                            }
-                            e.dataTransfer.setData(
-                              "text/plain",
-                              JSON.stringify({
-                                type: "scrap",
-                                title: chatTitle,
-                                snippet: selection,
-                                source: "chat",
-                            })
-                          );
+                
+                        onMouseUp={(e) => {
+                          if (!isAssistant || msg.loading) return;
+                          if (e.target?.closest?.("button, a")) return;
+                          const sel = window.getSelection();
+                          if (!sel || sel.rangeCount === 0) return;
+                          const text = sel.toString().trim();
+                          if (!text || text.length < 2) return;
+                          const range = sel.getRangeAt(0);
+                          const startNode = range.startContainer.nodeType === 3
+                            ? range.startContainer.parentElement
+                            : range.startContainer;
+                          if (!e.currentTarget.contains(startNode)) return;
+                          maybeOpenScrapPopup(msg);
                         }}
                       >
-                        {isAssistant ? (
+                      {isAssistant ? (
+                        <div
+                          data-selectable="1"
+                          className="select-text"
+                          style={{ userSelect: "text" }} 
+                        >
                           <MarkdownWithCitations
                             content={msg.content}
-                            sources={msg.sources || []}   // GenSearch: []
+                            sources={msg.sources || []}
                             onOpenSource={openSource}
                           />
-                        ) : (
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
-                        )}
-                          {isAssistant && !msg.loading && (
-                            <button
-                              onClick={() =>
-                                addScrap({
-                                  title: chatTitle, 
-                                  fullText: msg.content,
-                                  source: "chat",
-                                })
-                              }
-                              className="mt-4 self-end text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
-                            >
-                              📌Scrap
-                            </button>
-                          )}
                         </div>
-                      );
-                    })}
-                  </div>
-                  </div>
-                )}
+                      ) : (
+                        <div className="select-none">
+                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                        </div>
+                      )}
+
+                      {isAssistant && !msg.loading && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            addScrap({
+                              title: chatTitle,
+                              fullText: msg.content,
+                              source: "chat",
+                              snippetOverride: msg.content,
+                              meta: {
+                                request_id: msg.request_id,
+                                turn_index: msg.turn_index,
+                                message_id: msg.message_id,
+                              },
+                            });
+                            closeScrapPopup();
+                          }}
+                          className="mt-4 self-end text-xs px-2 py-1 rounded bg-gray-100 hover:bg-gray-200 border"
+                        >
+                          📌Scrap
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+              </div>
+              )}
               
               {isRAG && (
                 <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} />
@@ -1185,9 +1538,9 @@ export default function Experiment() {
                 </button>
 
                 {item.type === "scrap" && (
-                  <ReactMarkdown className="prose prose-sm max-w-none">
+                  <div className="whitespace-pre-wrap text-sm text-gray-800">
                     {item.snippet}
-                  </ReactMarkdown>
+                  </div>
                 )}
 
                 {item.type === "web" && (
@@ -1263,6 +1616,40 @@ export default function Experiment() {
             </div>
           </div>
         </div>
+        {scrapPopup.open && (
+          <div
+            data-scrap-popup="1"
+            className="fixed z-[70]"
+            style={{ left: scrapPopup.x, top: scrapPopup.y }}
+          >
+            <button
+              type="button"
+              onMouseDown={(e) =>{
+                e.preventDefault();
+                e.stopPropagation();
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+
+                addScrap({
+                  title: chatTitle,
+                  source: "chat",
+                  fullText: "",
+                  snippetOverride: scrapPopup.text,
+                  meta: scrapPopup.meta,
+                });
+                suppressRestoreRef.current = true;
+                selectionRangeRef.current = null;
+                window.getSelection()?.removeAllRanges();  
+                closeScrapPopup();
+              }}
+              className="px-3 py-1 rounded-md bg-white border shadow text-xs hover:bg-gray-50"
+            >
+              📌 Scrap
+            </button>
+          </div>
+        )}
       </div>
   );
 }
