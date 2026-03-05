@@ -10,6 +10,41 @@ const REQUIRED_TIME = 240; // 4 minutes
 const REQUIRED_QUESTIONS = 5;
 
 
+async function readSSEStream(res, onChunk) {
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = "";
+  let fullText = "";
+  let extra = {};
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split("\n");
+    buffer = lines.pop();
+    for (const line of lines) {
+      if (!line.startsWith("data: ")) continue;
+      const json = line.slice(6).trim();
+      if (!json) continue;
+      try {
+        const msg = JSON.parse(json);
+        if (msg.type === "chunk") {
+          fullText += msg.text;
+          onChunk(fullText);
+        } else if (msg.type === "done") {
+          extra = msg;
+        } else if (msg.type === "error") {
+          throw new Error(msg.error);
+        }
+      } catch (e) {
+        if (e.message && !e.message.includes("JSON")) throw e;
+      }
+    }
+  }
+  return { fullText, extra };
+}
+
 function getFaviconUrl(pageUrl) {
   try {
     const u = new URL(pageUrl);
@@ -739,15 +774,31 @@ function ExperimentContent() {
       const res = await fetch("/api/llm-rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          question: userInput,
-          sources,
-        }),
+        body: JSON.stringify({ question: userInput, sources }),
       });
 
-      const data = await res.json();
-      // AI answer log (RAGSearch)
-      const answerText = data?.text || "";
+      // Start with empty streaming message
+      setChatHistory((prev) => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        if (lastIdx >= 0 && updated[lastIdx]?.loading) {
+          updated[lastIdx] = { ...updated[lastIdx], content: "", loading: false, streaming: true };
+        }
+        return updated;
+      });
+
+      const { fullText: answerText, extra } = await readSSEStream(res, (partialText) => {
+        setChatHistory((prev) => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (lastIdx >= 0 && updated[lastIdx]?.streaming) {
+            updated[lastIdx] = { ...updated[lastIdx], content: partialText };
+          }
+          return updated;
+        });
+      });
+
+      const finalSources = extra?.sources || sources;
       const answer_message_id = makeMessageId("rag");
       const word_count = countWords(answerText);
       await logEvent({
@@ -760,7 +811,7 @@ function ExperimentContent() {
           prompt: userInput,
           answer: answerText,
           word_count,
-          sources_used: (data?.sources || sources || []).map((s, i) => ({
+          sources_used: finalSources.map((s, i) => ({
             index: i + 1,
             title: s.title || null,
             url: s.url || null,
@@ -773,13 +824,13 @@ function ExperimentContent() {
         const lastIdx = updated.length - 1;
         const assistantMsg = {
           role: "assistant",
-          content: data?.text || "No response generated.",
+          content: answerText || "No response generated.",
           request_id,
           turn_index,
           message_id: answer_message_id,
-          sources: data?.sources || sources,
+          sources: finalSources,
         };
-        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
+        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant") {
           updated[lastIdx] = assistantMsg;
         } else {
           updated.push(assistantMsg);
@@ -791,7 +842,7 @@ function ExperimentContent() {
       setChatHistory((prev) => {
         const updated = [...prev];
         const lastIdx = updated.length - 1;
-        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
+        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant") {
           updated[lastIdx] = { role: "assistant", content: "An error occurred while generating the response." };
         } else {
           updated.push({ role: "assistant", content: "An error occurred while generating the response." });
@@ -844,14 +895,30 @@ function ExperimentContent() {
       const res = await fetch("/api/llm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({      
-          prompt: userInput,      
-        }),
+        body: JSON.stringify({ prompt: userInput }),
       });
-      const data = await res.json();
 
-      // AI answer logging (GenSearch)
-      const answerText = data?.text || "";
+      // Start streaming
+      setChatHistory((prev) => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        if (lastIdx >= 0 && updated[lastIdx]?.loading) {
+          updated[lastIdx] = { ...updated[lastIdx], content: "", loading: false, streaming: true };
+        }
+        return updated;
+      });
+
+      const { fullText: answerText } = await readSSEStream(res, (partialText) => {
+        setChatHistory((prev) => {
+          const updated = [...prev];
+          const lastIdx = updated.length - 1;
+          if (lastIdx >= 0 && updated[lastIdx]?.streaming) {
+            updated[lastIdx] = { ...updated[lastIdx], content: partialText };
+          }
+          return updated;
+        });
+      });
+
       const answer_message_id = makeMessageId("gen");
       const word_count = countWords(answerText);
       await logEvent({
@@ -872,12 +939,12 @@ function ExperimentContent() {
         const lastIdx = updated.length - 1;
         const assistantMsg = {
           role: "assistant",
-          content: data?.text || "No response generated.",
+          content: answerText || "No response generated.",
           request_id,
           turn_index,
           message_id: answer_message_id,
         };
-        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant" && updated[lastIdx]?.loading) {
+        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant") {
           updated[lastIdx] = assistantMsg;
         } else {
           updated.push(assistantMsg);

@@ -1,130 +1,94 @@
-import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
-function tryParseJsonLoose(raw) {
-  if (!raw) return null;
-
-  const unfenced = raw
-    .replace(/^```json\s*/i, "")
-    .replace(/^```\s*/i, "")
-    .replace(/```$/i, "")
-    .trim();
-
-  try {
-    return JSON.parse(unfenced);
-  } catch {}
-
-  const first = unfenced.indexOf("{");
-  const last = unfenced.lastIndexOf("}");
-  if (first !== -1 && last !== -1 && last > first) {
-    const slice = unfenced.slice(first, last + 1);
-    try {
-      return JSON.parse(slice);
-    } catch {}
-  }
-  return null;
-}
-
 export async function POST(req) {
-  console.log("Gemini API called");
+  console.log("Gemini RAG API called (streaming)");
   try {
-    // ✅ Accept both {question} and legacy {prompt}
     const body = await req.json();
     const userQuestion = String(body.question ?? body.prompt ?? "").trim();
     const sources = Array.isArray(body.sources) ? body.sources : [];
 
     if (!userQuestion) {
-      return NextResponse.json({ error: "Missing question" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing question" }), { status: 400 });
     }
 
-    // ✅ ConvSearch citation mode: sources are REQUIRED
     if (sources.length === 0) {
-      return NextResponse.json(
-        { error: "Missing sources: citation mode requires sources" },
+      return new Response(
+        JSON.stringify({ error: "Missing sources: citation mode requires sources" }),
         { status: 400 }
       );
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Server misconfigured: missing GEMINI_API_KEY" },
+      return new Response(
+        JSON.stringify({ error: "Server misconfigured: missing GEMINI_API_KEY" }),
         { status: 500 }
       );
     }
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const sourcesBlock = JSON.stringify(
-      sources.map((s, i) => ({
-        id: i + 1,
-        title: s.title || "",
-        url: s.url || "",
-        snippet: s.snippet || "",
-      })),
-      null,
-      2
-    );
+    const sourcesBlock = sources
+      .map((s, i) => `[${i + 1}] ${s.title || ""} — ${s.url || ""}\n${s.snippet || ""}`)
+      .join("\n\n");
 
-    // ✅ instruction: ONLY sources, no invented sources (no hallucination!)
-    const instruction = `
-    Return ONLY valid JSON (no markdown).
-    Schema:
-    {
-      "answer": "string with in-text citations like [1], [2] ...",
-      "citations": [{ "id": 1, "title": "string", "url": "string" }]
-    }
-    Rules:
-    - You MUST use ONLY the provided sources to answer.
-    - Every factual claim should be supported by at least one citation [n].
-    - Do NOT invent or add sources. Do NOT cite numbers that are not in the source list.
-    - If the sources are insufficient to answer, cite the closest relevant source(s).
+    const instruction = `Answer the question using ONLY the provided sources.
+Use inline citations like [1], [2] to reference sources.
+Write in clear Markdown with headings and bullet points where appropriate.
+Every factual claim must cite at least one source. Do NOT invent sources.
+Aim for ~250–300 words.`;
 
-    Answering style requirements:
-    - Provide a clear, multi-sentence explanation.
-    - Use clear headings, bullet points, and formatting to organize the information.
-    - When appropriate, explain background, implications, or contrasts found in the sources.
-    - Aim for ~250–300 words
-    `;
     const fullPrompt = `${instruction}
 
-SOURCES (numbered):
+SOURCES:
 ${sourcesBlock}
 
 QUESTION:
-${userQuestion}
-`;
+${userQuestion}`;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: fullPrompt,
-      generationConfig: {
-        maxOutputTokens: 200,
-        temperature: 0.3,
-        topP: 0.9,
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const response = await ai.models.generateContentStream({
+            model: "gemini-2.5-flash",
+            contents: fullPrompt,
+            generationConfig: {
+              maxOutputTokens: 600,
+              temperature: 0.3,
+              topP: 0.9,
+            },
+          });
+
+          for await (const chunk of response) {
+            const text = chunk.text || "";
+            if (text) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ type: "chunk", text })}\n\n`)
+              );
+            }
+          }
+
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "done", sources })}\n\n`)
+          );
+        } catch (e) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "error", error: e.message })}\n\n`)
+          );
+        }
+        controller.close();
       },
     });
 
-    const raw = (response.text || "").trim();
-    const parsed = tryParseJsonLoose(raw);
-
-    const text =
-      parsed && typeof parsed === "object"
-        ? String(parsed.answer || "").trim()
-        : raw;
-
-    const citations =
-      parsed && typeof parsed === "object" && Array.isArray(parsed.citations)
-        ? parsed.citations
-        : [];
-
-    return NextResponse.json({
-      text,
-      citations,
-      sources, 
-      raw,     
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
     });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
   }
 }

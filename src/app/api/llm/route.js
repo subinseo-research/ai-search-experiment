@@ -1,26 +1,21 @@
-import { NextResponse } from "next/server";
 import { GoogleGenAI } from "@google/genai";
 
 export async function POST(req) {
-  console.log("Gemini API called");
+  console.log("Gemini API called (streaming)");
   try {
     const { prompt } = await req.json();
 
     if (!prompt || !String(prompt).trim()) {
-      return NextResponse.json({ error: "Missing prompt" }, { status: 400 });
+      return new Response(JSON.stringify({ error: "Missing prompt" }), { status: 400 });
     }
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json(
-        { error: "Server misconfigured: missing GEMINI_API_KEY" },
-        { status: 500 }
-      );
+      return new Response(JSON.stringify({ error: "Server misconfigured: missing GEMINI_API_KEY" }), { status: 500 });
     }
 
     const ai = new GoogleGenAI({ apiKey });
 
-    // ✅ GenSearch output format instruction
     const instruction = `
     Write a concise, well-organized answer in Markdown.
     Answering style requirements:
@@ -31,18 +26,46 @@ export async function POST(req) {
     USER QUESTION:
     `;
 
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: `${instruction}${String(prompt).trim()}`,
-      generationConfig: {
-        maxOutputTokens: 200,   
-        temperature: 0.3,
-        topP: 0.9,
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          const response = await ai.models.generateContentStream({
+            model: "gemini-2.5-flash",
+            contents: `${instruction}${String(prompt).trim()}`,
+            generationConfig: {
+              maxOutputTokens: 600,
+              temperature: 0.3,
+              topP: 0.9,
+            },
+          });
+
+          for await (const chunk of response) {
+            const text = chunk.text || "";
+            if (text) {
+              controller.enqueue(
+                encoder.encode(`data: ${JSON.stringify({ type: "chunk", text })}\n\n`)
+              );
+            }
+          }
+          controller.enqueue(encoder.encode(`data: ${JSON.stringify({ type: "done" })}\n\n`));
+        } catch (e) {
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ type: "error", error: e.message })}\n\n`)
+          );
+        }
+        controller.close();
       },
     });
 
-    return NextResponse.json({ text: response.text });
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
   } catch (e) {
-    return NextResponse.json({ error: e.message }, { status: 500 });
+    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
   }
 }
