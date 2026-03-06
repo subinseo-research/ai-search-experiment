@@ -58,14 +58,14 @@ function LikertRow({
 function LikertMatrix({ items, labels, responses, onChange }) {
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "minmax(360px, 520px) repeat(7, minmax(110px, 1fr))",
-    columnGap: "14px",
+    gridTemplateColumns: "minmax(140px, 2fr) repeat(7, minmax(58px, 1fr))",
+    columnGap: "6px",
     alignItems: "center",
   };
 
   return (
-    <div className="overflow-x-auto">
-      <div className="space-y-10 min-w-[980px] pt-2">
+    <div className="w-full overflow-x-hidden">
+      <div className="space-y-10 pt-2">
         {/* Header row (same 7 labels) */}
         <div
           style={gridStyle}
@@ -76,7 +76,7 @@ function LikertMatrix({ items, labels, responses, onChange }) {
             <div
               key={i}
               style={{ backgroundColor: COL_BG[i] }}
-              className="text-center text-[13px] font-medium text-gray-700 py-2 rounded-lg"
+              className="text-center text-[15px] font-medium text-gray-700 py-2 rounded-lg leading-tight"
             >
               {h}
             </div>
@@ -174,21 +174,21 @@ const COL_BG_SELECTED = [
 function BipolarMatrix({ items, responses, onChange }) {
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "minmax(360px, 520px) repeat(7, minmax(110px, 1fr))",
-    columnGap: "14px",
+    gridTemplateColumns: "minmax(140px, 2fr) repeat(7, minmax(58px, 1fr))",
+    columnGap: "6px",
     alignItems: "center",
   };
 
   return (
-    <div className="overflow-x-auto">
-      <div className="space-y-10 min-w-[980px] pt-6">
+    <div className="w-full overflow-x-hidden">
+      <div className="space-y-10 pt-6">
         <div style={gridStyle} className="sticky top-[54px] bg-white z-30 pt-3 pb-3 border-b border-gray-200">
           <div /> {/* questions column */}
             {COMMON_7_HEADERS.map((h, i) => (
               <div
                 key={i}
                 style={{ backgroundColor: COL_BG[i] }}
-                className="text-center text-[13px] font-medium text-gray-700 py-2 rounded-lg"
+                className="text-center text-[15px] font-medium text-gray-700 py-2 rounded-lg leading-tight"
               >
                 {h}
               </div>
@@ -244,8 +244,8 @@ function BipolarMatrix({ items, responses, onChange }) {
 
             {/* Row B */}
             <div style={gridStyle} className="mt-2">
-              <div /> {/* 질문 column */}
-              <div className="text-center text-[12px] text-gray-600">
+              <div /> 
+              <div className="text-center text-[15px] text-gray-600">
                 {item.left}
               </div>
               <div />
@@ -253,7 +253,7 @@ function BipolarMatrix({ items, responses, onChange }) {
               <div />
               <div />
               <div />
-              <div className="text-center text-[12px] text-gray-600">
+              <div className="text-center text-[15px] text-gray-600">
                 {item.right}
               </div>
             </div>
@@ -344,7 +344,7 @@ export default function PostSurvey() {
     "I made connections that I had not thought of before.",
     "I had unexpected revelations about old ideas.",
     "I found things that surprised me.",
-    "I was able to see the ordinary in new ways.",
+    "I was able to see ordinary knowledge in new ways.",
   ];
 
   const evaluationQuestions = [
@@ -534,20 +534,43 @@ export default function PostSurvey() {
   const questions = shuffledQuestionsByPage[page - 1] || pages[page - 1].questions;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Progress */}
       <div className="sticky top-0 z-40 bg-white border-b">
         <ProgressBar progress={50 + page * 10} />
       </div>
 
       {/* Main layout */}
-      <div className="flex min-h-[calc(100vh-56px)]">
+      <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden">
         {/* Survey */}
-        <div className="flex-1 overflow-y-auto">
-          <div className="w-full bg-white px-10 lg:px-16 pt-2 pb-10">
+        <div className="flex-1 overflow-y-auto min-w-0">
+          <div className="w-full bg-white px-6 lg:px-10 pt-2 pb-10">
             <h2 className="text-xl font-semibold mb-10 text-center">
               {pages[page - 1].title}
             </h2>
+
+            {page === 1 && (
+              <p className="text-base text-gray-700 mb-0 leading-relaxed">
+                Now we will ask you what you experienced in the previous search session.<br />
+                Please read the following items and evaluate your overall search experience during the session.
+              </p>
+            )}
+
+            {page === 2 && (
+              <p className="text-base text-gray-700 mb-0 leading-relaxed">
+                On the scales below, we will ask your feelings about the output information you just read and your overall search experience.<br />
+                Red indicates negative emotions, and blue indicates positive emotions.<br />
+                The deeper the color becomes, the stronger the intensity of the emotion.<br />
+                Please read the following items and evaluate your feelings according to each specific adjective.
+              </p>
+            )}
+
+            {page === 3 && (
+              <p className="text-base text-gray-700 mb-0 leading-relaxed">
+                On this page, we will ask about your belief in your ability to successfully complete a search task, even when the task is difficult, based on your search experience today.<br />
+                Please read the following sentences and evaluate your level of agreement or disagreement.
+              </p>
+            )}
 
             {questions.length > 0 && (
               section === "emotion" ? (
@@ -581,12 +604,25 @@ export default function PostSurvey() {
               )
             )}
 
+            {page === 4 && (
+              <>
+                <p className="text-base text-gray-700 mb-0 leading-relaxed">
+                  Now, you are almost done!👏🏻 <br />
+                  The following two questions are very important parts of our studies. There is no right or wrong answer, so please feel free to share your thoughts openly. <br/>
+                  You may want to refer to the scrapbook content shown on the right.
+                </p>
+                <p className="text-[18px] text-gray-900 mt-4 mb-0 leading-relaxed">
+                  You conducted a search to broadly explore information on the given topic:
+                </p>
+              </>
+            )}
+
             {page === pages.length && (
-              <div className="space-y-10 mt-12">
+              <div className="space-y-10 mt-2">
                 {/* OEQ1 */}
                 <div className="space-y-3">
                   <p className="font-medium text-[18px]">
-                    What keywords can you think of when you think about{" "}
+                    1. What keywords can you think of when you think about{" "}
                     <strong>{taskType}</strong>?
                   </p>
                   <textarea
@@ -602,7 +638,7 @@ export default function PostSurvey() {
                 {/* OEQ2 */}
                 <div className="space-y-3">
                   <p className="font-medium text-[18px]">
-                    Did you encounter any information that you could relate to your
+                    2. Did you encounter any information that you could relate to your
                     own experiences or to similar situations?
                   </p>
                   <textarea
@@ -630,7 +666,7 @@ export default function PostSurvey() {
         </div>
 
         {/* Scrapbook */}
-        <div className="w-[26%] min-w-[260px] max-w-[420px] bg-gray-50 border-l overflow-y-auto">
+        <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l overflow-y-auto flex-shrink-0">
           <div className="p-4 border-b">
             <h2 className="font-semibold">Your Scrapbook</h2>
             <p className="text-xs text-gray-500">
