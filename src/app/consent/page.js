@@ -115,7 +115,7 @@ export default function ConsentPage() {
 
           <div>
             <p className="mt-1">
-              This research is being conducted by Subin Seo, Dr. Yiwei Xu at the University of Maryland, College Park. We are inviting you to participate in this research project because you are an adult who regularly uses search systems to search information online. We seek to learn more about how people use different types of search systems, specifically conversational AI and traditional web search. This study aims to understand how different search systems shape users’ search behaviors and how this leads to varying search outcomes and user experiences. Please be assure that your responses will be kept confidential and anonymous.
+              This research is being conducted by Subin Seo, Dr. Yiwei Xu at the University of Maryland, College Park. We are inviting you to participate in this research project because you are an adult who regularly uses search systems to search information online. We seek to learn more about how people use different types of search systems, such as generative AI or traditional web search engine (You will use one system randomly assigned). This study aims to understand how different search systems shape users’ search behaviors and how this leads to varying search outcomes and user experiences. Please be assure that your responses will be kept confidential and anonymous.
             </p>
           </div>
 
