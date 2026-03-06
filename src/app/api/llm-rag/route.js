@@ -6,6 +6,7 @@ export async function POST(req) {
     const body = await req.json();
     const userQuestion = String(body.question ?? body.prompt ?? "").trim();
     const sources = Array.isArray(body.sources) ? body.sources : [];
+    const history = Array.isArray(body.history) ? body.history : [];
 
     if (!userQuestion) {
       return new Response(JSON.stringify({ error: "Missing question" }), { status: 400 });
@@ -32,21 +33,30 @@ export async function POST(req) {
       .map((s, i) => `[${i + 1}] ${s.title || ""} — ${s.url || ""}\n${s.snippet || ""}`)
       .join("\n\n");
 
-    const instruction = `Answer the question using ONLY the provided sources.
+    const systemInstruction = `You are a helpful assistant engaged in an ongoing conversation.
+Answer the current question using the provided sources as your primary evidence.
 Use inline citations like [1], [2] to reference sources.
 Write in clear Markdown with headings and bullet points where appropriate.
-Every factual claim must cite at least one source. Do NOT invent sources.
-Aim for ~250–300 words.
-Treat the interaction as a continuous conversation rather than isolated questions.
-Use previous turns to maintain topic continuity and provide more relevant answers. `;
 
-    const fullPrompt = `${instruction}
+Important conversation rules:
+- If the current question is a follow-up (e.g., "Should I be worried?", "What do you think?"), interpret it in the context of the previous conversation turns.
+- Use previous turns to understand what topic the user is referring to, even if the sources don't explicitly repeat the topic.
+- For claims drawn from the provided sources, always cite with [n]. For contextual framing from prior conversation, no citation is needed.
+- Do NOT invent sources or fabricate citations.`;
 
-SOURCES:
-${sourcesBlock}
-
-QUESTION:
-${userQuestion}`;
+    // Build multi-turn contents: history + current question (with fresh sources)
+    const contents = [
+      ...history
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+      {
+        role: "user",
+        parts: [{ text: `Answer in ~250–300 words using clear Markdown headings and bullet points.\n\nSOURCES:\n${sourcesBlock}\n\nQUESTION:\n${userQuestion}` }],
+      },
+    ];
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -54,9 +64,10 @@ ${userQuestion}`;
         try {
           const response = await ai.models.generateContentStream({
             model: "gemini-2.5-flash",
-            contents: fullPrompt,
+            systemInstruction,
+            contents,
             generationConfig: {
-              maxOutputTokens: 600,
+              maxOutputTokens: 400,
               temperature: 0.3,
               topP: 0.9,
             },

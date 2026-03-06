@@ -745,9 +745,30 @@ function ExperimentContent() {
     });
     setQuestionCount((prev) => prev + 1);
 
-    // Fetch top N web results as sources (same as WebSearch)
+    // Capture completed history before adding the new user message
+    const historyForAPI = chatHistory
+      .filter((m) => !m.loading && !m.streaming && m.content)
+      .map((m) => ({ role: m.role, content: m.content }));
+
+    // Expand follow-up queries using conversation context before searching
+    let queryForSearch = userInput;
+    if (historyForAPI.length > 0) {
+      try {
+        const expandRes = await fetch("/api/expand-query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: userInput, history: historyForAPI }),
+        });
+        const { expandedQuery } = await expandRes.json();
+        if (expandedQuery) queryForSearch = expandedQuery;
+      } catch {
+        // fall back to original query
+      }
+    }
+
+    // Fetch top N web results using the (potentially expanded) query
     const searchRes = await fetch(
-      `/api/SearchEngine?q=${encodeURIComponent(userInput)}&requestedTotal=8`
+      `/api/SearchEngine?q=${encodeURIComponent(queryForSearch)}&requestedTotal=8`
     );
     const searchData = await searchRes.json();
 
@@ -758,7 +779,6 @@ function ExperimentContent() {
         url: item.link,
         snippet: item.snippet,
       })) || [];
-
 
     // Append user + loading assistant
     setChatHistory((prev) => [
@@ -774,7 +794,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm-rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userInput, sources }),
+        body: JSON.stringify({ question: userInput, sources, history: historyForAPI }),
       });
 
       // Start with empty streaming message
@@ -882,6 +902,12 @@ function ExperimentContent() {
     });
 
     setQuestionCount((prev) => prev + 1);
+
+    // Capture completed history before adding the new user message
+    const historyForAPI = chatHistory
+      .filter((m) => !m.loading && !m.streaming && m.content)
+      .map((m) => ({ role: m.role, content: m.content }));
+
     setChatHistory((prev) => [
       ...prev,
       { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
@@ -895,7 +921,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userInput }),
+        body: JSON.stringify({ prompt: userInput, history: historyForAPI }),
       });
 
       // Start streaming

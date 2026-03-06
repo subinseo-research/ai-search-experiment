@@ -3,7 +3,7 @@ import { GoogleGenAI } from "@google/genai";
 export async function POST(req) {
   console.log("Gemini API called (streaming)");
   try {
-    const { prompt } = await req.json();
+    const { prompt, history = [] } = await req.json();
 
     if (!prompt || !String(prompt).trim()) {
       return new Response(JSON.stringify({ error: "Missing prompt" }), { status: 400 });
@@ -16,17 +16,23 @@ export async function POST(req) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const instruction = `
-    Write a concise, well-organized answer in Markdown.
-    Answering style requirements:
-    - Provide a clear, multi-sentence explanation.
-    - Use clear headings, bullet points, and formatting to organize the information.
-    - Aim for ~250–300 words
-    - Treat the interaction as a continuous conversation rather than isolated questions.
-    - Use previous turns to maintain topic continuity and provide more relevant answers.
+    const systemInstruction = `Write a concise, well-organized answer in Markdown.
+Answering style requirements:
+- Provide a clear, multi-sentence explanation.
+- Use clear headings, bullet points, and formatting to organize the information.
+- Treat the interaction as a continuous conversation rather than isolated questions.
+- Use previous turns to maintain topic continuity and provide more relevant answers.`;
 
-    USER QUESTION:
-    `;
+    // Build multi-turn contents: previous history + current user message
+    const contents = [
+      ...history
+        .filter((m) => m.role === "user" || m.role === "assistant")
+        .map((m) => ({
+          role: m.role === "assistant" ? "model" : "user",
+          parts: [{ text: m.content }],
+        })),
+      { role: "user", parts: [{ text: `Answer in ~250–300 words using clear Markdown headings and bullet points.\n\n${String(prompt).trim()}` }] },
+    ];
 
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
@@ -34,9 +40,10 @@ export async function POST(req) {
         try {
           const response = await ai.models.generateContentStream({
             model: "gemini-2.5-flash",
-            contents: `${instruction}${String(prompt).trim()}`,
+            systemInstruction,
+            contents,
             generationConfig: {
-              maxOutputTokens: 600,
+              maxOutputTokens: 400,
               temperature: 0.3,
               topP: 0.9,
             },
