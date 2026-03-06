@@ -638,8 +638,7 @@ export default function PostSurvey() {
                 {/* OEQ2 */}
                 <div className="space-y-3">
                   <p className="font-medium text-[18px]">
-                    2. Did you encounter any information that you could relate to your
-                    own experiences or to similar situations?
+                    2. Did you encounter any information that you could relate to your own experiences or to similar situations? If so, what were they?
                   </p>
                   <textarea
                     className="w-full border rounded-md p-4 min-h-[140px]"
