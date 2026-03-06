@@ -370,10 +370,10 @@ function ExperimentContent() {
 
   const instructionMessage = systemType
     ? systemType === "WebSearch"
-      ? `You will use search engines to conduct the search. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+      ? `You will use search engines to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap). Hope you enjoy your search!`
       : systemType === "RAGSearch"
-        ? `You will use Chat AI to conduct the search. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
-        : `You will use Chat AI to conduct the search. You can revisit the search tasks on the left panel at any time and use the scrap section on the right to save any information you find.`
+        ? `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap). Hope you enjoy your search!`
+        : `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap). Hope you enjoy your search!`
     : "";
 
 
@@ -393,6 +393,7 @@ function ExperimentContent() {
   const [scraps, setScraps] = useState([]);
   const [seconds, setSeconds] = useState(0);
   const [taskOpen, setTaskOpen] = useState(true);
+  const [gifLightbox, setGifLightbox] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refOpen, setRefOpen] = useState(false);
   const [activeSource, setActiveSource] = useState(null);
@@ -1060,80 +1061,111 @@ function ExperimentContent() {
   ========================= */
   if (step === 1) {
     return (
-      <div className="flex flex-col min-h-screen">
+      <div className="flex flex-col h-screen overflow-hidden">
         <ProgressBar progress={15} />
 
         <div className="flex flex-1 overflow-hidden">
-          {/* Left Panel */}
+          {/* Left Panel: wrapper stretches full content height for bg, sticky inner stays in viewport */}
           <div
             className={`
-              sticky top-0 h-screen
               bg-gray-100 border-r border-gray-300
-              transition-all
+              transition-all flex-shrink-0 overflow-y-auto overflow-x-hidden
               ${taskOpen ? "w-[20%]" : "w-[64px]"}
-              overflow-hidden
             `}
           >
-            <div className="px-4 pt-2">
-              <button
-                onClick={() => setTaskOpen((v) => !v)}
-                className="mb-4 w-10 h-10 rounded border bg-white shadow"
-              >
-                {taskOpen ? "←" : "→"}
-              </button>
+            <div>
+              <div className="px-4 pt-2">
+                <button
+                  onClick={() => setTaskOpen((v) => !v)}
+                  className="mb-4 w-10 h-10 rounded border bg-white shadow"
+                >
+                  {taskOpen ? "←" : "→"}
+                </button>
 
-              {taskOpen && (
-                <div className="p-4 mt-2">
-                  <div className="p-4 rounded border border-gray-300 text-base space-y-4">
-                    <div>
-                      <strong>Search Case</strong>
-                      <p className="mt-1 whitespace-pre-wrap">
-                        {scenario}
-                      </p>
-                    </div>
-                    <div>
-                      <strong>Search Task</strong>
-                      <p className="mt-1 whitespace-pre-wrap">
-                        {task}
-                      </p>
+                {taskOpen && (
+                  <div className="p-4 mt-2">
+                    <div className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words">
+                      <div>
+                        <strong>Search Case</strong>
+                        <p className="mt-1 whitespace-pre-wrap">
+                          {scenario}
+                        </p>
+                      </div>
+                      <div>
+                        <strong>Search Task</strong>
+                        <p className="mt-1 whitespace-pre-wrap">
+                          {task}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
             </div>
           </div>
 
           {/* Main Intro Content */}
-          <div className="flex-1 flex items-center justify-center">
-            <div className="max-w-2xl w-full text-center space-y-8 px-6">
-              <h1 className="text-3xl font-bold leading-snug">
-                Now you will start a search!
-                <br />
-                Perform a search to explore evidence about {topic}.
-              </h1>
+          <div className="flex-1 overflow-y-auto">
+            <div className="min-h-full flex items-center justify-center">
+              <div className="max-w-4xl w-full text-center space-y-5 px-6 py-6">
+                <h1 className="text-3xl font-bold leading-snug">
+                  Now you will start a search! <br/> Perform a search to explore evidence about {topic}.
+                </h1>
 
-              <div className="bg-gray-100 p-6 rounded-lg text-left">
-                <p className="text-base leading-relaxed">
-                  {instructionMessage}
-                </p>
+                <div className="bg-gray-100 px-10 py-4 rounded-lg text-left">
+                  <p className="text-sm leading-relaxed">
+                    {instructionMessage}
+                  </p>
+                </div>
+
+                <div className="flex justify-center">
+                  <img
+                    src={
+                      systemType === "RAGSearch" ? "/Tutorial_RAGSearch.gif"
+                      : systemType === "GenSearch" ? "/Tutorial_GenSearch.gif"
+                      : "/Tutorial_WebSearch.gif"
+                    }
+                    alt="Tutorial"
+                    className="rounded-lg max-w-full cursor-zoom-in"
+                    style={{ maxHeight: "400px" }}
+                    onClick={() => setGifLightbox(true)}
+                  />
+                </div>
+
+                {gifLightbox && (
+                  <div
+                    className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] cursor-zoom-out"
+                    onClick={() => setGifLightbox(false)}
+                  >
+                    <img
+                      src={
+                        systemType === "RAGSearch" ? "/Tutorial_RAGSearch.gif"
+                        : systemType === "GenSearch" ? "/Tutorial_GenSearch.gif"
+                        : "/Tutorial_WebSearch.gif"
+                      }
+                      alt="Tutorial"
+                      className="w-[98vw] h-[98vh] object-contain rounded-lg shadow-2xl"
+                    />
+                  </div>
+                )}
+
+                <button
+                  onClick={() => {
+                    setStep(2);
+                    setShowIntroModal(true);
+                  }}
+                  className="
+                    inline-flex items-center justify-center
+                    bg-blue-600 text-white
+                    px-8 py-3 rounded-lg
+                    font-medium
+                    hover:bg-blue-700
+                    transition
+                  "
+                >
+                  Start Experiment →
+                </button>
               </div>
-
-              <button
-                onClick={() => {
-                  setStep(2);
-                  setShowIntroModal(true);
-                }}
-                className="
-                  inline-flex items-center justify-center
-                  bg-blue-600 text-white
-                  px-8 py-3 rounded-lg
-                  font-medium
-                  hover:bg-blue-700
-                  transition
-                "
-              >
-                Start Experiment →
-              </button>
             </div>
           </div>
         </div>
@@ -1163,9 +1195,9 @@ function ExperimentContent() {
         {/* Left Panel */}
         <div
           className={`
-            fixed top-0 left-0 h-full 
+            fixed top-0 left-0 h-full
             bg-gray-100 border-r border-gray-300
-            transition-all
+            transition-all overflow-y-auto overflow-x-hidden
             ${taskOpen ? "w-[20%]" : "w-[64px]"}
           `}
         >
@@ -1180,7 +1212,7 @@ function ExperimentContent() {
 
             {taskOpen && (
               <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-base space-y-4">
+                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
