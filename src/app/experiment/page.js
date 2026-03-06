@@ -1248,11 +1248,11 @@ function ExperimentContent() {
               <h2 className="text-xl font-semibold mb-4">Notification</h2>
 
               <p className="text-base leading-relaxed">
-                Please search freely regarding the assigned task. <br />
-                If you search... <br />
-                1. for at least four minutes and <br />
-                2. enter multiple search inputs, <br />
-                you will be able to proceed to the next page.
+               You can move to the next page if you:<br />
+               <span className="block mt-2">
+                1. Search for at least <mark className="bg-yellow-200 rounded px-0.5">four minutes</mark>.<br />
+                2. Enter more than <mark className="bg-yellow-200 rounded px-0.5">five queries</mark>.
+               </span>
               </p>
 
               <div className="mt-5 text-sm text-gray-500">
@@ -1291,10 +1291,12 @@ function ExperimentContent() {
                       <span className="font-medium">{topic}</span>.
                     </p>
 
-                    <ul className="text-sm text-gray-500 space-y-2">
-                      <li>• Try different search approaches</li>
+                    <ul className="text-sm text-gray-500 space-y-2 text-left inline-block">
+                      <li>• Explore about {topic}</li>
                       <li>• Refine your queries as you go</li>
                       <li>• Save anything useful in the scrapbook</li>
+                      <li>⚠️ Please use English only</li>
+                      <li>⚠️ Please refrain from using external tools</li>
                     </ul>
                   </div>
 
@@ -1420,9 +1422,11 @@ function ExperimentContent() {
                       Ask the AI anything you'd like to know or discuss.
                     </p>
                     <ul className="text-sm text-gray-500 space-y-2 text-left inline-block">
-                      <li>• Ask questions about {topic}</li>
+                      <li>• Explore about {topic}</li>
                       <li>• Feel free to ask follow-up questions</li>
                       <li>• Save anything useful in the scrapbook</li>
+                      <li>⚠️ Please use English only</li>
+                      <li>⚠️ Please refrain from using external tools</li>
                     </ul>
                   </div>
                 </div>
