@@ -751,9 +751,25 @@ function ExperimentContent() {
     });
     setQuestionCount((prev) => prev + 1);
 
+    // Expand follow-up queries using conversation history
+    let searchQuery_expanded = userInput;
+    if (chatHistory.length > 0) {
+      try {
+        const expandRes = await fetch("/api/expand-query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: userInput, history: chatHistory }),
+        });
+        const expandData = await expandRes.json();
+        if (expandData.expandedQuery) searchQuery_expanded = expandData.expandedQuery;
+      } catch {
+        // fallback to original query
+      }
+    }
+
     // Fetch top N web results as sources (same as WebSearch)
     const searchRes = await fetch(
-      `/api/SearchEngine?q=${encodeURIComponent(userInput)}&requestedTotal=8`
+      `/api/SearchEngine?q=${encodeURIComponent(searchQuery_expanded)}&requestedTotal=8`
     );
     const searchData = await searchRes.json();
 
@@ -780,7 +796,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm-rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userInput, sources }),
+        body: JSON.stringify({ question: userInput, sources, history: chatHistory }),
       });
 
       // Start with empty streaming message
@@ -901,7 +917,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userInput }),
+        body: JSON.stringify({ prompt: userInput, history: chatHistory }),
       });
 
       // Start streaming
@@ -959,6 +975,16 @@ function ExperimentContent() {
       });
     } catch (err) {
       console.error(err);
+      setChatHistory((prev) => {
+        const updated = [...prev];
+        const lastIdx = updated.length - 1;
+        if (lastIdx >= 0 && updated[lastIdx]?.role === "assistant") {
+          updated[lastIdx] = { role: "assistant", content: "An error occurred while generating the response." };
+        } else {
+          updated.push({ role: "assistant", content: "An error occurred while generating the response." });
+        }
+        return updated;
+      });
     } finally {
       setIsGenerating(false);
       generatingRef.current = false;
