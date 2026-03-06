@@ -546,9 +546,17 @@ function ExperimentContent() {
     selectionRangeRef.current = range.cloneRange();
     suppressRestoreRef.current = false;
 
-    // position:fixed → viewport coords only, no scrollX/Y offset
-    const x = Math.min(rect.right + 6, window.innerWidth - 130);
-    const y = Math.max(rect.top - 42, 8);
+    // position:absolute inside chatScrollRef → content-relative coords
+    const container = chatScrollRef.current;
+    const containerRect = container ? container.getBoundingClientRect() : { left: 0, top: 0 };
+    const scrollTop = container ? container.scrollTop : 0;
+    const scrollLeft = container ? container.scrollLeft : 0;
+    const buttonWidth = 80;
+    const x = Math.max(
+      rect.left - containerRect.left + scrollLeft + (rect.width - buttonWidth) / 2,
+      8
+    );
+    const y = Math.max(rect.top - containerRect.top + scrollTop - 36, 8);
 
     setScrapPopup({
       open: true,
@@ -567,19 +575,16 @@ function ExperimentContent() {
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    // Bubble phase (no capture flag) so React synthetic events fire first.
-    // Never call removeAllRanges() here — that kills drag-select in progress.
-    // Only close UI chrome (popup + highlight overlay) when clicking outside.
-    const onDocMouseDown = (e) => {
-      const el = e.target instanceof Element ? e.target : null;
-      if (el?.closest?.('[data-scrap-popup="1"]')) return;
-      if (el?.closest?.('[data-selectable="1"]')) return;
-      closeScrapPopup();
-      clearHighlight();
+    // Close popup whenever the text selection disappears
+    const onSelectionChange = () => {
+      const sel = window.getSelection();
+      if (!sel || sel.rangeCount === 0 || !sel.toString().trim()) {
+        closeScrapPopup();
+      }
     };
 
-    document.addEventListener("mousedown", onDocMouseDown);
-    return () => document.removeEventListener("mousedown", onDocMouseDown);
+    document.addEventListener("selectionchange", onSelectionChange);
+    return () => document.removeEventListener("selectionchange", onSelectionChange);
   }, []);
 
   const isRangeFullyInside = (containerEl, range) => {
@@ -745,30 +750,9 @@ function ExperimentContent() {
     });
     setQuestionCount((prev) => prev + 1);
 
-    // Capture completed history before adding the new user message
-    const historyForAPI = chatHistory
-      .filter((m) => !m.loading && !m.streaming && m.content)
-      .map((m) => ({ role: m.role, content: m.content }));
-
-    // Expand follow-up queries using conversation context before searching
-    let queryForSearch = userInput;
-    if (historyForAPI.length > 0) {
-      try {
-        const expandRes = await fetch("/api/expand-query", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: userInput, history: historyForAPI }),
-        });
-        const { expandedQuery } = await expandRes.json();
-        if (expandedQuery) queryForSearch = expandedQuery;
-      } catch {
-        // fall back to original query
-      }
-    }
-
-    // Fetch top N web results using the (potentially expanded) query
+    // Fetch top N web results as sources (same as WebSearch)
     const searchRes = await fetch(
-      `/api/SearchEngine?q=${encodeURIComponent(queryForSearch)}&requestedTotal=8`
+      `/api/SearchEngine?q=${encodeURIComponent(userInput)}&requestedTotal=8`
     );
     const searchData = await searchRes.json();
 
@@ -779,6 +763,7 @@ function ExperimentContent() {
         url: item.link,
         snippet: item.snippet,
       })) || [];
+
 
     // Append user + loading assistant
     setChatHistory((prev) => [
@@ -794,7 +779,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm-rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userInput, sources, history: historyForAPI }),
+        body: JSON.stringify({ question: userInput, sources }),
       });
 
       // Start with empty streaming message
@@ -902,12 +887,6 @@ function ExperimentContent() {
     });
 
     setQuestionCount((prev) => prev + 1);
-
-    // Capture completed history before adding the new user message
-    const historyForAPI = chatHistory
-      .filter((m) => !m.loading && !m.streaming && m.content)
-      .map((m) => ({ role: m.role, content: m.content }));
-
     setChatHistory((prev) => [
       ...prev,
       { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
@@ -921,7 +900,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userInput, history: historyForAPI }),
+        body: JSON.stringify({ prompt: userInput }),
       });
 
       // Start streaming
@@ -1502,9 +1481,41 @@ function ExperimentContent() {
                   );
                 })}
               </div>
+
+              {scrapPopup.open && (
+                <div
+                  data-scrap-popup="1"
+                  className="absolute z-[70]"
+                  style={{ left: scrapPopup.x, top: scrapPopup.y }}
+                >
+                  <button
+                    type="button"
+                    onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      addScrap({
+                        title: chatTitle,
+                        source: "chat",
+                        fullText: "",
+                        snippetOverride: scrapPopup.text,
+                        meta: scrapPopup.meta,
+                        msgSources: scrapPopup.msgSources,
+                      });
+                      suppressRestoreRef.current = true;
+                      selectionRangeRef.current = null;
+                      window.getSelection()?.removeAllRanges();
+                      closeScrapPopup();
+                    }}
+                    className="px-3 py-1 rounded-md bg-white border shadow text-xs hover:bg-gray-50"
+                  >
+                    📌 Scrap
+                  </button>
+                </div>
+              )}
               </div>
               )}
-              
+
               {isRAG && (
                 <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} onScrap={addWebScrap} />
                 )}
@@ -1670,41 +1681,6 @@ function ExperimentContent() {
             </div>
           </div>
         </div>
-        {scrapPopup.open && (
-          <div
-            data-scrap-popup="1"
-            className="fixed z-[70]"
-            style={{ left: scrapPopup.x, top: scrapPopup.y }}
-          >
-            <button
-              type="button"
-              onMouseDown={(e) =>{
-                e.preventDefault();
-                e.stopPropagation();
-              }}
-              onClick={(e) => {
-                e.preventDefault();
-                e.stopPropagation();
-
-                addScrap({
-                  title: chatTitle,
-                  source: "chat",
-                  fullText: "",
-                  snippetOverride: scrapPopup.text,
-                  meta: scrapPopup.meta,
-                  msgSources: scrapPopup.msgSources,
-                });
-                suppressRestoreRef.current = true;
-                selectionRangeRef.current = null;
-                window.getSelection()?.removeAllRanges();  
-                closeScrapPopup();
-              }}
-              className="px-3 py-1 rounded-md bg-white border shadow text-xs hover:bg-gray-50"
-            >
-              📌 Scrap
-            </button>
-          </div>
-        )}
       </div>
   );
 }
