@@ -173,19 +173,19 @@ export default function PreSurvey() {
      Render
   -------------------------------- */
   return (
-    <div className="h-screen overflow-hidden bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <div className="sticky top-0 z-40 bg-white border-b">
         <ProgressBar progress={10} />
       </div>
 
-      <div className="flex h-[calc(100vh-56px)]">
+      <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden">
         {/* Left panel */}
         <div className={`
-            sticky top-[56px] h-full
+            sticky top-[56px] h-[calc(100vh-56px)]
             bg-gray-100 border-r border-gray-300
-            transition-all 
+            transition-all flex-shrink-0
             ${panelOpen ? "w-[20%]" : "w-[64px]"}
-            overflow-hidden
+            overflow-hidden overflow-y-auto
          `}
         >
           
@@ -215,13 +215,12 @@ export default function PreSurvey() {
         </div>
 
         {/* Survey */}
-        <div className="flex-1 flex justify-center h-full overflow-y-auto">
-          <div className="max-w-[900px] w-full px-8 py-12 bg-white">
+        <div className="flex-1 overflow-y-auto min-w-0">
+          <div className="w-full px-6 lg:px-10 pt-6 pb-10 bg-white">
 
-            <p className="text-lg font-medium mt-10 mb-8">
-              On the scales below, indicate how you think about the given topic.
-              <br />
-              There are no right or wrong answers; we are interested in what you think.  
+            <p className="text-base text-gray-700 mb-4 leading-relaxed">
+              On the scales below, indicate how you think about the given topic.<br />
+              There are no right or wrong answers; we are interested in what you think.
             </p>
 
             <div className="space-y-8 mb-16">
@@ -248,11 +247,11 @@ export default function PreSurvey() {
                         {idx + 1}. {renderedQuestion}
                       </p>
 
-                      <div className="flex justify-between text-base text-gray-600">
+                      <div className="flex justify-between text-sm text-gray-600">
                         {Labels.map((label, i) => (
                           <label
                             key={label}
-                            className="flex flex-col items-center w-[100px] cursor-pointer"
+                            className="flex flex-col items-center flex-1 cursor-pointer"
                           >
                             <input
                               type="radio"
