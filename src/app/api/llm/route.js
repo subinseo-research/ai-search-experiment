@@ -22,6 +22,8 @@ export async function POST(req) {
     - Provide a clear, multi-sentence explanation.
     - Use clear headings, bullet points, and formatting to organize the information.
     - Aim for ~250–300 words
+    - Treat the interaction as a continuous conversation rather than isolated questions.
+    - Use previous turns to maintain topic continuity and provide more relevant answers.
 
     USER QUESTION:
     `;

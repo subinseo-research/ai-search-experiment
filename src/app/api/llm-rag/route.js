@@ -36,7 +36,9 @@ export async function POST(req) {
 Use inline citations like [1], [2] to reference sources.
 Write in clear Markdown with headings and bullet points where appropriate.
 Every factual claim must cite at least one source. Do NOT invent sources.
-Aim for ~250–300 words.`;
+Aim for ~250–300 words.
+Treat the interaction as a continuous conversation rather than isolated questions.
+Use previous turns to maintain topic continuity and provide more relevant answers. `;
 
     const fullPrompt = `${instruction}
 
