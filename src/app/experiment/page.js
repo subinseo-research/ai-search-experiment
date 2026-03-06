@@ -1145,13 +1145,16 @@ function ExperimentContent() {
                 </div>
 
                 <div className="flex justify-center">
-                  <img
+                  <video
                     src={
-                      systemType === "RAGSearch" ? "/Tutorial_RAGSearch.gif"
-                      : systemType === "GenSearch" ? "/Tutorial_GenSearch.gif"
-                      : "/Tutorial_WebSearch.gif"
+                      systemType === "RAGSearch" ? "/Tutorial_RAGSearch.mp4"
+                      : systemType === "GenSearch" ? "/Tutorial_GenSearch.mp4"
+                      : "/Tutorial_WebSearch.mp4"
                     }
-                    alt="Tutorial"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
                     className="rounded-lg max-w-full cursor-zoom-in"
                     style={{ maxHeight: "400px" }}
                     onClick={() => setGifLightbox(true)}
@@ -1163,13 +1166,16 @@ function ExperimentContent() {
                     className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] cursor-zoom-out"
                     onClick={() => setGifLightbox(false)}
                   >
-                    <img
+                    <video
                       src={
-                        systemType === "RAGSearch" ? "/Tutorial_RAGSearch.gif"
-                        : systemType === "GenSearch" ? "/Tutorial_GenSearch.gif"
-                        : "/Tutorial_WebSearch.gif"
+                        systemType === "RAGSearch" ? "/Tutorial_RAGSearch.mp4"
+                        : systemType === "GenSearch" ? "/Tutorial_GenSearch.mp4"
+                        : "/Tutorial_WebSearch.mp4"
                       }
-                      alt="Tutorial"
+                      autoPlay
+                      loop
+                      muted
+                      playsInline
                       className="w-[98vw] h-[98vh] object-contain rounded-lg shadow-2xl"
                     />
                   </div>
