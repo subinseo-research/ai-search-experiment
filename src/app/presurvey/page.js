@@ -173,15 +173,15 @@ export default function PreSurvey() {
      Render
   -------------------------------- */
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
-      <div className="sticky top-0 z-40 bg-white border-b">
+    <div className="h-screen flex flex-col bg-gray-50 overflow-x-hidden">
+      <div className="flex-shrink-0 z-40 bg-white border-b">
         <ProgressBar progress={10} />
       </div>
 
-      <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden">
+      <div className="flex flex-1 overflow-hidden">
         {/* Left panel */}
         <div className={`
-            sticky top-[56px] h-[calc(100vh-56px)]
+            h-full
             bg-gray-100 border-r border-gray-300
             transition-all flex-shrink-0
             ${panelOpen ? "w-[20%]" : "w-[64px]"}
@@ -215,12 +215,16 @@ export default function PreSurvey() {
         </div>
 
         {/* Survey */}
-        <div className="flex-1 overflow-y-auto min-w-0">
+        <div className="flex-1 overflow-y-auto min-w-0 h-full">
           <div className="w-full px-6 lg:px-10 pt-6 pb-10 bg-white">
 
-            <p className="text-base text-gray-700 mb-4 leading-relaxed">
-              On the scales below, indicate how you think about the given topic.<br />
-              There are no right or wrong answers; we are interested in what you think.
+            <p className="text-base text-gray-700 mb-10 leading-relaxed">
+              On the scales below, indicate the extent to which each statement reflects your thoughts about searching for information on {topic}.<br />
+              There are no better or worse responses. We are simply interested in your current state. 
+            </p>
+
+            <p className="text-lg text-gray-900 mb-2 leading-relaxed">
+              After reading the search scenario and task, assuming that you perform the search:
             </p>
 
             <div className="space-y-8 mb-16">

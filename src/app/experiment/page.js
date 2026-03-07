@@ -1319,14 +1319,13 @@ function ExperimentContent() {
                     </h2>
 
                     <p className="text-gray-600">
-                      Use the search box above to explore scientific evidence about {" "}
-                      <span className="font-medium">{topic}</span>.
+                      Explore anything you'd like to know or find using a search engine.
                     </p>
 
                     <ul className="text-sm text-gray-500 space-y-2 text-left inline-block">
-                      <li>• Explore about {topic}</li>
-                      <li>• Refine your queries as you go</li>
-                      <li>• Save anything useful in the scrapbook</li>
+                      <li>▪️ Explore about {topic}</li>
+                      <li>▪️ Refine your queries as you go</li>
+                      <li>▪️ Save anything useful in the scrapbook</li>
                       <li>⚠️ Please use English only</li>
                       <li>⚠️ Please refrain from using external tools</li>
                     </ul>
@@ -1454,9 +1453,9 @@ function ExperimentContent() {
                       Ask the AI anything you'd like to know or discuss.
                     </p>
                     <ul className="text-sm text-gray-500 space-y-2 text-left inline-block">
-                      <li>• Explore about {topic}</li>
-                      <li>• Feel free to ask follow-up questions</li>
-                      <li>• Save anything useful in the scrapbook</li>
+                      <li>▪️ Explore about {topic}</li>
+                      <li>▪️ Ask follow-up questions</li>
+                      <li>▪️ Save anything useful in the scrapbook</li>
                       <li>⚠️ Please use English only</li>
                       <li>⚠️ Please refrain from using external tools</li>
                     </ul>
