@@ -22,7 +22,7 @@ export default function DemographicSurvey() {
     // generative AI usage
     use_chatgpt: "",
     use_gemini: "",
-    use_copilot: "",
+    use_claude: "",
     use_genai_other: "",
     use_genai_other_name: "",
 
@@ -54,7 +54,7 @@ export default function DemographicSurvey() {
     // usage
     "use_chatgpt",
     "use_gemini",
-    "use_copilot",
+    "use_claude",
     "use_genai_other",
     "use_google",
     "use_bing",
@@ -63,10 +63,12 @@ export default function DemographicSurvey() {
 
   const USAGE_OPTIONS = [
     "Never",
-    "1–2 times",
-    "3–5 times",
-    "6–10 times",
-    "More than 10 times",
+    "Once or twice a month",
+    "A few times a month",
+    "A few times a week",
+    "Most days of the week",
+    "Every day",
+    "Several times a day",
   ];
 
   /* -----------------------------
@@ -190,7 +192,7 @@ export default function DemographicSurvey() {
     // usage
     if (formData.use_chatgpt) fields.use_chatgpt = formData.use_chatgpt;
     if (formData.use_gemini) fields.use_gemini = formData.use_gemini;
-    if (formData.use_copilot) fields.use_copilot = formData.use_copilot;
+    if (formData.use_claude) fields.use_claude = formData.use_claude;
     if (formData.use_genai_other) fields.use_genai_other = formData.use_genai_other;
     if (formData.use_genai_other_name)
       fields.use_genai_other_name = formData.use_genai_other_name;
@@ -304,267 +306,169 @@ export default function DemographicSurvey() {
   const isHighlighted = (fieldName) => highlightFields.includes(fieldName);
 
   return (
-    <div className="w-full h-screen flex flex-col bg-gray-50">
-      <div className="w-full">
+    <div className="w-full min-h-screen flex flex-col bg-white">
+      <div className="fixed top-0 left-0 right-0 z-40">
         <ProgressBar progress={95} />
       </div>
 
-      <div className="flex-1 flex items-center justify-center">
-        <div className="w-full max-w-2xl bg-white shadow-lg rounded-2xl p-10 overflow-y-auto max-h-[85vh]">
-          <h1 className="text-2xl font-bold mb-6 text-center">
+      <div className="flex-1 px-15 py-5 pt-8">
+          <h1 className="text-2xl font-bold mb-5 text-center">
             Demographic Questions
           </h1>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-            {/* Age */}
-            <div
-              ref={(el) => (fieldRefs.current.age = el)}
-              className={
-                isHighlighted("age")
-                  ? "p-3 rounded-lg border-2 border-red-500"
-                  : ""
-              }
-            >
-              <label className="block mb-2 font-medium">What is your age?</label>
-              <input
-                type="text"
-                name="age"
-                value={formData.age}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-2"
-                placeholder="Enter your age (numbers only)"
-              />
-            </div>
+          <form onSubmit={handleSubmit}>
 
-            {/* Gender */}
-            <div
-              ref={(el) => (fieldRefs.current.gender = el)}
-              className={
-                isHighlighted("gender")
-                  ? "p-3 rounded-lg border-2 border-red-500"
-                  : ""
-              }
-            >
-              <label className="block mb-2 font-medium">
-                What is your gender identity?
-              </label>
+            {/* ── 2-column grid: Q1–Q5 left │ Q6–Q7 right ── */}
+            <div className="grid grid-cols-2 gap-x-10 gap-y-4 mb-5">
 
-              {["Male", "Female", "Non-binary", "Not listed (please state)"].map(
-                (option) => (
-                  <div key={option} className="flex items-center mb-1 cursor-pointer">
-                    <input
-                      type="radio"
-                      id={option}
-                      name="gender"
-                      value={option}
-                      checked={formData.gender === option}
-                      onChange={handleChange}
-                      className="mr-2 w-4 h-4"
-                    />
-                    <label htmlFor={option}>{option}</label>
-                  </div>
-                )
-              )}
+              {/* ── LEFT COLUMN ── */}
+              <div className="space-y-6 border-r border-gray-300 pr-10">
 
-              {formData.gender === "Not listed (please state)" && (
-                <input
-                  type="text"
-                  name="gender_other"
-                  value={formData.gender_other}
-                  onChange={handleChange}
-                  placeholder="Please specify"
-                  className="w-full border rounded-lg p-2 mt-2"
-                />
-              )}
-            </div>
-
-            {/* Education */}
-            <div
-              ref={(el) => (fieldRefs.current.education = el)}
-              className={
-                isHighlighted("education")
-                  ? "p-3 rounded-lg border-2 border-red-500"
-                  : ""
-              }
-            >
-              <label className="block mb-2 font-medium">
-                What is the highest level of school you completed, or the highest
-                degree you received?
-              </label>
-              <select
-                name="education"
-                value={formData.education}
-                onChange={handleChange}
-                className="w-full border rounded-lg p-2"
-              >
-                <option value="">Select one</option>
-                <option>Never Attended School or Only Attended Kindergarten</option>
-                <option>Elementary (Grades 1 through 8)</option>
-                <option>Some High School (Grades 9 through 11)</option>
-                <option>High School Diploma or Equivalent (Grade 12 or GED)</option>
-                <option>Some College or Technical School (College 1 year to 3 years)</option>
-                <option>Bachelor&apos;s Degree</option>
-                <option>Master&apos;s Degree</option>
-                <option>Professional School (JD, MD, etc.) or Doctorate Degree (PhD, EdD)</option>
-              </select>
-            </div>
-
-            {/* Race */}
-            <div
-              ref={(el) => (fieldRefs.current.race = el)}
-              className={
-                isHighlighted("race")
-                  ? "p-3 rounded-lg border-2 border-red-500"
-                  : ""
-              }
-            >
-              <label className="block mb-2 font-medium">
-                Which of the following would you say best describes your race?
-                (Check all that apply)
-              </label>
-              {[
-                "White",
-                "Black",
-                "Asian",
-                "American Indian or Alaska Native",
-                "Native Hawaiian or Other Pacific Islander",
-              ].map((race) => (
-                <div key={race} className="flex items-center mb-1 cursor-pointer">
+                {/* Age */}
+                <div
+                  ref={(el) => (fieldRefs.current.age = el)}
+                  className={isHighlighted("age") ? "p-3 rounded-lg border-2 border-red-500" : ""}
+                >
+                  <label className="block mb-1 font-medium">1. What is your age?</label>
                   <input
-                    type="checkbox"
-                    id={race}
-                    name="race"
-                    value={race}
-                    checked={formData.race.includes(race)}
+                    type="text"
+                    name="age"
+                    value={formData.age}
                     onChange={handleChange}
-                    className="mr-2 w-4 h-4"
+                    className="w-70 border rounded-lg p-2"
+                    placeholder="Enter your age (numbers only)"
                   />
-                  <label htmlFor={race}>{race}</label>
                 </div>
-              ))}
-            </div>
 
-            {/* Hispanic */}
-            <div
-              ref={(el) => (fieldRefs.current.hispanic = el)}
-              className={
-                isHighlighted("hispanic")
-                  ? "p-3 rounded-lg border-2 border-red-500"
-                  : ""
-              }
-            >
-              <label className="block mb-2 font-medium">
-                Are you Hispanic or Latino/a/x?
-              </label>
-              {["Yes", "No"].map((option) => (
-                <div key={option} className="flex items-center mb-1">
-                  <input
-                    type="radio"
-                    id={option}
-                    name="hispanic"
-                    value={option}
-                    checked={formData.hispanic === option}
-                    onChange={handleChange}
-                    className="mr-2"
-                  />
-                  <label htmlFor={option}>{option}</label>
+                {/* Gender */}
+                <div
+                  ref={(el) => (fieldRefs.current.gender = el)}
+                  className={isHighlighted("gender") ? "p-3 rounded-lg border-2 border-red-500" : ""}
+                >
+                  <label className="block mb-1 font-medium">2. What is your gender identity?</label>
+                  {["Male", "Female", "Non-binary", "Not listed (please state)"].map((option) => (
+                    <div key={option} className="flex items-center mb-1 cursor-pointer">
+                      <input type="radio" id={option} name="gender" value={option}
+                        checked={formData.gender === option} onChange={handleChange} className="mr-2 w-4 h-4" />
+                      <label htmlFor={option}>{option}</label>
+                    </div>
+                  ))}
+                  {formData.gender === "Not listed (please state)" && (
+                    <input type="text" name="gender_other" value={formData.gender_other}
+                      onChange={handleChange} placeholder="Please specify"
+                      className="w-48 border rounded-lg p-2 mt-1" />
+                  )}
                 </div>
-              ))}
-            </div>
 
-            {/* Q6: Party ID */}
-            <div
-              ref={(el) => (fieldRefs.current.party_id = el)}
-              className={
-                isHighlighted("party_id")
-                  ? "p-3 rounded-lg border-2 border-red-500"
-                  : ""
-              }
-            >
-              <label className="block mb-2 font-medium">
-                Generally speaking, do you think of yourself as a…
-              </label>
-
-              {[
-                "Republican",
-                "Democrat",
-                "Independent",
-                "No preference",
-              ].map((opt) => {
-                const id = `party_id_${opt.replace(/\s+/g, "_")}`;
-                return (
-                  <label
-                    key={opt}
-                    htmlFor={id}
-                    className="flex items-center mb-1 cursor-pointer select-none"
-                  >
-                    <input
-                      id={id}
-                      type="radio"
-                      name="party_id"
-                      value={opt}
-                      checked={formData.party_id === opt}
-                      onChange={handleChange}
-                      className="mr-2"
-                    />
-                    {opt}
+                {/* Education */}
+                <div
+                  ref={(el) => (fieldRefs.current.education = el)}
+                  className={isHighlighted("education") ? "p-3 rounded-lg border-2 border-red-500" : ""}
+                >
+                  <label className="block mb-1 font-medium">
+                    3. What is the highest level of school you completed, or the highest degree you received?
                   </label>
-                );
-              })}
-            </div>
+                  <select name="education" value={formData.education} onChange={handleChange}
+                    className="w-150 border rounded-lg p-2">
+                    <option value="">Select one</option>
+                    <option>Never Attended School or Only Attended Kindergarten</option>
+                    <option>Elementary (Grades 1 through 8)</option>
+                    <option>Some High School (Grades 9 through 11)</option>
+                    <option>High School Diploma or Equivalent (Grade 12 or GED)</option>
+                    <option>Some College or Technical School (College 1 year to 3 years)</option>
+                    <option>Bachelor&apos;s Degree</option>
+                    <option>Master&apos;s Degree</option>
+                    <option>Professional School (JD, MD, etc.) or Doctorate Degree (PhD, EdD)</option>
+                  </select>
+                </div>
 
-            {/* Q8: Ideology Scale */}
-            <div
-              ref={(el) => (fieldRefs.current.ideology_scale = el)}
-              className={
-                isHighlighted("ideology_scale")
-                  ? "p-3 rounded-lg border-2 border-red-500"
-                  : ""
-              }
-            >
-              <p className="block mb-3 font-medium">
-                In general, do you think of yourself as…
-              </p>
-
-              {[
-                "Extremely liberal",
-                "Liberal",
-                "Slightly liberal",
-                "Moderate",
-                "Slightly conservative",
-                "Conservative",
-                "Extremely conservative",
-              ].map((opt) => {
-                const id = `ideology_${opt.replace(/[^a-zA-Z0-9]/g, "_")}`;
-                return (
-                  <label
-                    key={opt}
-                    htmlFor={id}
-                    className="flex items-center mb-1 cursor-pointer select-none"
-                  >
-                    <input
-                      id={id}
-                      type="radio"
-                      name="ideology_scale"
-                      value={opt}
-                      checked={formData.ideology_scale === opt}
-                      onChange={handleChange}
-                      className="mr-2"
-                    />
-                    {opt}
+                {/* Race */}
+                <div
+                  ref={(el) => (fieldRefs.current.race = el)}
+                  className={isHighlighted("race") ? "p-3 rounded-lg border-2 border-red-500" : ""}
+                >
+                  <label className="block mb-1 font-medium">
+                    4. Which of the following would you say best describes your race? (Check all that apply)
                   </label>
-                );
-              })}
-            </div>
+                  {["White", "Black", "Asian", "American Indian or Alaska Native",
+                    "Native Hawaiian or Other Pacific Islander"].map((race) => (
+                    <div key={race} className="flex items-center mb-1 cursor-pointer">
+                      <input type="checkbox" id={race} name="race" value={race}
+                        checked={formData.race.includes(race)} onChange={handleChange} className="mr-2 w-4 h-4" />
+                      <label htmlFor={race}>{race}</label>
+                    </div>
+                  ))}
+                </div>
 
+              </div>{/* end LEFT COLUMN */}
 
-            {/* Tool Usage Frequency (Matrix) */}
+              {/* ── RIGHT COLUMN ── */}
+              <div className="space-y-6">
+
+                {/* Hispanic */}
+                <div
+                  ref={(el) => (fieldRefs.current.hispanic = el)}
+                  className={isHighlighted("hispanic") ? "p-3 rounded-lg border-2 border-red-500" : ""}
+                >
+                  <label className="block mb-1 font-medium">5. Are you Hispanic or Latino/a/x?</label>
+                  {["Yes", "No"].map((option) => (
+                    <div key={option} className="flex items-center mb-1">
+                      <input type="radio" id={option} name="hispanic" value={option}
+                        checked={formData.hispanic === option} onChange={handleChange} className="mr-2" />
+                      <label htmlFor={option}>{option}</label>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Party ID */}
+                <div
+                  ref={(el) => (fieldRefs.current.party_id = el)}
+                  className={isHighlighted("party_id") ? "p-3 rounded-lg border-2 border-red-500" : ""}
+                >
+                  <label className="block mb-1 font-medium">
+                    6. Generally speaking, do you think of yourself as a…
+                  </label>
+                  {["Republican", "Democrat", "Independent", "No preference"].map((opt) => {
+                    const id = `party_id_${opt.replace(/\s+/g, "_")}`;
+                    return (
+                      <label key={opt} htmlFor={id} className="flex items-center mb-1 cursor-pointer select-none">
+                        <input id={id} type="radio" name="party_id" value={opt}
+                          checked={formData.party_id === opt} onChange={handleChange} className="mr-2" />
+                        {opt}
+                      </label>
+                    );
+                  })}
+                </div>
+
+                {/* Ideology Scale */}
+                <div
+                  ref={(el) => (fieldRefs.current.ideology_scale = el)}
+                  className={isHighlighted("ideology_scale") ? "p-3 rounded-lg border-2 border-red-500" : ""}
+                >
+                  <p className="block mb-1 font-medium">7. In general, do you think of yourself as…</p>
+                  {["Extremely liberal", "Liberal", "Slightly liberal", "Moderate",
+                    "Slightly conservative", "Conservative", "Extremely conservative"].map((opt) => {
+                    const id = `ideology_${opt.replace(/[^a-zA-Z0-9]/g, "_")}`;
+                    return (
+                      <label key={opt} htmlFor={id} className="flex items-center mb-1 cursor-pointer select-none">
+                        <input id={id} type="radio" name="ideology_scale" value={opt}
+                          checked={formData.ideology_scale === opt} onChange={handleChange} className="mr-2" />
+                        {opt}
+                      </label>
+                    );
+                  })}
+                </div>
+
+              </div>{/* end RIGHT COLUMN */}
+            </div>{/* end 2-column grid */}
+
+            {/* Tool Usage Frequency (Matrix) — full width */}
             <div
               className={
                 [
                   "use_chatgpt",
                   "use_gemini",
-                  "use_copilot",
+                  "use_claude",
                   "use_genai_other",
                   "use_google",
                   "use_bing",
@@ -575,7 +479,7 @@ export default function DemographicSurvey() {
               }
             >
               <p className="block mb-3 font-medium">
-                How frequently do you use the following tools in a typical week for information seeking?
+                8. How frequently do you use the following tools?
               </p>
 
               <div className="overflow-x-auto space-y-6">
@@ -583,12 +487,10 @@ export default function DemographicSurvey() {
                 {/* Generative AI */}
                 {/* ===================== */}
                 <div>
-                  <h4 className="font-semibold mb-2">Generative AI</h4>
-
                   <table className="w-full border-collapse text-sm">
                     <thead className="font-normal">
                       <tr>
-                        <th className="border p-2 text-left text-gray-700">Tool</th>
+                        <th className="border p-2 text-left text-gray-700 w-[250px]">Generative AI</th>
                         {USAGE_OPTIONS.map((opt) => (
                           <th key={opt} className="border p-2 text-center">
                             {opt}
@@ -601,11 +503,23 @@ export default function DemographicSurvey() {
                       {[
                         { label: "ChatGPT", field: "use_chatgpt" },
                         { label: "Gemini", field: "use_gemini" },
-                        { label: "Copilot", field: "use_copilot" },
+                        { label: "Claude", field: "use_claude" },
                         { label: "Other Generative AI", field: "use_genai_other" },
                       ].map(({ label, field }) => (
                         <tr key={field}>
-                          <td className="border p-2 font-medium">{label}</td>
+                          <td className="border p-2 font-medium">
+                            {label}
+                            {field === "use_genai_other" && (
+                              <input
+                                type="text"
+                                name="use_genai_other_name"
+                                value={formData.use_genai_other_name}
+                                onChange={handleChange}
+                                placeholder="Please specify"
+                                className="mt-1 w-full border rounded-lg p-1 text-sm font-normal"
+                              />
+                            )}
+                          </td>
 
                           {USAGE_OPTIONS.map((opt) => (
                             <td key={opt} className="border p-0">
@@ -624,28 +538,16 @@ export default function DemographicSurvey() {
                       ))}
                     </tbody>
                   </table>
-
-                  {/* Other GenAI name */}
-                  <input
-                    type="text"
-                    name="use_genai_other_name"
-                    value={formData.use_genai_other_name}
-                    onChange={handleChange}
-                    placeholder="If other, please specify (optional)"
-                    className="mt-2 w-full border rounded-lg p-2"
-                  />
                 </div>
 
                 {/* ===================== */}
                 {/* Web Search Engines */}
                 {/* ===================== */}
                 <div>
-                  <h4 className="font-semibold mb-2">Web Search Engines</h4>
-
                   <table className="w-full border-collapse text-sm">
                     <thead className="font-normal">
                       <tr>
-                        <th className="border p-2 text-left text-gray-700">Tool</th>
+                        <th className="border p-2 text-left text-gray-700 w-[250px]">Search Engine</th>
                         {USAGE_OPTIONS.map((opt) => (
                           <th key={opt} className="border p-2 text-center">
                             {opt}
@@ -661,7 +563,19 @@ export default function DemographicSurvey() {
                         { label: "Other Search Engines", field: "use_search_other" },
                       ].map(({ label, field }) => (
                         <tr key={field}>
-                          <td className="border p-2 font-medium">{label}</td>
+                          <td className="border p-2 font-medium">
+                            {label}
+                            {field === "use_search_other" && (
+                              <input
+                                type="text"
+                                name="use_search_other_name"
+                                value={formData.use_search_other_name}
+                                onChange={handleChange}
+                                placeholder="Please specify"
+                                className="mt-1 w-full border rounded-lg p-1 text-sm font-normal"
+                              />
+                            )}
+                          </td>
 
                           {USAGE_OPTIONS.map((opt) => (
                             <td key={opt} className="border p-0">
@@ -680,16 +594,6 @@ export default function DemographicSurvey() {
                       ))}
                     </tbody>
                   </table>
-
-                  {/* Other Search name */}
-                  <input
-                    type="text"
-                    name="use_search_other_name"
-                    value={formData.use_search_other_name}
-                    onChange={handleChange}
-                    placeholder="If other, please specify (optional)"
-                    className="mt-2 w-full border rounded-lg p-2"
-                  />
                 </div>
               </div>
             </div>
@@ -708,7 +612,6 @@ export default function DemographicSurvey() {
               {message && <p className="text-red-600 mt-3">{message}</p>}
             </div>
           </form>
-        </div>
       </div>
 
       {/* Warning Modal */}

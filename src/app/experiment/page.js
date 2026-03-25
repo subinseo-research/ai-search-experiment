@@ -6,8 +6,7 @@ import ProgressBar from "../../components/ProgressBar";
 import ReactMarkdown from "react-markdown";
 import { useSearchParams } from "next/navigation";
 
-const REQUIRED_TIME = 240; // 4 minutes
-const REQUIRED_QUESTIONS = 5;
+const REQUIRED_QUESTIONS = 3;
 
 
 async function readSSEStream(res, onChunk) {
@@ -253,6 +252,16 @@ function MarkdownWithCitations({ content, sources, onOpenSource }) {
   });
   return <div className="text-sm text-gray-800">{blocks}</div>;
 }
+
+function CyclingLoadingText({ messages, intervalMs = 2000 }) {
+  const [idx, setIdx] = React.useState(0);
+  React.useEffect(() => {
+    const t = setInterval(() => setIdx((i) => (i + 1) % messages.length), intervalMs);
+    return () => clearInterval(t);
+  }, [messages.length, intervalMs]);
+  return <span className="text-gray-400">{messages[idx]}</span>;
+}
+
 function makeMessageId(prefix = "m") {
   if (typeof crypto !== "undefined" && crypto.randomUUID) {
     return `${prefix}_${crypto.randomUUID()}`;
@@ -270,6 +279,25 @@ function countWords(text = "") {
 function nextTurnIndex(chatHistory = []) {
   const assistantCount = chatHistory.filter((m) => m.role === "assistant").length;
   return assistantCount + 1;
+}
+
+function reorderCitations(text, sources) {
+  const seen = new Map(); // oldNum -> newNum
+  let counter = 1;
+  for (const m of text.matchAll(/\[(\d+(?:,\s*\d+)*)\]/g)) {
+    for (const n of m[1].split(",").map((s) => parseInt(s.trim(), 10))) {
+      if (!seen.has(n)) seen.set(n, counter++);
+    }
+  }
+  const newText = text.replace(/\[(\d+(?:,\s*\d+)*)\]/g, (_, inner) => {
+    const nums = inner.split(",").map((s) => parseInt(s.trim(), 10));
+    return `[${nums.map((n) => seen.get(n) ?? n).join(", ")}]`;
+  });
+  const newSources = [];
+  seen.forEach((newNum, oldNum) => {
+    newSources[newNum - 1] = sources[oldNum - 1];
+  });
+  return { text: newText, sources: newSources };
 }
 
 export default function Experiment() {
@@ -323,7 +351,8 @@ function ExperimentContent() {
   }, [searchParams]);
 
   const [questionCount, setQuestionCount] = useState(0);
-  const [showIntroModal, setShowIntroModal] = useState(true);
+  const [showGoalModal, setShowGoalModal] = useState(true);
+  const [showIntroModal, setShowIntroModal] = useState(false);
 
   const [step, setStep] = useState(1);
   const [participantId, setParticipantId] = useState(null);
@@ -378,9 +407,14 @@ function ExperimentContent() {
   };
 
   const logFinalScrapbook = async () => {
+    if (scrapActiveRef.current) {
+      scrapTimeRef.current += Date.now() - scrapActiveRef.current;
+      scrapActiveRef.current = null;
+    }
     await logEvent({
       log_type: "final_scrapbook",
       log_data: {
+        scrap_time_sec: Math.round(scrapTimeRef.current / 1000),
         total_items: scraps.length,
         scraps: scraps.map((item, index) => ({
           index,
@@ -396,10 +430,10 @@ function ExperimentContent() {
 
   const instructionMessage = systemType
     ? systemType === "WebSearch"
-      ? `You will use search engines to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap). Hope you enjoy your search!`
+      ? `You will use search engines to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap).`
       : systemType === "RAGSearch"
-        ? `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap). Hope you enjoy your search!`
-        : `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap). Hope you enjoy your search!`
+        ? `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap).`
+        : `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap).`
     : "";
 
 
@@ -418,7 +452,7 @@ function ExperimentContent() {
   // Common
   const [scraps, setScraps] = useState([]);
   const [seconds, setSeconds] = useState(0);
-  const [taskOpen, setTaskOpen] = useState(true);
+  const [taskOpen, setTaskOpen] = useState(false);
   const [gifLightbox, setGifLightbox] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refOpen, setRefOpen] = useState(false);
@@ -448,7 +482,7 @@ function ExperimentContent() {
     setRefOpen(false);
     setActiveSource(null);
   };
-  const canProceed = seconds >= REQUIRED_TIME && questionCount >= REQUIRED_QUESTIONS;
+  const canProceed = questionCount >= REQUIRED_QUESTIONS;
 
   const cleanSnippet = (raw) => {
     if (!raw) return "";
@@ -519,10 +553,14 @@ function ExperimentContent() {
     el.style.height = "auto";
     el.style.height = el.scrollHeight + "px";
   };
-  const [scrapWidth, setScrapWidth] = useState(24);
+  const [scrapWidth, setScrapWidth] = useState(20);
   const isDraggingRef = useRef(false);
   const isSelectingRef = useRef(false);
   const chatAreaRef = useRef(null);
+  const scrapTimeRef = useRef(0);      // accumulated ms while scrapbook was last-clicked
+  const scrapActiveRef = useRef(null); // start timestamp when scrapbook panel was clicked
+  const scrapPanelRef = useRef(null);  // ref to scrapbook panel DOM node
+  const [scrapFocused, setScrapFocused] = useState(false);
   const addNote = () => {
     setScraps((prev) => {
       logEvent({
@@ -697,7 +735,7 @@ function ExperimentContent() {
      Start only after intro modal is closed
   ========================= */
   useEffect(() => {
-    if (step !== 2 || showIntroModal) return;
+    if (step !== 2 || showGoalModal || showIntroModal) return;
 
     const timer = setInterval(() => {
       setSeconds((prev) => prev + 1);
@@ -705,6 +743,23 @@ function ExperimentContent() {
 
     return () => clearInterval(timer);
   }, [step, showIntroModal]);
+
+  useEffect(() => {
+    const handleGlobalMouseDown = (e) => {
+      if (scrapPanelRef.current && scrapPanelRef.current.contains(e.target)) {
+        if (!scrapActiveRef.current) scrapActiveRef.current = Date.now();
+        setScrapFocused(true);
+      } else {
+        if (scrapActiveRef.current) {
+          scrapTimeRef.current += Date.now() - scrapActiveRef.current;
+          scrapActiveRef.current = null;
+        }
+        setScrapFocused(false);
+      }
+    };
+    document.addEventListener("mousedown", handleGlobalMouseDown);
+    return () => document.removeEventListener("mousedown", handleGlobalMouseDown);
+  }, []);
 
   /* =========================
      Page popstate and step
@@ -743,16 +798,27 @@ function ExperimentContent() {
       const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=20`);
       const data = await res.json();
 
+      const isHomepageUrl = (url) => {
+        try {
+          const { pathname } = new URL(url);
+          const segments = pathname.split("/").filter(Boolean);
+          return segments.length <= 1;
+        } catch {
+          return false;
+        }
+      };
+
       const results =
-        data.items?.map((item, idx) => ({
-          id: `search-${idx}`,
-          title: item.title,
-          snippet: item.snippet,
-          link: item.link,
-        })) || [];
+        (data.items || [])
+          .filter((item) => !isHomepageUrl(item.link))
+          .map((item, idx) => ({
+            id: `search-${idx}`,
+            title: item.title,
+            snippet: item.snippet,
+            link: item.link,
+          }));
 
       setSearchResults(results);
-      setSearchQuery("");
 
       logEvent({
         log_type: "serp_results",
@@ -834,7 +900,7 @@ function ExperimentContent() {
     setChatHistory((prev) => [
       ...prev,
       { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
-      { role: "assistant", content: "Generating response...", loading: true, request_id, turn_index },
+      { role: "assistant", content: "", loading: true, system: "RAGSearch", request_id, turn_index },
     ]);
 
     setSearchQuery("");
@@ -868,11 +934,12 @@ function ExperimentContent() {
         });
       });
 
-      const finalSources = extra?.sources || sources;
+      const rawSources = extra?.sources || sources;
+      const { text: finalText, sources: finalSources } = reorderCitations(answerText, rawSources);
       const answer_message_id = makeMessageId("rag");
-      const word_count = countWords(answerText);
+      const word_count = countWords(finalText);
       const citedIndices = new Set(
-        [...answerText.matchAll(/\[(\d+(?:,\s*\d+)*)\]/g)]
+        [...finalText.matchAll(/\[(\d+(?:,\s*\d+)*)\]/g)]
           .flatMap((m) => m[1].split(",").map((n) => parseInt(n.trim(), 10)))
       );
       const cited_sources = finalSources
@@ -886,7 +953,7 @@ function ExperimentContent() {
           turn_index,
           message_id: answer_message_id,
           prompt: userInput,
-          answer: answerText,
+          answer: finalText,
           word_count,
           sources_used: cited_sources,
         },
@@ -897,7 +964,7 @@ function ExperimentContent() {
         const lastIdx = updated.length - 1;
         const assistantMsg = {
           role: "assistant",
-          content: answerText || "No response generated.",
+          content: finalText || "No response generated.",
           request_id,
           turn_index,
           message_id: answer_message_id,
@@ -958,7 +1025,7 @@ function ExperimentContent() {
     setChatHistory((prev) => [
       ...prev,
       { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
-      { role: "assistant", content: "Generating response...", loading: true, request_id, turn_index },
+      { role: "assistant", content: "", loading: true, system: "GenSearch", request_id, turn_index },
     ]);
 
     setSearchQuery("");
@@ -1086,17 +1153,6 @@ function ExperimentContent() {
 };
 
   const handleUpdateScrapComment = (index, value) => {
-      if (value.length % 10 === 0) {
-        logEvent({
-          log_type: "note",
-          log_data: {
-            action: "update",
-            index,
-            content: value,
-            system: systemType || "",
-          },
-        });
-      }
       setScraps((prev) => {
         const next = [...prev];
         if (!next[index]) return prev;
@@ -1161,7 +1217,7 @@ function ExperimentContent() {
 
                 {taskOpen && (
                   <div className="p-4 mt-2">
-                    <div className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words">
+                    <div className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words select-none">
                       <div>
                         <strong>Search Case</strong>
                         <p className="mt-1 whitespace-pre-wrap">
@@ -1235,7 +1291,6 @@ function ExperimentContent() {
                 <button
                   onClick={() => {
                     setStep(2);
-                    setShowIntroModal(true);
                   }}
                   className="
                     inline-flex items-center justify-center
@@ -1246,7 +1301,7 @@ function ExperimentContent() {
                     transition
                   "
                 >
-                  Start Experiment →
+                  Start Search
                 </button>
               </div>
             </div>
@@ -1265,14 +1320,6 @@ function ExperimentContent() {
         <ProgressBar progress={50} />
       </div>
 
-      {/* Timer */}
-      <div className="fixed top-6 right-5 z-[60]">
-        {/* Timer Overlay */}
-        <div className="bg-black text-white px-4 py-2 rounded-md text-sm">
-            Time: {Math.floor(seconds / 60)}:
-            {(seconds % 60).toString().padStart(2, "0")}
-        </div>
-      </div>
 
       <div className="relative flex flex-1 overflow-x-hidden">
         {/* Left Panel */}
@@ -1295,7 +1342,7 @@ function ExperimentContent() {
 
             {taskOpen && (
               <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words">
+                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words select-none">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -1309,6 +1356,29 @@ function ExperimentContent() {
             )}
           </div>
         </div>
+
+        {/* Goal Modal: shown first before Intro Modal */}
+        {showGoalModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg">
+              <h2 className="text-xl font-semibold mb-4">Study Goal</h2>
+
+              <p className="text-base leading-relaxed">
+                At the end of the study, you will answer the open-ended question about <mark className="bg-green-200 rounded px-0.5">what advice you would give to a friend</mark>.
+              </p>
+
+              <button
+                onClick={() => {
+                  setShowGoalModal(false);
+                  setShowIntroModal(true);
+                }}
+                className="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 rounded-lg"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Intro Modal: blocks interaction until closed */}
         {showIntroModal && (
@@ -1331,16 +1401,10 @@ function ExperimentContent() {
               <h2 className="text-xl font-semibold mb-4">Notification</h2>
 
               <p className="text-base leading-relaxed">
-               You can move to the next page if you:<br />
                <span className="block mt-2">
-                1. Search for at least <mark className="bg-yellow-200 rounded px-0.5">four minutes</mark>.<br />
-                2. Enter more than <mark className="bg-yellow-200 rounded px-0.5">five queries</mark>.
+                You can proceed to the next page once you've entered at least <mark className="bg-yellow-200 rounded px-0.5">three queries</mark>.
                </span>
               </p>
-
-              <div className="mt-5 text-sm text-gray-500">
-                Your timer will start after you close this window.
-              </div>
             </div>
           </div>
         )}
@@ -1388,11 +1452,11 @@ function ExperimentContent() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="flex-1 border px-4 py-3 rounded-l-md"
                       placeholder="Search Anything"
-                      disabled={showIntroModal}
+                      disabled={showGoalModal || showIntroModal}
                     />
                     <button
                       className="bg-blue-600 text-white px-6 rounded-r-md"
-                      disabled={showIntroModal}
+                      disabled={showGoalModal || showIntroModal}
                       type="submit"
                     >
                       Search
@@ -1410,11 +1474,11 @@ function ExperimentContent() {
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="flex-1 border px-3 py-2"
                       placeholder="Type your query..."
-                      disabled={showIntroModal}
+                      disabled={showGoalModal || showIntroModal}
                     />
                     <button
                       className="bg-blue-600 text-white px-4 disabled:opacity-50"
-                      disabled={showIntroModal}
+                      disabled={showGoalModal || showIntroModal}
                       type="submit"
                     >
                       Search
@@ -1550,13 +1614,19 @@ function ExperimentContent() {
                         <div
                           data-selectable="1"
                           className="select-text"
-                          style={{ userSelect: "text" }} 
+                          style={{ userSelect: "text" }}
                         >
+                          {msg.loading ? (
+                            msg.system === "RAGSearch"
+                              ? <CyclingLoadingText messages={["🔎Searching the web...", "🤔Thinking...", "🧐Pondering, stand by...", "😊I'm almost there..."]} />
+                              : <CyclingLoadingText messages={["🤔Thinking...", "🧐Pondering, stand by...", "😊I'm almost there..."]} />
+                          ) : (
                           <MarkdownWithCitations
                             content={msg.content}
                             sources={msg.sources || []}
                             onOpenSource={openSource}
                           />
+                          )}
                         </div>
                       ) : (
                         <div className="select-none">
@@ -1657,7 +1727,7 @@ function ExperimentContent() {
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     placeholder="Ask anything"
-                    disabled={isGenerating || showIntroModal}
+                    disabled={isGenerating || showGoalModal || showIntroModal}
                     className="
                       w-full border rounded-full px-4 py-2 text-base
                       focus:outline-none focus:ring-2 focus:ring-blue-400
@@ -1666,7 +1736,7 @@ function ExperimentContent() {
                   />
                   <button
                     type="submit"
-                    disabled={isGenerating || showIntroModal || !searchQuery.trim()}
+                    disabled={isGenerating || showGoalModal || showIntroModal || !searchQuery.trim()}
                     className="
                       ml-2 px-4 py-2 rounded-full
                       bg-blue-600 text-white
@@ -1686,7 +1756,8 @@ function ExperimentContent() {
 
         {/* Scrapbook */}
         <div
-          className="absolute top-0 right-0 h-full bg-gray-50 border-l flex flex-col z-40"
+          ref={scrapPanelRef}
+          className={`absolute top-0 right-0 h-full border-1 border-gray-300 flex flex-col z-40 ${scrapFocused ? "bg-gray-0" : "bg-gray-100"}`}
           style={{ width: `${scrapWidth}%`, minWidth: 220, maxWidth: 600 }}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
@@ -1699,7 +1770,7 @@ function ExperimentContent() {
           />
 
           {/* Title */}
-          <div className="p-4 border-b">
+          <div className="p-2 border-b border-gray-300">
             <h2 className="mt-2 font-semibold mb-1">Scrapbook & Notes</h2>
           </div>
 
@@ -1786,7 +1857,7 @@ function ExperimentContent() {
         </div>
 
           {/* Proceed button */}
-          <div className="sticky bottom-0 bg-gray-50 p-4">
+          <div className="sticky bottom-0 p-4">
             <button
               onClick={handleNext}
               disabled={!canProceed}
@@ -1797,12 +1868,12 @@ function ExperimentContent() {
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"}
               `}
             >
-              Proceed to Next Step →
+              Next Page →
             </button>
             
             {!canProceed && (
-              <p className="mt-2 text-xs text-gray-500 text-center">
-                Available after 4 minutes and multiple search inputs.
+              <p className="mt-2 text-xs text-gray-800 text-center">
+                Available after submitting three queries
               </p>
             )}
             </div>

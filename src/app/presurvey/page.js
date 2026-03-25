@@ -173,7 +173,7 @@ export default function PreSurvey() {
      Render
   -------------------------------- */
   return (
-    <div className="h-screen flex flex-col bg-gray-50 overflow-x-hidden">
+    <div className="h-screen flex flex-col bg-white overflow-x-hidden">
       <div className="flex-shrink-0 z-40 bg-white border-b">
         <ProgressBar progress={10} />
       </div>

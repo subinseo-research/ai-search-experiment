@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 
 function shuffleArray(array) {
@@ -11,6 +12,32 @@ function shuffleArray(array) {
     [arr[i], arr[j]] = [arr[j], arr[i]];
   }
   return arr;
+}
+
+function getColColors(n) {
+  const half = Math.floor(n / 2);
+  return Array.from({ length: n }, (_, i) => {
+    if (i < half) {
+      const t = half > 1 ? (half - 1 - i) / (half - 1) : 1;
+      const opacity = 0.07 + t * 0.11;
+      return {
+        bg: `rgba(239, 68, 68, ${opacity.toFixed(2)})`,
+        bgSelected: `rgba(239, 68, 68, ${(opacity + 0.12).toFixed(2)})`,
+      };
+    } else if (i > half) {
+      const t = half > 1 ? (i - half - 1) / (half - 1) : 1;
+      const opacity = 0.07 + t * 0.11;
+      return {
+        bg: `rgba(59, 130, 246, ${opacity.toFixed(2)})`,
+        bgSelected: `rgba(59, 130, 246, ${(opacity + 0.12).toFixed(2)})`,
+      };
+    } else {
+      return {
+        bg: "rgba(107, 114, 128, 0.06)",
+        bgSelected: "rgba(107, 114, 128, 0.18)",
+      };
+    }
+  });
 }
 
 /* -------------------------------
@@ -55,37 +82,59 @@ function LikertRow({
   );
 }
 
-function LikertMatrix({ items, labels, responses, onChange, highlightKeys = new Set(), itemRefs = {} }) {
+function LikertMatrix({ items, labels, columnNumbers = null, innerScroll = false, responses, onChange, highlightKeys = new Set(), itemRefs = {} }) {
+  const n = labels.length;
+  const colMinPx = n <= 7 ? 48 : 36;
+  const colColors = getColColors(n);
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "minmax(180px, 3fr) repeat(7, minmax(58px, 1fr))",
+    gridTemplateColumns: `minmax(350px, 5fr) repeat(${n}, minmax(${colMinPx}px, 1fr))`,
     columnGap: "6px",
     alignItems: "center",
   };
 
   return (
-    <div className="w-full overflow-x-hidden">
-      {/* Header row (same 7 labels) */}
-      <div
-        style={gridStyle}
-        className="sticky top-[54px] bg-white z-30 pt-2 pb-3 border-b border-gray-200"
-      >
-        <div />
-        {labels.map((h, i) => (
-          <div
-            key={i}
-            style={{ backgroundColor: COL_BG[i] }}
-            className="text-center text-[15px] font-medium text-gray-700 py-2 rounded-lg leading-tight"
-          >
-            {h}
+    <div className={`w-full overflow-x-hidden ${innerScroll ? "flex flex-col flex-1 min-h-0" : ""}`}>
+      {/* Header row */}
+      <div className={`bg-white z-30 pt-2 pb-3 border-b border-gray-200 ${innerScroll ? "flex-shrink-0" : "sticky top-[54px]"}`}>
+        {/* Label text row — only when columnNumbers (above the colored blocks) */}
+        {columnNumbers && (
+          <div style={gridStyle} className="mb-1">
+            <div />
+            {labels.map((h, i) => (
+              <div
+                key={i}
+                className="flex items-end justify-center text-center text-[12px] text-gray-600 font-semibold min-h-[28px] leading-tight px-1"
+              >
+                {h}
+              </div>
+            ))}
           </div>
-        ))}
+        )}
+
+        {/* Colored blocks row */}
+        <div style={gridStyle}>
+          <div />
+          {labels.map((h, i) => (
+            <div
+              key={i}
+              style={{ backgroundColor: colColors[i].bg }}
+              className="flex items-center justify-center text-center font-medium text-gray-700 h-[40px] rounded-lg leading-tight px-1"
+            >
+              {columnNumbers ? (
+                <span className="text-[13px]">{columnNumbers[i]}</span>
+              ) : (
+                h && <span className="text-[14px]">{h}</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Items */}
-      <div className="divide-y divide-gray-200 pt-14">
+      <div className={`divide-y divide-gray-200 ${innerScroll ? "overflow-y-auto flex-1 min-h-0 pb-6" : columnNumbers ? "pt-20" : "pt-14"}`}>
         {items.map((q, idx) => {
-          const key = typeof q === "string" ? q : q.key; 
+          const key = typeof q === "string" ? q : q.key;
           const value = responses[key];
           const highlighted = highlightKeys.has(key);
 
@@ -103,14 +152,14 @@ function LikertMatrix({ items, labels, responses, onChange, highlightKeys = new 
                   {typeof q === "string" ? q : q.text}
                 </div>
 
-                {Array.from({ length: 7 }).map((_, i) => {
+                {Array.from({ length: n }).map((_, i) => {
                   const selected = value === i + 1;
 
                   return (
                     <label
                       key={i}
                       style={{
-                        backgroundColor: selected ? COL_BG_SELECTED[i] : COL_BG[i],
+                        backgroundColor: selected ? colColors[i].bgSelected : colColors[i].bg,
                       }}
                       className={[
                         "flex justify-center items-center",
@@ -119,7 +168,7 @@ function LikertMatrix({ items, labels, responses, onChange, highlightKeys = new 
                         "hover:brightness-[0.98]",
                         "focus-within:ring-2 focus-within:ring-blue-300",
                       ].join(" ")}
-                      title={`Select ${labels[i]}`}
+                      title={labels[i] || String(i + 1)}
                     >
                       <input
                         type="radio"
@@ -263,6 +312,7 @@ function BipolarMatrix({ items, responses, onChange, highlightKeys = new Set(), 
 
 export default function PostSurvey() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const questionRefs = useRef({});
   const scrollContainerRef = useRef(null);
   const pageRef = useRef(1);
@@ -306,7 +356,6 @@ export default function PostSurvey() {
           localStorage.setItem("postsurvey_page", prevPage);
           scrollContainerRef.current?.scrollTo(0, 0);
         }
-        // page 1이면 아무데도 가지 않음
       }, 0);
     };
     window.addEventListener("popstate", handlePopState);
@@ -332,11 +381,13 @@ export default function PostSurvey() {
     }
     setSystemType(system); 
 
-    setTaskType(localStorage.getItem("task_type") || "the topic");
+    const topicParam = searchParams.get("topic");
+    if (topicParam) localStorage.setItem("task_type", topicParam);
+    setTaskType(topicParam || localStorage.getItem("task_type") || "the topic");
 
     const savedPage = localStorage.getItem("postsurvey_page");
     if (savedPage) setPage(parseInt(savedPage, 10));
-  }, [router]);
+  }, [router, searchParams]);
 
   useEffect(() => {
     const shuffled = {};
@@ -371,92 +422,85 @@ export default function PostSurvey() {
      Question Sets
   -------------------------------- */
   const serendipityQuestions = [
-    "I obtained unexpected insights about ${taskType}.",
-    "I made connections that I had not thought of before.",
+    `I obtained unexpected insights about ${taskType}.`,
+    `I made connections about ${taskType} that I had not thought of before.`,
     `I had unexpected revelations about ${taskType}.`,
-    "I found things that surprised me.",
+    `I found things about ${taskType} that surprised me.`,
     `I was able to see ordinary knowledge about ${taskType} in new ways.`,
   ];
 
   const evaluationQuestions = [
     {
-      key: "overall",
-      text: "My overall experience with search",
-      left: "negative",
-      right: "positive",
-      neutral: "Neither good nor bad",
+      key: "understanding",
+      text: "Your understanding of the provided search system",
+      left: "low",
+      right: "high",
     },
     {
-      key: "understanding",
-      text: "Your understanding of information",
-      left: "insufficient",
-      right: "sufficient",
-      neutral: "Neither sufficient nor insufficient",
+      key: "confidence",
+      text: "Your feelings of assurance about the provided search systems",
+      left: "low",
+      right: "high",
     },
     {
       key: "feelings",
       text: "Your feelings of participating in search",
       left: "negative",
       right: "positive",
-      neutral: "Neither positive nor negative",
     },
     {
-      key: "attitude",
-      text: "Attitude of search system",
-      left: "belligerent",
-      right: "cooperative",
-      neutral: "Neither cooperative nor belligerent",
+      key: "involvement",
+      text: "The degree of your involvement in the search",
+      left: "uninvolved",
+      right: "involved",
     },
     {
-      key: "communication",
-      text: "Communication with the search system",
-      left: "destructive",
-      right: "productive",
-      neutral: "Neither productive nor destructive",
+      key: "control",
+      text: "Your feeling of the personal power to regulate the provided search system",
+      left: "weak",
+      right: "strong",
     },
     {
       key: "reliability",
-      text: "Reliability of output information",
-      left: "low",
-      right: "high",
-      neutral: "Neither high nor low",
+      text: "The consistency of the output information",
+      left: "inconsistent",
+      right: "consistent",
     },
     {
       key: "relevancy",
-      text: "Relevancy of output information",
+      text: " The degree of match between what the you wants and what is provided by the system",
       left: "irrelevant",
       right: "relevant",
-      neutral: "Neither relevant nor irrelevant",
     },
     {
       key: "accuracy",
-      text: "Accuracy of output information",
-      left: "inaccurate",
-      right: "accurate",
-      neutral: "Neither accurate nor inaccurate",
+      text: "The correctness of the output information",
+      left: "low",
+      right: "high",
     },
     {
       key: "precision",
-      text: "Precision of output information",
-      left: "uncertain",
-      right: "definite",
-      neutral: "Neither definite nor uncertain",
+      text: "The variability of the output information from what it is intended to retrieve",
+      left: "low",
+      right: "high",
     },
     {
       key: "completeness",
-      text: "Completeness of the output information",
+      text: "The comprehensiveness of the output information content",
       left: "inadequate",
       right: "adequate",
-      neutral: "Neither adequate nor inadequate",
     },
   ];
 
   const selfEfficacyQuestions = [
-    "Given enough time and effort, I believe I can find information in general that interests me.",
-    "I can do a good search and feel confident it will lead me to interesting information.",
-    "The concept is too complex for me to explore through online search.",
-    "I trust my ability to find new and interesting information.",
-  ];
+    "I think I'm able to develop search queries that accurately reflect what I'm looking for.",
+    "I think I'm able to distinguish between results that are relevant to my needs and those that are not.",
+    "I think I'm able to find an adequate amount of information.",
+    "I think I'm able to navigate through information spaces to find what I need.",
+    "I think I'm able to quickly decide which results to skip and which to pursue.",
+    "I think I'm able to compare multiple results and draw an integrated conclusion.",
+    "I think I'm able to form and revise my understanding as I discover new information.",
+  ]
 
   const sevenPointLabels = [
     "Strongly Disagree",
@@ -468,10 +512,35 @@ export default function PostSurvey() {
     "Strongly Agree",
   ];
 
+  const BanduraLabels = [
+    "Cannot do at all",
+    "Cannot do",
+    "Moderately cannot do",
+    "Uncertain",
+    "Moderately can do",
+    "Can do",
+    "Hihgly certain can do",
+  ];
+
+  // 0–10 scale: labels only at anchors (0, 5, 10)
+  const BanduraLabels2 = [
+    "Cannot do at all", // 0
+    "", // 1
+    "", // 2
+    "", // 3
+    "", // 4
+    "Moderately can do", // 5
+    "", // 6
+    "", // 7
+    "", // 8
+    "", // 9
+    "Highly certain can do", // 10
+  ];
+
   const pages = [
     { title: "", questions: serendipityQuestions, section: "serendipity" },
-    { title: "", questions: [], section: "emotion1" },
     { title: "", questions: [], section: "emotion2" },
+    { title: "", questions: [], section: "emotion1" },
     { title: "", questions: selfEfficacyQuestions, section: "selfEfficacy" },
     { title: "", questions: [], section: "openEnded" },
   ];
@@ -571,7 +640,7 @@ export default function PostSurvey() {
   const questions = shuffledQuestionsByPage[page - 1] || pages[page - 1].questions;
 
   return (
-    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       {/* Progress */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b">
         <ProgressBar progress={50 + page * 8} />
@@ -580,8 +649,8 @@ export default function PostSurvey() {
       {/* Main layout */}
       <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden">
         {/* Survey */}
-        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-w-0">
-          <div className="w-full bg-white px-6 lg:px-10 pt-2 pb-10">
+        <div ref={scrollContainerRef} className={`flex-1 min-w-0 ${section === "selfEfficacy" ? "overflow-y-hidden flex flex-col h-[calc(100vh-56px)]" : "overflow-y-auto"}`}>
+          <div className={`w-full bg-white px-6 lg:px-10 pt-2 ${section === "selfEfficacy" ? "flex flex-col flex-1 min-h-0" : "pb-10"}`}>
             <h2 className="text-xl font-semibold mb-10 text-center">
               {pages[page - 1].title}
             </h2>
@@ -596,15 +665,15 @@ export default function PostSurvey() {
             {(page === 2 || page === 3) && (
               <p className="text-lg text-gray-700 mb-8 leading-relaxed">
                 On the scales below, we will ask your feelings about the output information you just read and your overall search experience.<br />
-                Red indicates negative emotions, and blue indicates positive emotions. The deeper the color becomes, the stronger the intensity of the emotion.<br />
                 Please read the following items and evaluate your feelings according to each specific adjective.
               </p>
             )}
 
             {page === 4 && (
-              <p className="text-lg text-gray-700 mb-0 leading-relaxed">
-                On this page, we will ask about your belief in your ability to successfully complete a search task, even when the task is difficult, based on your search experience today.<br />
-                Please read the following sentences and evaluate your level of agreement or disagreement.
+              <p className="text-lg text-gray-700 mb-0 leading-relaxed flex-shrink-0">
+                On this page, we will ask about your belief in your ability to search based on your experience today.<br />
+                Please rate how certain you are that you can search information at each of the aspects described below.<br />
+                Here, the information refers to information in general in your life and is not limited to {taskType}.
               </p>
             )}
 
@@ -617,10 +686,21 @@ export default function PostSurvey() {
                   highlightKeys={highlightQuestions}
                   itemRefs={questionRefs.current}
                 />
-              ) : section === "serendipity" || section === "selfEfficacy" ? (
+              ) : section === "serendipity" ? (
                 <LikertMatrix
                   items={questions}
                   labels={sevenPointLabels}
+                  responses={sectionResponses[section]}
+                  onChange={(key, v) => handleChange(section, key, v)}
+                  highlightKeys={highlightQuestions}
+                  itemRefs={questionRefs.current}
+                />
+              ) : section === "selfEfficacy" ? (
+                <LikertMatrix
+                  items={questions}
+                  labels={BanduraLabels2}
+                  columnNumbers={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+                  innerScroll
                   responses={sectionResponses[section]}
                   onChange={(key, v) => handleChange(section, key, v)}
                   highlightKeys={highlightQuestions}
@@ -689,20 +769,11 @@ export default function PostSurvey() {
               </div>
             )}
 
-            <div className="mt-16 text-center">
-              <button
-                onClick={handleNext}
-                disabled={loading}
-                className="px-10 py-4 bg-blue-600 text-white rounded-lg font-semibold text-lg disabled:opacity-50"
-              >
-                {loading ? "Submitting..." : page < pages.length ? "Next" : "Submit"}
-              </button>
-            </div>
           </div>
         </div>
 
         {/* Scrapbook */}
-        <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l overflow-y-auto flex-shrink-0 min-h-screen">
+        <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l flex flex-col flex-shrink-0 min-h-screen">
           <div className="p-4 border-b">
             <h2 className="font-semibold">Your Scrapbook</h2>
             <p className="text-xs text-gray-500">
@@ -710,7 +781,7 @@ export default function PostSurvey() {
             </p>
           </div>
 
-          <div className="p-4 space-y-3">
+          <div className="p-4 space-y-3 flex-1 overflow-y-auto">
             {scraps.length === 0 && (
               <p className="text-sm text-gray-400">
                 No items were saved during the search.
@@ -747,6 +818,20 @@ export default function PostSurvey() {
                 )}
               </div>
             ))}
+          </div>
+
+          <div className="sticky bottom-0 p-4 bg-gray-50 border-t">
+            <button
+              onClick={handleNext}
+              disabled={loading}
+              className={`w-full py-2.5 rounded-md font-semibold transition ${
+                loading
+                  ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                  : "bg-blue-600 text-white hover:bg-blue-700"
+              }`}
+            >
+              {loading ? "Submitting..." : page < pages.length ? "Next →" : "Submit"}
+            </button>
           </div>
         </div>
       </div>
