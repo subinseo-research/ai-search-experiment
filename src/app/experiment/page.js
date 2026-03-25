@@ -482,25 +482,7 @@ function ExperimentContent() {
     setRefOpen(false);
     setActiveSource(null);
   };
-  const [proceedCountdown, setProceedCountdown] = useState(null); // null | number
-  const [proceedUnlocked, setProceedUnlocked] = useState(false);
-  const canProceed = questionCount >= REQUIRED_QUESTIONS && proceedUnlocked;
-
-  useEffect(() => {
-    if (questionCount < REQUIRED_QUESTIONS || proceedUnlocked) return;
-    setProceedCountdown(10);
-    const interval = setInterval(() => {
-      setProceedCountdown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          setProceedUnlocked(true);
-          return null;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  }, [questionCount >= REQUIRED_QUESTIONS]);
+  const canProceed = questionCount >= REQUIRED_QUESTIONS;
 
   const cleanSnippet = (raw) => {
     if (!raw) return "";
@@ -1368,12 +1350,9 @@ function ExperimentContent() {
                   </div>
                   <div>
                     <strong>Search Task</strong>
-                    <p className="mt-1 whitespace-pre-wrap">{task}</p>
-                  </div>
-                  <div>
-                    <strong>Study Goal</strong>
-                    <p className="mt-1">
-                      At the end of the study, you will answer the open-ended question about <mark className="bg-green-200 rounded px-0.5">what advice you would give to a friend</mark>.
+                    <p className="mt-1 whitespace-pre-wrap">
+                      {task}
+                      (At the end of the study, you will answer the open-ended question about what advice you would give to a friend.)
                     </p>
                   </div>
                 </div>
@@ -1800,7 +1779,7 @@ function ExperimentContent() {
           </div>
 
           {/* Scrollable content */}
-          <div className="flex-1 p-4 overflow-y-auto min-h-0">
+          <div className="flex-1 p-4 overflow-y-auto">
             {scraps.map((item, i) => (
               <div key={i} className="bg-white p-3 pt-6 mb-3 rounded border relative">
                 <button
@@ -1864,14 +1843,11 @@ function ExperimentContent() {
               </div>
             ))}
 
-          </div>
-
-          {/* Fixed bottom buttons */}
-          <div className="border-t border-gray-300 bg-gray-100 p-4 space-y-2">
-            <button
-              onClick={addNote}
-              className="
-                w-full py-2
+          {/* + Note button*/}
+          <button
+            onClick={addNote}
+            className="
+                w-full mt-4 py-2
                 border-2 border-dashed
                 rounded-lg
                 text-sm
@@ -1879,15 +1855,18 @@ function ExperimentContent() {
                 hover:bg-gray-100
                 transition
               "
-            >
-              + Add a new note
-            </button>
+          >
+            + Add a new note
+          </button>
+        </div>
 
+          {/* Proceed button */}
+          <div className="sticky bottom-0 p-4">
             <button
               onClick={handleNext}
               disabled={!canProceed}
               className={`
-                w-full py-2.5 rounded-md font-semibold transition
+                w-full py-2.5 rounded-md font-semibold transition 
                 ${canProceed
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"}
@@ -1895,14 +1874,14 @@ function ExperimentContent() {
             >
               Next Page →
             </button>
-
+            
             {!canProceed && (
-              <p className="mt-1 text-xs text-gray-800 text-center">
+              <p className="mt-2 text-xs text-gray-800 text-center">
                 Available after submitting three queries
               </p>
             )}
+            </div>
           </div>
-        </div>
         </div>
       </div>
   );
