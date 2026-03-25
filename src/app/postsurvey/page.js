@@ -488,7 +488,7 @@ function PostSurvey() {
     },
     {
       key: "precision",
-      text: "The variability of the output information from what it is intended to retrieve",
+      text: "The focus of output information from what your search query intended to find",
       left: "low",
       right: "high",
     },
