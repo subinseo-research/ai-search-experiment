@@ -648,16 +648,16 @@ function PostSurvey() {
   const questions = shuffledQuestionsByPage[page - 1] || pages[page - 1].questions;
 
   return (
-    <div className="min-h-screen bg-white overflow-x-hidden">
+    <div className="h-screen bg-white overflow-hidden">
       {/* Progress */}
       <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b">
         <ProgressBar progress={50 + page * 8} />
       </div>
 
       {/* Main layout */}
-      <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden">
+      <div className="flex h-full overflow-hidden">
         {/* Survey */}
-        <div ref={scrollContainerRef} className={`flex-1 min-w-0 ${section === "selfEfficacy" ? "overflow-y-hidden flex flex-col h-[calc(100vh-56px)]" : "overflow-y-auto"}`}>
+        <div ref={scrollContainerRef} className={`flex-1 min-w-0 ${section === "selfEfficacy" ? "overflow-hidden flex flex-col" : "overflow-y-auto"}`}>
           <div className={`w-full bg-white px-6 lg:px-10 pt-2 ${section === "selfEfficacy" ? "flex flex-col flex-1 min-h-0" : "pb-10"}`}>
             <h2 className="text-xl font-semibold mb-10 text-center">
               {pages[page - 1].title}
@@ -707,7 +707,7 @@ function PostSurvey() {
                 <LikertMatrix
                   items={questions}
                   labels={BanduraLabels2}
-                  columnNumbers={[0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]}
+                  columnNumbers={[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
                   innerScroll
                   responses={sectionResponses[section]}
                   onChange={(key, v) => handleChange(section, key, v)}
@@ -781,7 +781,7 @@ function PostSurvey() {
         </div>
 
         {/* Scrapbook */}
-        <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l flex flex-col flex-shrink-0 min-h-screen">
+        <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l flex flex-col flex-shrink-0">
           <div className="p-4 border-b">
             <h2 className="font-semibold">Your Scrapbook</h2>
             <p className="text-xs text-gray-500">
