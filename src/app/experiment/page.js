@@ -482,7 +482,15 @@ function ExperimentContent() {
     setRefOpen(false);
     setActiveSource(null);
   };
-  const canProceed = questionCount >= REQUIRED_QUESTIONS;
+  const [proceedUnlocked, setProceedUnlocked] = useState(false);
+
+  useEffect(() => {
+    if (questionCount < REQUIRED_QUESTIONS || proceedUnlocked) return;
+    const timer = setTimeout(() => setProceedUnlocked(true), 10000);
+    return () => clearTimeout(timer);
+  }, [questionCount]);
+
+  const canProceed = questionCount >= REQUIRED_QUESTIONS && proceedUnlocked;
 
   const cleanSnippet = (raw) => {
     if (!raw) return "";
