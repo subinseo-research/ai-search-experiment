@@ -799,7 +799,8 @@ function ExperimentContent() {
 
     // Count only valid queries
     setQuestionCount((prev) => prev + 1);
-    logEvent({ log_type: "query", log_data: { query: q } }); //save log data 
+    logEvent({ log_type: "query", log_data: { query: q } }); //save log data
+    setIsGenerating(true);
 
     try {
       const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=20`);
@@ -841,6 +842,8 @@ function ExperimentContent() {
       });
     } catch (err) {
       console.error(err);
+    } finally {
+      setIsGenerating(false);
     }
   };
 

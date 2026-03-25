@@ -471,12 +471,12 @@ function PostSurvey() {
     {
       key: "reliability",
       text: "The dependability of the output information",
-      left: "inconsistent",
-      right: "consistent",
+      left: "inferior",
+      right: "superior",
     },
     {
       key: "relevancy",
-      text: " The degree of match between what you wants and what is provided by the system",
+      text: " The degree of match between what you want and what is provided by the system",
       left: "irrelevant",
       right: "relevant",
     },
