@@ -25,7 +25,7 @@ export async function POST(req) {
       // usage – Generative AI
       use_chatgpt: body.use_chatgpt ?? null,
       use_gemini: body.use_gemini ?? null,
-      use_copilot: body.use_copilot ?? null,
+      use_claude: body.use_claude ?? null,
       use_genai_other: body.use_genai_other ?? null,
       use_genai_other_name: body.use_genai_other_name ?? null,
 
