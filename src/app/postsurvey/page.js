@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
@@ -310,7 +310,15 @@ function BipolarMatrix({ items, responses, onChange, highlightKeys = new Set(), 
   );
 }
 
-export default function PostSurvey() {
+export default function PostSurveyPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-white" />}>
+      <PostSurvey />
+    </Suspense>
+  );
+}
+
+function PostSurvey() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const questionRefs = useRef({});
