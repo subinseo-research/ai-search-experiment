@@ -17,7 +17,6 @@ export default function DemographicSurvey() {
 
     // political
     party_id: "",
-    party_lean: "", // Q7 (Conditional)
     ideology_scale: "",
 
     // generative AI usage
@@ -48,9 +47,8 @@ export default function DemographicSurvey() {
     "race",
     "hispanic",
 
-    // political (3)
+    // political
     "party_id",
-    "party_lean",
     "ideology_scale",
 
     // usage
@@ -112,16 +110,6 @@ export default function DemographicSurvey() {
     if (field === "race") {
       return formData.race.length > 0;
     }
-
-    // party_lean: conditional required
-    if (field === "party_lean") {
-      return ["Independent", "Another party", "No preference"].includes(
-        formData.party_id
-      )
-        ? String(formData.party_lean ?? "").trim() !== ""
-        : true; // Republican / Democrat이면 lean 질문은 자동 충족
-    }
-
     return String(formData[field] ?? "").trim() !== "";
   };
 
@@ -501,7 +489,6 @@ export default function DemographicSurvey() {
                 "Republican",
                 "Democrat",
                 "Independent",
-                "Another party",
                 "No preference",
               ].map((opt) => {
                 const id = `party_id_${opt.replace(/\s+/g, "_")}`;
@@ -526,45 +513,6 @@ export default function DemographicSurvey() {
               })}
             </div>
 
-            {/* Q7: Party Lean (Conditional) */}
-            {["Independent", "Another party", "No preference"].includes(formData.party_id) && (
-              <div
-                ref={(el) => (fieldRefs.current.party_lean = el)}
-                className={
-                  isHighlighted("party_lean")
-                    ? "p-3 rounded-lg border-2 border-red-500"
-                    : ""
-                }
-              >
-                <p className="block mb-2 font-medium">
-                  If you had to choose, do you think of yourself as closer to…
-                </p>
-
-                {["Republican Party", "Democratic Party"].map((opt) => {
-                  const id = `party_lean_${opt.replace(/\s+/g, "_")}`;
-                  return (
-                    <label
-                      key={opt}
-                      htmlFor={id}
-                      className="flex items-center mb-1 cursor-pointer select-none"
-                    >
-                      <input
-                        id={id}
-                        type="radio"
-                        name="party_lean"
-                        value={opt}
-                        checked={formData.party_lean === opt}
-                        onChange={handleChange}
-                        className="mr-2"
-                      />
-                      {opt}
-                    </label>
-                  );
-                })}
-              </div>
-            )}
-
-
             {/* Q8: Ideology Scale */}
             <div
               ref={(el) => (fieldRefs.current.ideology_scale = el)}
@@ -582,7 +530,7 @@ export default function DemographicSurvey() {
                 "Extremely liberal",
                 "Liberal",
                 "Slightly liberal",
-                "Moderate / middle of the road",
+                "Moderate",
                 "Slightly conservative",
                 "Conservative",
                 "Extremely conservative",

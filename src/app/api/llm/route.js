@@ -16,12 +16,13 @@ export async function POST(req) {
 
     const ai = new GoogleGenAI({ apiKey });
 
-    const systemInstruction = `Write a concise, well-organized answer in Markdown.
-Answering style requirements:
-- Provide a clear, multi-sentence explanation.
-- Use clear headings, bullet points, and formatting to organize the information.
-- Treat the interaction as a continuous conversation rather than isolated questions.
-- Use previous turns to maintain topic continuity and provide more relevant answers.`;
+    const systemInstruction = `
+    Write a concise, well-organized answer in Markdown.
+    Answering style requirements:
+    - Provide a clear, multi-sentence explanation.
+    - Use clear headings, bullet points for listed itmes, and formatting to organize the information.
+    - Treat the interaction as a continuous conversation rather than isolated questions.
+    - Use previous turns to maintain topic continuity and provide more relevant answers.`;
 
     // Build multi-turn contents: previous history + current user message
     const contents = [

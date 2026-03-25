@@ -55,45 +55,49 @@ function LikertRow({
   );
 }
 
-function LikertMatrix({ items, labels, responses, onChange }) {
+function LikertMatrix({ items, labels, responses, onChange, highlightKeys = new Set(), itemRefs = {} }) {
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "minmax(140px, 2fr) repeat(7, minmax(58px, 1fr))",
+    gridTemplateColumns: "minmax(180px, 3fr) repeat(7, minmax(58px, 1fr))",
     columnGap: "6px",
     alignItems: "center",
   };
 
   return (
     <div className="w-full overflow-x-hidden">
-      <div className="space-y-10 pt-2">
-        {/* Header row (same 7 labels) */}
-        <div
-          style={gridStyle}
-          className="sticky top-[54px] bg-white z-30 pt-2 pb-3 border-b border-gray-200"
-        >
-          <div />
-          {labels.map((h, i) => (
-            <div
-              key={i}
-              style={{ backgroundColor: COL_BG[i] }}
-              className="text-center text-[15px] font-medium text-gray-700 py-2 rounded-lg leading-tight"
-            >
-              {h}
-            </div>
-          ))}
-        </div>
+      {/* Header row (same 7 labels) */}
+      <div
+        style={gridStyle}
+        className="sticky top-[54px] bg-white z-30 pt-2 pb-3 border-b border-gray-200"
+      >
+        <div />
+        {labels.map((h, i) => (
+          <div
+            key={i}
+            style={{ backgroundColor: COL_BG[i] }}
+            className="text-center text-[15px] font-medium text-gray-700 py-2 rounded-lg leading-tight"
+          >
+            {h}
+          </div>
+        ))}
+      </div>
 
-        {/* Items */}
+      {/* Items */}
+      <div className="divide-y divide-gray-200 pt-14">
         {items.map((q, idx) => {
-          const key = typeof q === "string" ? q : q.key; // 안전장치
+          const key = typeof q === "string" ? q : q.key; 
           const value = responses[key];
+          const highlighted = highlightKeys.has(key);
 
           return (
             <div
               key={key}
-              className="py-5 border-b border-gray-200 rounded-xl px-2 transition-colors hover:bg-gray-50/60"
+              ref={(el) => (itemRefs[key] = el)}
+              className={`py-6 px-2 rounded-xl transition-colors hover:bg-gray-50/60 ${
+                highlighted ? "ring-2 ring-inset ring-red-500 animate-flash" : ""
+              }`}
             >
-              <div style={gridStyle} className="mt-2">
+              <div style={gridStyle}>
                 <div className="pr-6 text-lg text-gray-800 leading-snug">
                   <span className="font-medium">{idx + 1}.</span>{" "}
                   {typeof q === "string" ? q : q.text}
@@ -171,40 +175,32 @@ const COL_BG_SELECTED = [
   "rgba(59, 130, 246, 0.30)",
 ];
 
-function BipolarMatrix({ items, responses, onChange }) {
+function BipolarMatrix({ items, responses, onChange, highlightKeys = new Set(), itemRefs = {} }) {
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: "minmax(140px, 2fr) repeat(7, minmax(58px, 1fr))",
+    gridTemplateColumns: "minmax(180px, 3fr) repeat(7, minmax(58px, 1fr))",
     columnGap: "6px",
     alignItems: "center",
   };
 
   return (
     <div className="w-full overflow-x-hidden">
-      <div className="space-y-10 pt-6">
-        <div style={gridStyle} className="sticky top-[54px] bg-white z-30 pt-3 pb-3 border-b border-gray-200">
-          <div /> {/* questions column */}
-            {COMMON_7_HEADERS.map((h, i) => (
-              <div
-                key={i}
-                style={{ backgroundColor: COL_BG[i] }}
-                className="text-center text-[15px] font-medium text-gray-700 py-2 rounded-lg leading-tight"
-              >
-                {h}
-              </div>
-            ))}
-        </div>
+      <div className="divide-y divide-gray-200">
       {/* ===== questions rows ===== */}
       {items.map((item, idx) => {
         const value = responses[item.key];
+        const highlighted = highlightKeys.has(item.key);
 
         return (
           <div
             key={item.key}
-            className="py-5 border-b border-gray-200 rounded-xl px-2 transition-colors hover:bg-gray-50/60"
+            ref={(el) => (itemRefs[item.key] = el)}
+            className={`py-6 px-2 rounded-xl transition-colors hover:bg-gray-50/60 ${
+              highlighted ? "ring-2 ring-inset ring-red-500 animate-flash" : ""
+            }`}
           >
             {/* Row A */}
-            <div style={gridStyle} className="mt-4">
+            <div style={gridStyle}>
               <div className="pr-6 text-lg text-gray-800 leading-snug">
                 <span className="font-medium">{idx + 1}.</span>{" "}
                 {item.text}
@@ -268,6 +264,8 @@ function BipolarMatrix({ items, responses, onChange }) {
 export default function PostSurvey() {
   const router = useRouter();
   const questionRefs = useRef({});
+  const scrollContainerRef = useRef(null);
+  const pageRef = useRef(1);
 
   const [participantId, setParticipantId] = useState(null);
   const [systemType, setSystemType] = useState(null);
@@ -277,6 +275,7 @@ export default function PostSurvey() {
   // section-based states
   const [serendipityResponses, setSerendipityResponses] = useState({});
   const [emotionResponses, setEmotionResponses] = useState({});
+  const [emotion2Responses, setEmotion2Responses] = useState({});
   const [selfEfficacyResponses, setSelfEfficacyResponses] = useState({});
   const [openEndedResponses, setOpenEndedResponses] = useState({});
   const [shuffledQuestionsByPage, setShuffledQuestionsByPage] = useState({});
@@ -286,10 +285,36 @@ export default function PostSurvey() {
   const [loading, setLoading] = useState(false);
 
   const [showWarningModal, setShowWarningModal] = useState(false);
-  const [highlightQuestion, setHighlightQuestion] = useState(null);
+  const [highlightQuestions, setHighlightQuestions] = useState(new Set());
+
+  // Keep pageRef in sync so popstate handler always reads current page
+  useEffect(() => { pageRef.current = page; }, [page]);
 
   /* -------------------------------
-     useEffect 
+     Back button → previous survey page
+  -------------------------------- */
+  useEffect(() => {
+    history.pushState(null, "", location.href);
+
+    const handlePopState = () => {
+      setTimeout(() => {
+        history.pushState(null, "", location.href);
+        const cur = pageRef.current;
+        if (cur > 1) {
+          const prevPage = cur - 1;
+          setPage(prevPage);
+          localStorage.setItem("postsurvey_page", prevPage);
+          scrollContainerRef.current?.scrollTo(0, 0);
+        }
+        // page 1이면 아무데도 가지 않음
+      }, 0);
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  /* -------------------------------
+     useEffect
   -------------------------------- */
   {/* Participants' information load */}
   useEffect(() => {
@@ -308,21 +333,27 @@ export default function PostSurvey() {
     setSystemType(system); 
 
     setTaskType(localStorage.getItem("task_type") || "the topic");
+
+    const savedPage = localStorage.getItem("postsurvey_page");
+    if (savedPage) setPage(parseInt(savedPage, 10));
   }, [router]);
 
   useEffect(() => {
     const shuffled = {};
-
     pages.forEach((p, index) => {
       if (p.section === "openEnded") {
-        shuffled[index] = p.questions; 
+        shuffled[index] = p.questions;
+      } else if (p.section === "emotion1") {
+        shuffled[index] = shuffleArray(evaluationQuestions.slice(0, 5));
+      } else if (p.section === "emotion2") {
+        shuffled[index] = shuffleArray(evaluationQuestions.slice(5, 10));
       } else {
-        shuffled[index] = shuffleArray(p.questions); 
+        shuffled[index] = shuffleArray(p.questions);
       }
     });
 
     setShuffledQuestionsByPage(shuffled);
-  }, []);
+  }, [taskType]);
 
   {/* scrapbook load */}
   useEffect(() => {
@@ -340,19 +371,19 @@ export default function PostSurvey() {
      Question Sets
   -------------------------------- */
   const serendipityQuestions = [
-    "I obtained unexpected insights.",
+    "I obtained unexpected insights about ${taskType}.",
     "I made connections that I had not thought of before.",
-    "I had unexpected revelations about old ideas.",
+    `I had unexpected revelations about ${taskType}.`,
     "I found things that surprised me.",
-    "I was able to see ordinary knowledge in new ways.",
+    `I was able to see ordinary knowledge about ${taskType} in new ways.`,
   ];
 
   const evaluationQuestions = [
     {
       key: "overall",
       text: "My overall experience with search",
-      left: "bad",
-      right: "good",
+      left: "negative",
+      right: "positive",
       neutral: "Neither good nor bad",
     },
     {
@@ -371,14 +402,14 @@ export default function PostSurvey() {
     },
     {
       key: "attitude",
-      text: "Attitude of search engines/chat AI",
+      text: "Attitude of search system",
       left: "belligerent",
       right: "cooperative",
       neutral: "Neither cooperative nor belligerent",
     },
     {
       key: "communication",
-      text: "Communication with the search engines/chat AI",
+      text: "Communication with the search system",
       left: "destructive",
       right: "productive",
       neutral: "Neither productive nor destructive",
@@ -421,7 +452,7 @@ export default function PostSurvey() {
   ];
 
   const selfEfficacyQuestions = [
-    "Given enough time and effort, I believe I can find information that interests me.",
+    "Given enough time and effort, I believe I can find information in general that interests me.",
     "I can do a good search and feel confident it will lead me to interesting information.",
     "The concept is too complex for me to explore through online search.",
     "I trust my ability to find new and interesting information.",
@@ -439,21 +470,24 @@ export default function PostSurvey() {
 
   const pages = [
     { title: "", questions: serendipityQuestions, section: "serendipity" },
-    { title: "", questions: evaluationQuestions, section: "emotion" },
+    { title: "", questions: [], section: "emotion1" },
+    { title: "", questions: [], section: "emotion2" },
     { title: "", questions: selfEfficacyQuestions, section: "selfEfficacy" },
     { title: "", questions: [], section: "openEnded" },
   ];
 
   const sectionSetters = {
     serendipity: setSerendipityResponses,
-    emotion: setEmotionResponses,
+    emotion1: setEmotionResponses,
+    emotion2: setEmotion2Responses,
     selfEfficacy: setSelfEfficacyResponses,
     openEnded: setOpenEndedResponses,
   };
 
   const sectionResponses = {
     serendipity: serendipityResponses,
-    emotion: emotionResponses,
+    emotion1: emotionResponses,
+    emotion2: emotion2Responses,
     selfEfficacy: selfEfficacyResponses,
     openEnded: openEndedResponses,
   };
@@ -476,7 +510,7 @@ export default function PostSurvey() {
           condition: systemType, // WebSearch | GenSearch | RAGSearch
           task_id: taskType,
           serendipity_responses: serendipityResponses,
-          emotion_responses: emotionResponses,
+          emotion_responses: { ...emotionResponses, ...emotion2Responses },
           post_self_efficacy_responses: selfEfficacyResponses,
           open_ended: openEndedResponses,
         }),
@@ -494,6 +528,7 @@ export default function PostSurvey() {
       return;
     }
 
+    localStorage.removeItem("postsurvey_page");
     router.push("/demographic");
   } catch (e) {
     alert("SAVE FAILED (network/runtime):\n\n" + (e?.message || String(e)));
@@ -519,8 +554,10 @@ export default function PostSurvey() {
     }
 
     if (page < pages.length) {
-      setPage(page + 1);
-      window.scrollTo(0, 0);
+      const nextPage = page + 1;
+      setPage(nextPage);
+      localStorage.setItem("postsurvey_page", nextPage);
+      scrollContainerRef.current?.scrollTo(0, 0);
     } else {
       handleFinalSubmit();
     }
@@ -536,48 +573,49 @@ export default function PostSurvey() {
   return (
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       {/* Progress */}
-      <div className="sticky top-0 z-40 bg-white border-b">
-        <ProgressBar progress={50 + page * 10} />
+      <div className="fixed top-0 left-0 right-0 z-40 bg-white border-b">
+        <ProgressBar progress={50 + page * 8} />
       </div>
 
       {/* Main layout */}
       <div className="flex min-h-[calc(100vh-56px)] overflow-x-hidden">
         {/* Survey */}
-        <div className="flex-1 overflow-y-auto min-w-0">
+        <div ref={scrollContainerRef} className="flex-1 overflow-y-auto min-w-0">
           <div className="w-full bg-white px-6 lg:px-10 pt-2 pb-10">
             <h2 className="text-xl font-semibold mb-10 text-center">
               {pages[page - 1].title}
             </h2>
 
             {page === 1 && (
-              <p className="text-base text-gray-700 mb-0 leading-relaxed">
+              <p className="text-lg text-gray-700 mb-0 leading-relaxed">
                 Now we will ask you what you experienced in the previous search session.<br />
                 Please read the following items and evaluate your overall search experience during the session.
               </p>
             )}
 
-            {page === 2 && (
-              <p className="text-base text-gray-700 mb-0 leading-relaxed">
+            {(page === 2 || page === 3) && (
+              <p className="text-lg text-gray-700 mb-8 leading-relaxed">
                 On the scales below, we will ask your feelings about the output information you just read and your overall search experience.<br />
-                Red indicates negative emotions, and blue indicates positive emotions.<br />
-                The deeper the color becomes, the stronger the intensity of the emotion.<br />
+                Red indicates negative emotions, and blue indicates positive emotions. The deeper the color becomes, the stronger the intensity of the emotion.<br />
                 Please read the following items and evaluate your feelings according to each specific adjective.
               </p>
             )}
 
-            {page === 3 && (
-              <p className="text-base text-gray-700 mb-0 leading-relaxed">
+            {page === 4 && (
+              <p className="text-lg text-gray-700 mb-0 leading-relaxed">
                 On this page, we will ask about your belief in your ability to successfully complete a search task, even when the task is difficult, based on your search experience today.<br />
                 Please read the following sentences and evaluate your level of agreement or disagreement.
               </p>
             )}
 
             {questions.length > 0 && (
-              section === "emotion" ? (
+              section === "emotion1" || section === "emotion2" ? (
                 <BipolarMatrix
                   items={questions}
                   responses={sectionResponses[section]}
                   onChange={(key, v) => handleChange(section, key, v)}
+                  highlightKeys={highlightQuestions}
+                  itemRefs={questionRefs.current}
                 />
               ) : section === "serendipity" || section === "selfEfficacy" ? (
                 <LikertMatrix
@@ -585,6 +623,8 @@ export default function PostSurvey() {
                   labels={sevenPointLabels}
                   responses={sectionResponses[section]}
                   onChange={(key, v) => handleChange(section, key, v)}
+                  highlightKeys={highlightQuestions}
+                  itemRefs={questionRefs.current}
                 />
               ) : (
                 <div className="space-y-8">
@@ -597,22 +637,19 @@ export default function PostSurvey() {
                       value={sectionResponses[section][q]}
                       onChange={(v) => handleChange(section, q, v)}
                       highlightRef={(el) => (questionRefs.current[q] = el)}
-                      highlight={highlightQuestion === q}
+                      highlight={highlightQuestions.has(q)}
                     />
                   ))}
                 </div>
               )
             )}
 
-            {page === 4 && (
+            {page === 5 && (
               <>
-                <p className="text-base text-gray-700 mb-0 leading-relaxed">
+                <p className="text-[18px] text-gray-700 mb-8 leading-relaxed">
                   Now, you are almost done!👏🏻 <br />
                   The following two questions are very important parts of our studies. There is no right or wrong answer, so please feel free to share your thoughts openly. <br/>
                   You may want to refer to the scrapbook content shown on the right.
-                </p>
-                <p className="text-[18px] text-gray-900 mt-4 mb-0 leading-relaxed">
-                  You conducted a search to broadly explore information on the given topic:
                 </p>
               </>
             )}
@@ -622,11 +659,11 @@ export default function PostSurvey() {
                 {/* OEQ1 */}
                 <div className="space-y-3">
                   <p className="font-medium text-[18px]">
-                    1. What keywords can you think of when you think about{" "}
-                    <strong>{taskType}</strong>?
+                    1. Based on the information you found during your search, what advice would you give your friend about {" "}
+                    {taskType}?
                   </p>
                   <textarea
-                    className="w-full border rounded-md p-4 min-h-[120px]"
+                    className="w-full border rounded-md p-4 min-h-[200px]"
                     placeholder="There are no right or wrong answers. Please provide anything."
                     value={openEndedResponses["OEQ1"] || ""}
                     onChange={(e) =>
@@ -638,10 +675,10 @@ export default function PostSurvey() {
                 {/* OEQ2 */}
                 <div className="space-y-3">
                   <p className="font-medium text-[18px]">
-                    2. Did you encounter any information that you could relate to your own experiences or to similar situations? If so, what were they?
+                    2. Did you encounter any interesting or valuable information that led to new insights or unexpected connections? If so, please describe it.
                   </p>
                   <textarea
-                    className="w-full border rounded-md p-4 min-h-[140px]"
+                    className="w-full border rounded-md p-4 min-h-[200px]"
                     placeholder="There are no right or wrong answers. Please provide anything."
                     value={openEndedResponses["OEQ2"] || ""}
                     onChange={(e) =>
@@ -665,7 +702,7 @@ export default function PostSurvey() {
         </div>
 
         {/* Scrapbook */}
-        <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l overflow-y-auto flex-shrink-0">
+        <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l overflow-y-auto flex-shrink-0 min-h-screen">
           <div className="p-4 border-b">
             <h2 className="font-semibold">Your Scrapbook</h2>
             <p className="text-xs text-gray-500">
@@ -714,10 +751,10 @@ export default function PostSurvey() {
         </div>
       </div>
 
-      {/* ✅ Warning Modal: 최상위 div 내부, main layout 밖 */}
+      {/* ✅ Warning Modal*/}
       {showWarningModal && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center space-y-6">
+          <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full text-center space-y-2">
             <p>
               There is an unanswered question on this page.
               <br />
@@ -737,17 +774,22 @@ export default function PostSurvey() {
 
               <button
                 onClick={() => {
-                  const firstUnanswered = questions.find((q) => {
-                    const k = typeof q === "string" ? q : q.key;
-                    return sectionResponses[section][k] === undefined;
-                  });
-                  if (firstUnanswered && questionRefs.current[firstUnanswered]) {
-                    questionRefs.current[firstUnanswered].scrollIntoView({
+                  const unansweredKeys = questions
+                    .filter((q) => {
+                      const k = typeof q === "string" ? q : q.key;
+                      return sectionResponses[section][k] === undefined;
+                    })
+                    .map((q) => (typeof q === "string" ? q : q.key));
+
+                  setHighlightQuestions(new Set(unansweredKeys));
+                  setTimeout(() => setHighlightQuestions(new Set()), 3000);
+
+                  const firstKey = unansweredKeys[0];
+                  if (firstKey && questionRefs.current[firstKey]) {
+                    questionRefs.current[firstKey].scrollIntoView({
                       behavior: "smooth",
                       block: "center",
                     });
-                    setHighlightQuestion(firstUnanswered);
-                    setTimeout(() => setHighlightQuestion(null), 2000);
                   }
                   setShowWarningModal(false);
                 }}

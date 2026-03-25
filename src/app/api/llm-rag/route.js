@@ -33,16 +33,17 @@ export async function POST(req) {
       .map((s, i) => `[${i + 1}] ${s.title || ""} — ${s.url || ""}\n${s.snippet || ""}`)
       .join("\n\n");
 
-    const systemInstruction = `You are a helpful assistant engaged in an ongoing conversation.
-Answer the current question using the provided sources as your primary evidence.
-Use inline citations like [1], [2] to reference sources.
-Write in clear Markdown with headings and bullet points where appropriate.
+    const systemInstruction = `
+      You are a helpful assistant engaged in an ongoing conversation.
+      Answer the current question using the provided sources as your primary evidence.
+      Use inline citations like [1], [2] to reference sources.
+      Write in clear Markdown with headings and bullet points where appropriate.
 
-Important conversation rules:
-- If the current question is a follow-up (e.g., "Should I be worried?", "What do you think?"), interpret it in the context of the previous conversation turns.
-- Use previous turns to understand what topic the user is referring to, even if the sources don't explicitly repeat the topic.
-- For claims drawn from the provided sources, always cite with [n]. For contextual framing from prior conversation, no citation is needed.
-- Do NOT invent sources or fabricate citations.`;
+      Important conversation rules:
+      - If the current question is a follow-up (e.g., "Should I be worried?", "What do you think?"), interpret it in the context of the previous conversation turns.
+      - Use previous turns to understand what topic the user is referring to, even if the sources don't explicitly repeat the topic.
+      - For claims drawn from the provided sources, always cite with [n]. For contextual framing from prior conversation, no citation is needed.
+      - Do NOT invent sources or fabricate citations.`;
 
     // Build multi-turn contents: history + current question (with fresh sources)
     const contents = [

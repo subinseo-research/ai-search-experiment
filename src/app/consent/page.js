@@ -4,12 +4,21 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import ProgressBar from "../../components/ProgressBar";
 
+const DEVICES = [
+  { id: "desktop", label: "Computer (Desktop)", emoji: "🖥️" },
+  { id: "laptop",  label: "Laptop",             emoji: "💻" },
+  { id: "tablet",  label: "Tablet / Pad",       emoji: "🔳" },
+  { id: "phone",   label: "Phone",              emoji: "📱" },
+];
+
 export default function ConsentPage() {
   const router = useRouter();
+  const [consentPage, setConsentPage] = useState(1);
   const [checked, setChecked] = useState(false);
   const [participantId, setParticipantId] = useState(null);
-  const [prolificId, setProlificId] = useState(""); 
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [prolificId, setProlificId] = useState("");
+  const [selectedDevice, setSelectedDevice] = useState(null);
+  const [deviceSubmitting, setDeviceSubmitting] = useState(false);
 
   // Load participant UUID
   useEffect(() => {
@@ -21,37 +30,28 @@ export default function ConsentPage() {
     }
   }, []);
 
-  const isContinueDisabled = 
-    !checked || !prolificId.trim() || isSubmitting;
+  const isContinueDisabled = !checked || !prolificId.trim();
 
-  const handleContinue = async () => {
-    if (!participantId || !checked || !prolificId.trim() || isSubmitting) return;
-    setIsSubmitting(true);
+  const handleContinue = () => {
+    if (!participantId || !checked || !prolificId.trim()) return;
+    setConsentPage(2);
+  };
 
-    try {
-      const res = await fetch("/api/airtable/consent", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          participant_id: participantId,
-          prolific_id: prolificId.trim(),
-          consent: "yes",
-        }),
-      });
+  // Block back button on page 2
+  useEffect(() => {
+    if (consentPage !== 2) return;
+    history.pushState(null, "", location.href);
+    const block = () => history.pushState(null, "", location.href);
+    window.addEventListener("popstate", block);
+    return () => window.removeEventListener("popstate", block);
+  }, [consentPage]);
 
-      const data = await res.json();
-      if (!data.success) throw new Error("Save failed");
-
-      router.push("/task");
-    } catch (err) {
-      console.error("Consent save error:", err);
-      alert("Error saving consent. Please try again.");
-      setIsSubmitting(false);
-    }
+  const handleDeviceSelect = (deviceId) => {
+    setSelectedDevice(deviceId);
   };
 
   const handleDecline = async () => {
-    if (!participantId || isSubmitting) return;
+    if (!participantId) return;
 
     try {
       await fetch("/api/airtable/consent", {
@@ -64,9 +64,36 @@ export default function ConsentPage() {
         }),
       });
 
-      router.push("/decline?status=declined");
+      window.location.href = "https://app.prolific.com/submissions/complete?cc=CAXSLOV7";
     } catch (err) {
       console.error("Consent decline error:", err);
+    }
+  };
+
+  const handleDeviceNext = async () => {
+    if (!selectedDevice || deviceSubmitting) return;
+    setDeviceSubmitting(true);
+    const isFail = selectedDevice === "tablet" || selectedDevice === "phone";
+
+    try {
+      await fetch("/api/airtable/consent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          participant_id: participantId,
+          prolific_id: prolificId.trim(),
+          consent: "yes",
+          device: isFail ? "fail" : "pass",
+        }),
+      });
+    } catch (err) {
+      console.error("Device check save error:", err);
+    }
+
+    if (isFail) {
+      window.location.href = "https://app.prolific.com/submissions/complete?cc=CTO4GPBE";
+    } else {
+      router.push("/task");
     }
   };
 
@@ -74,6 +101,51 @@ export default function ConsentPage() {
     return (
       <main className="flex items-center justify-center min-h-screen text-gray-700">
         <p>Loading participant information...</p>
+      </main>
+    );
+  }
+
+  if (consentPage === 2) {
+    return (
+      <main className="min-h-[100svh] bg-white text-gray-900 flex flex-col">
+        <div className="sticky top-0 z-50 bg-white border-b border-gray-200">
+          <ProgressBar progress={4} />
+        </div>
+
+        <div className="flex-1 flex flex-col items-center justify-center px-6 py-16 text-center">
+          <h2 className="text-2xl font-bold mb-3">What device are you using?</h2>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 w-full max-w-2xl">
+            {DEVICES.map((device) => (
+              <button
+                key={device.id}
+                onClick={() => handleDeviceSelect(device.id)}
+                className={`flex flex-col items-center justify-center gap-3 rounded-2xl border-2 p-6 cursor-pointer transition-all
+                  ${selectedDevice === device.id
+                    ? "border-gray-900 bg-gray-50"
+                    : "border-gray-200 hover:border-gray-400 hover:bg-gray-50"
+                  }`}
+              >
+                <span className="text-5xl">{device.emoji}</span>
+                <span className="text-sm font-medium text-gray-800">{device.label}</span>
+              </button>
+            ))}
+          </div>
+
+          <div className="w-full max-w-2xl flex justify-end mt-8">
+            <button
+              onClick={handleDeviceNext}
+              disabled={!selectedDevice || deviceSubmitting}
+              className={`rounded-xl px-6 py-2.5 text-sm font-semibold text-white transition-colors ${
+                selectedDevice && !deviceSubmitting
+                  ? "bg-gray-900 hover:bg-black"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
+            >
+              {deviceSubmitting ? "Saving…" : "Next"}
+            </button>
+          </div>
+        </div>
       </main>
     );
   }
@@ -115,13 +187,13 @@ export default function ConsentPage() {
 
           <div>
             <p className="mt-1">
-              This research is being conducted by Subin Seo, Dr. Yiwei Xu at the University of Maryland, College Park. We are inviting you to participate in this research project because you are an adult who regularly uses search systems to search information online. We seek to learn more about how people use different types of search systems, such as generative AI or traditional web search engine (You will use one system randomly assigned). This study aims to understand how different search systems shape users’ search behaviors and how this leads to varying search outcomes and user experiences. Please be assure that your responses will be kept confidential and anonymous.
+              This research is being conducted by Subin Seo, Dr. Yiwei Xu at the University of Maryland, College Park. We are inviting you to participate in this research project because you are an adult who regularly uses search systems to search information online. We seek to learn more about how people use search systems in their daily life and user experience. Please be assure that your responses will be kept confidential and anonymous.
             </p>
           </div>
 
           <div>
             <p className="mt-1">
-              The study will take approximately 10–12 minutes to complete, and you will receive monetary compensation for your participation.Your participation in this research is voluntary. This means you can choose not to continue and you can click the do not consent button below. You also have the right to withdraw at any point during the study, for any reason, and without any prejudice by simply exiting the survey. If you would like to discuss this research and your participation, please contact the Principal Investigator through the Prolific messaging system (which ensures the anonymity of your personal identity). 
+              The study will take approximately 10–12 minutes to complete, and you will receive your compensation through Prolific upon completion. Your participation in this research is voluntary. This means you can choose not to continue and you can click the do not consent button below. You also have the right to withdraw at any point during the study, for any reason, and without any prejudice by simply exiting the survey. If you would like to discuss this research and your participation, please contact the Principal Investigator through the Prolific messaging system (which ensures the anonymity of your personal identity). 
             </p>        
           </div>
         </section>
@@ -167,12 +239,7 @@ export default function ConsentPage() {
           <button
             type="button"
             onClick={handleDecline}
-            disabled={isSubmitting}
-            className={`rounded-xl border px-4 py-2 text-sm ${
-              isSubmitting
-                ? "border-gray-200 text-gray-400 cursor-not-allowed"
-                : "border-gray-300 hover:bg-gray-50"
-            }`}
+            className="rounded-xl border px-4 py-2 text-sm border-gray-300 hover:bg-gray-50"
           >
             Decline
           </button>
@@ -187,7 +254,7 @@ export default function ConsentPage() {
                 : "bg-gray-900 hover:bg-black"
             }`}
           >
-            {isSubmitting ? "Saving consent…" : "Consent"}
+            Consent
           </button>
         </div>
 

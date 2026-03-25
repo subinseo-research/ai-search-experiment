@@ -192,9 +192,7 @@ export default function TaskPage() {
           <p className="text-gray-600 text-base mb-10">
             Please read the task carefully. 
             <br />
-            This is a simulated scenario and the search task you will perform in the experiment. 
-            <br />
-            You will first complete a pre-survey, followed by the main search task.
+            You will first answer a few questions, followed by the main search task.
           </p>
 
           {/* Search Case */}

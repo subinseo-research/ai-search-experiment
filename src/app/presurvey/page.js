@@ -115,7 +115,7 @@ export default function PreSurvey() {
     setRandomizedQuestions(shuffled);
   }, [Pretask_Questionnaires]);
 
-  const Labels = ["Not at all", "Slightly", "Somewhat", "Moderately", "Fairly", "Very", "Extremely"];
+  const Labels = ["Not at all clear", "Slightly clear", "Somewhat clear", "Moderately clear", "Fairly clear", "Very clear", "Extremely clear"];
   
   /* -------------------------------
      Handle response
@@ -218,9 +218,9 @@ export default function PreSurvey() {
         <div className="flex-1 overflow-y-auto min-w-0 h-full">
           <div className="w-full px-6 lg:px-10 pt-6 pb-10 bg-white">
 
-            <p className="text-base text-gray-700 mb-10 leading-relaxed">
+            <p className="text-lg text-gray-900 mb-10 leading-relaxed">
               On the scales below, indicate the extent to which each statement reflects your thoughts about searching for information on {topic}.<br />
-              There are no better or worse responses. We are simply interested in your current state. 
+              There are no right or wrong answers. We are simply interested in what you think. 
             </p>
 
             <p className="text-lg text-gray-900 mb-2 leading-relaxed">

@@ -79,7 +79,7 @@ function CitationPill({ n, onClick }) {
   );
 }
 
-function ReferenceModal({ open, source, onClose, onScrap }) {
+function ReferenceModal({ open, source, onClose, onScrap, onLinkClick }) {
   if (!open || !source) return null;
 
   return (
@@ -121,6 +121,7 @@ function ReferenceModal({ open, source, onClose, onScrap }) {
                   target="_blank"
                   rel="noopener noreferrer"
                   className="mt-2 inline-block text-sm text-blue-600 hover:underline break-all"
+                  onClick={() => onLinkClick?.(source)}
                 >
                   {source.url}
                 </a>
@@ -293,7 +294,32 @@ function ExperimentContent() {
       localStorage.setItem("system_type", system);
     }
 
-    if (topic) localStorage.setItem("task_type", topic);
+    if (topic) {
+      localStorage.setItem("task_type", topic);
+
+      const scenarioCases = {
+        Nanotechnology: {
+          searchCase: "Your friend visited a grocery store. While your friend was standing in front of the fresh corner, your friend overheard some people passing by saying that these days, the nanoparticles used in packaging materials can also mix into the food. You want to check what scientific evidence actually says.",
+          searchTask: "Perform a search to explore evidence about nanotechnology.",
+        },
+        GMO: {
+          searchCase: "Your friend visited a grocery store. While your friend was standing in front of the cereal and snack section, your friend overheard some people talking about how some genetically modified organisms (GMOs) food may disrupt hormones or cause long-term health effects. You want to check what scientific evidence actually says.",
+          searchTask: "Perform a search to explore evidence about GMO foods.",
+        },
+        "Cultivated Meat": {
+          searchCase: "Your friend visited a grocery store. While your friend was standing in front of the meat section, trying to decide which meat to buy, your friend overheard some people passing by saying that these days, some meat is cultivated meat but is often not labeled properly. You want to check what scientific evidence actually says.",
+          searchTask: "Perform a search to explore evidence about cultivated meat.",
+        },
+      };
+      const normalizedTopic = Object.keys(scenarioCases).find(
+        (k) => k.toLowerCase() === topic.toLowerCase()
+      );
+      const matched = normalizedTopic ? scenarioCases[normalizedTopic] : null;
+      if (matched) {
+        localStorage.setItem("search_case", matched.searchCase);
+        localStorage.setItem("search_task", matched.searchTask);
+      }
+    }
   }, [searchParams]);
 
   const [questionCount, setQuestionCount] = useState(0);
@@ -408,6 +434,15 @@ function ExperimentContent() {
   const openSource = (src) => {
     setActiveSource(src);
     setRefOpen(true);
+    logEvent({
+      log_type: "source_button_click",
+      log_data: {
+        system: "RAGSearch",
+        url: src?.url || "",
+        title: src?.title || "",
+        snippet: src?.snippet || "",
+      },
+    });
   };
   const closeSource = () => {
     setRefOpen(false);
@@ -705,7 +740,7 @@ function ExperimentContent() {
     logEvent({ log_type: "query", log_data: { query: q } }); //save log data 
 
     try {
-      const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=40`);
+      const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=20`);
       const data = await res.json();
 
       const results =
@@ -718,6 +753,19 @@ function ExperimentContent() {
 
       setSearchResults(results);
       setSearchQuery("");
+
+      logEvent({
+        log_type: "serp_results",
+        log_data: {
+          query: q,
+          results: results.map((r, idx) => ({
+            rank: idx + 1,
+            title: r.title,
+            snippet: r.snippet,
+            link: r.link,
+          })),
+        },
+      });
     } catch (err) {
       console.error(err);
     }
@@ -769,12 +817,12 @@ function ExperimentContent() {
 
     // Fetch top N web results as sources (same as WebSearch)
     const searchRes = await fetch(
-      `/api/SearchEngine?q=${encodeURIComponent(searchQuery_expanded)}&requestedTotal=8`
+      `/api/SearchEngine?q=${encodeURIComponent(searchQuery_expanded)}&requestedTotal=20`
     );
     const searchData = await searchRes.json();
 
     const sources =
-      searchData.items?.slice(0, 8).map((item, i) => ({
+      searchData.items?.map((item, i) => ({
         id: i + 1,
         title: item.title,
         url: item.link,
@@ -823,6 +871,13 @@ function ExperimentContent() {
       const finalSources = extra?.sources || sources;
       const answer_message_id = makeMessageId("rag");
       const word_count = countWords(answerText);
+      const citedIndices = new Set(
+        [...answerText.matchAll(/\[(\d+(?:,\s*\d+)*)\]/g)]
+          .flatMap((m) => m[1].split(",").map((n) => parseInt(n.trim(), 10)))
+      );
+      const cited_sources = finalSources
+        .map((s, i) => ({ index: i + 1, title: s.title || null, url: s.url || null, snippet: s.snippet || null }))
+        .filter((s) => citedIndices.has(s.index));
       await logEvent({
         log_type: "ai_answer",
         log_data: {
@@ -833,11 +888,7 @@ function ExperimentContent() {
           prompt: userInput,
           answer: answerText,
           word_count,
-          sources_used: finalSources.map((s, i) => ({
-            index: i + 1,
-            title: s.title || null,
-            url: s.url || null,
-          })),
+          sources_used: cited_sources,
         },
       });
 
@@ -1315,17 +1366,13 @@ function ExperimentContent() {
                     <div className="text-4xl">🔍</div>
 
                     <h2 className="text-2xl font-semibold">
-                      Start your search
+                      Start searching with Search Engine!
                     </h2>
-
-                    <p className="text-gray-600">
-                      Explore anything you'd like to know or find using a search engine.
-                    </p>
 
                     <ul className="text-sm text-gray-500 space-y-2 text-left inline-block">
                       <li>▪️ Explore about {topic}</li>
                       <li>▪️ Refine your queries as you go</li>
-                      <li>▪️ Save anything useful in the scrapbook</li>
+                      <li>▪️ Save anything interesting and valuable in the scrapbook</li>
                       <li>⚠️ Please use English only</li>
                       <li>⚠️ Please refrain from using external tools</li>
                     </ul>
@@ -1447,15 +1494,12 @@ function ExperimentContent() {
                   <div className="w-full max-w-xl bg-white border rounded-xl p-10 text-center space-y-6">
                     <div className="text-4xl">🤖</div>
                     <h2 className="text-2xl font-semibold">
-                      Start a conversation
+                      Start searching with AI chatbot!
                     </h2>
-                    <p className="text-gray-600">
-                      Ask the AI anything you'd like to know or discuss.
-                    </p>
                     <ul className="text-sm text-gray-500 space-y-2 text-left inline-block">
                       <li>▪️ Explore about {topic}</li>
                       <li>▪️ Ask follow-up questions</li>
-                      <li>▪️ Save anything useful in the scrapbook</li>
+                      <li>▪️ Save anything interesting and valuable in the scrapbook</li>
                       <li>⚠️ Please use English only</li>
                       <li>⚠️ Please refrain from using external tools</li>
                     </ul>
@@ -1584,7 +1628,23 @@ function ExperimentContent() {
               )}
 
               {isRAG && (
-                <ReferenceModal open={refOpen} source={activeSource} onClose={closeSource} onScrap={addWebScrap} />
+                <ReferenceModal
+                  open={refOpen}
+                  source={activeSource}
+                  onClose={closeSource}
+                  onScrap={addWebScrap}
+                  onLinkClick={(src) =>
+                    logEvent({
+                      log_type: "source_link_click",
+                      log_data: {
+                        system: "RAGSearch",
+                        url: src?.url || "",
+                        title: src?.title || "",
+                        snippet: src?.snippet || "",
+                      },
+                    })
+                  }
+                />
                 )}
 
               {/* Input area */}
