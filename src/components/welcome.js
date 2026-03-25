@@ -5,7 +5,7 @@ export function WelcomePage({ onNext }) {
 
         <div className="flex-1 flex flex-col items-center justify-center space-y-4">
           <h1 className="text-[64px] font-bold text-center">
-            Online Search Experiment
+            Online Search Study
           </h1>
           <p className="text-base text-muted-foreground text-center">
             PI: Subin Seo at University of Maryland, College Park
