@@ -486,7 +486,9 @@ function ExperimentContent() {
 
   useEffect(() => {
     if (questionCount < REQUIRED_QUESTIONS || proceedUnlocked) return;
-    if (!isGenerating) setProceedUnlocked(true);
+    if (isGenerating) return;
+    const timer = setTimeout(() => setProceedUnlocked(true), 10000);
+    return () => clearTimeout(timer);
   }, [questionCount, isGenerating]);
 
   const canProceed = questionCount >= REQUIRED_QUESTIONS && proceedUnlocked;
