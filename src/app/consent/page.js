@@ -91,7 +91,7 @@ export default function ConsentPage() {
     }
 
     if (isFail) {
-      window.location.href = "https://app.prolific.com/submissions/complete?cc=CTO4GPBE";
+      window.location.href = "https://app.prolific.com/submissions/complete?cc=C144575I";
     } else {
       router.push("/task");
     }
