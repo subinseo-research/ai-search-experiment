@@ -96,7 +96,10 @@ function LikertMatrix({ items, labels, columnNumbers = null, innerScroll = false
   return (
     <div className={`w-full overflow-x-hidden ${innerScroll ? "flex flex-col flex-1 min-h-0" : ""}`}>
       {/* Header row */}
-      <div className={`bg-white z-30 pt-2 pb-3 border-b border-gray-200 ${innerScroll ? "flex-shrink-0" : "sticky top-[54px]"}`}>
+      <div
+        className={`bg-white z-30 pt-2 pb-3 border-b border-gray-200 ${innerScroll ? "flex-shrink-0 overflow-y-scroll" : "sticky top-[54px]"}`}
+        style={innerScroll ? { scrollbarColor: "transparent transparent" } : undefined}
+      >
         {/* Label text row — only when columnNumbers (above the colored blocks) */}
         {columnNumbers && (
           <div style={gridStyle} className="mb-1">
@@ -132,7 +135,7 @@ function LikertMatrix({ items, labels, columnNumbers = null, innerScroll = false
       </div>
 
       {/* Items */}
-      <div className={`divide-y divide-gray-200 ${innerScroll ? "overflow-y-auto flex-1 min-h-0 pb-6" : columnNumbers ? "pt-20" : "pt-14"}`}>
+      <div className={`divide-y divide-gray-200 ${innerScroll ? "overflow-y-scroll flex-1 min-h-0 pb-6" : columnNumbers ? "pt-20" : "pt-14"}`}>
         {items.map((q, idx) => {
           const key = typeof q === "string" ? q : q.key;
           const value = responses[key];

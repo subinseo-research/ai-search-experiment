@@ -335,7 +335,7 @@ export default function DemographicSurvey() {
                     name="age"
                     value={formData.age}
                     onChange={handleChange}
-                    className="w-70 border rounded-lg p-2"
+                    className="w-full border rounded-lg p-2"
                     placeholder="Enter your age (numbers only)"
                   />
                 </div>
@@ -369,7 +369,7 @@ export default function DemographicSurvey() {
                     3. What is the highest level of school you completed, or the highest degree you received?
                   </label>
                   <select name="education" value={formData.education} onChange={handleChange}
-                    className="w-150 border rounded-lg p-2">
+                    className="w-full border rounded-lg p-2">
                     <option value="">Select one</option>
                     <option>Never Attended School or Only Attended Kindergarten</option>
                     <option>Elementary (Grades 1 through 8)</option>
