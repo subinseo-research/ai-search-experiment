@@ -487,7 +487,7 @@ export default function DemographicSurvey() {
                 {/* Generative AI */}
                 {/* ===================== */}
                 <div>
-                  <table className="w-full border-collapse text-sm">
+                  <table className="w-full table-fixed border-collapse text-sm">
                     <thead className="font-normal">
                       <tr>
                         <th className="border p-2 text-left text-gray-700 w-[250px]">Generative AI</th>
@@ -544,7 +544,7 @@ export default function DemographicSurvey() {
                 {/* Web Search Engines */}
                 {/* ===================== */}
                 <div>
-                  <table className="w-full border-collapse text-sm">
+                  <table className="w-full table-fixed border-collapse text-sm">
                     <thead className="font-normal">
                       <tr>
                         <th className="border p-2 text-left text-gray-700 w-[250px]">Search Engine</th>

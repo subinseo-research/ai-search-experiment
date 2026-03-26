@@ -6,6 +6,10 @@
   color-scheme: light;
 }
 
+html {
+  font-size: clamp(12px, 1.1vw, 16px);
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);

@@ -62,7 +62,7 @@ function CitationPill({ n, onClick }) {
       onClick={onClick}
       className="
         inline-flex items-center gap-1
-        px-2 py-1.5
+        px-2 py-1
         rounded-full
         border border-gray-300
         bg-gray-50 hover:bg-gray-100
@@ -88,7 +88,8 @@ function ReferenceModal({ open, source, onClose, onScrap, onLinkClick }) {
     >
       <div
         className="w-full max-w-xl rounded-2xl bg-white shadow-2xl border border-gray-200 p-6"
-        onClick={(e) => e.stopPropagation()} 
+        style={{ fontSize: "clamp(11px, 1.1vw, 16px)" }}
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-6">
           <div className="flex items-start gap-3 min-w-0">
@@ -430,10 +431,10 @@ function ExperimentContent() {
 
   const instructionMessage = systemType
     ? systemType === "WebSearch"
-      ? `You will use search engines to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap).`
+      ? `You will use search engines to conduct the search.\nYou can scrapbook interesting or valuable information and write notes (please refer to the video below).`
       : systemType === "RAGSearch"
-        ? `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap).`
-        : `You will use Generative AI to conduct the search. You can scrapbook interesting or valuable information and write notes (please refer to the video below for instructions on how to scrap).`
+        ? `You will use Generative AI to conduct the search.\nYou can scrapbook interesting or valuable information and write notes (please refer to the video below).`
+        : `You will use Generative AI to conduct the search.\nYou can scrapbook interesting or valuable information and write notes (please refer to the video below).`
     : "";
 
 
@@ -1215,21 +1216,21 @@ function ExperimentContent() {
             className={`
               bg-gray-100 border-r border-gray-300
               transition-all flex-shrink-0 overflow-y-auto overflow-x-hidden
-              ${taskOpen ? "w-[20%]" : "w-[64px]"}
+              ${taskOpen ? "w-[16rem]" : "w-[3rem]"}
             `}
           >
             <div>
-              <div className="px-4 pt-2">
-                <button
-                  onClick={() => setTaskOpen((v) => !v)}
-                  className="mb-4 w-10 h-10 rounded border bg-white shadow"
-                >
-                  {taskOpen ? "←" : "→"}
-                </button>
+              <button
+                onClick={() => setTaskOpen((v) => !v)}
+                className="w-full py-1.5 bg-gray-300 hover:bg-gray-400 text-white text-xs font-bold tracking-widest transition"
+              >
+                {taskOpen ? "<<<" : ">>>"}
+              </button>
+              <div className="px-3 pt-2">
 
                 {taskOpen && (
-                  <div className="p-4 mt-2">
-                    <div className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words select-none">
+                  <div className="mt-2">
+                    <div className="p-3 rounded border border-gray-300 text-sm space-y-4 break-words select-none">
                       <div>
                         <strong>Search Case</strong>
                         <p className="mt-1 whitespace-pre-wrap">
@@ -1251,7 +1252,7 @@ function ExperimentContent() {
           </div>
 
           {/* Main Intro Content */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto" style={{ fontSize: "clamp(11px, 1.1vw, 16px)" }}>
             <div className="min-h-full flex items-center justify-center">
               <div className="max-w-4xl w-full text-center space-y-5 px-6 py-6">
                 <h1 className="text-3xl font-bold leading-snug">
@@ -1259,7 +1260,7 @@ function ExperimentContent() {
                 </h1>
 
                 <div className="bg-gray-100 px-10 py-4 rounded-lg text-left">
-                  <p className="text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed whitespace-pre-line">
                     {instructionMessage}
                   </p>
                 </div>
@@ -1276,7 +1277,7 @@ function ExperimentContent() {
                     muted
                     playsInline
                     className="rounded-lg max-w-full cursor-zoom-in"
-                    style={{ maxHeight: "400px" }}
+                    style={{ maxHeight: "clamp(180px, 50vh, 640px)" }}
                     onClick={() => setGifLightbox(true)}
                   />
                 </div>
@@ -1300,7 +1301,7 @@ function ExperimentContent() {
                     />
                   </div>
                 )}
-
+ 
                 <button
                   onClick={() => {
                     setStep(2);
@@ -1314,7 +1315,7 @@ function ExperimentContent() {
                     transition
                   "
                 >
-                  Start Search
+                  Start Search 🚀
                 </button>
               </div>
             </div>
@@ -1338,24 +1339,24 @@ function ExperimentContent() {
         {/* Left Panel */}
         <div
           className={`
-            fixed top-0 left-0 h-full
+            fixed top-0 left-0 h-full pt-2
             bg-gray-100 border-r border-gray-300
             transition-all overflow-y-auto overflow-x-hidden
-            ${taskOpen ? "w-[20%]" : "w-[64px]"}
+            ${taskOpen ? "w-[16rem]" : "w-[3rem]"}
           `}
         >
 
-          <div className="px-4 pt-4">
-            <button
-              onClick={() => setTaskOpen((v) => !v)}
-              className="mb-4 w-10 h-10 rounded border bg-white shadow"
-            >
-              {taskOpen ? "←" : "→"}
-            </button>
+          <button
+            onClick={() => setTaskOpen((v) => !v)}
+            className="w-full py-1.5 bg-gray-300 hover:bg-gray-400 text-white text-xs font-bold tracking-widest transition"
+          >
+            {taskOpen ? "<<<" : ">>>"}
+          </button>
+          <div className="px-3 pt-2">
 
             {taskOpen && (
-              <div className="p-4 mt-2">
-                <div ref={taskPanelAnchorRef} className="p-4 rounded border border-gray-300 text-sm space-y-4 break-words select-none">
+              <div className="mt-2">
+                <div ref={taskPanelAnchorRef} className="p-3 rounded border border-gray-300 text-sm space-y-4 break-words select-none">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{scenario}</p>
@@ -1376,7 +1377,7 @@ function ExperimentContent() {
         {/* Goal Modal: shown first before Intro Modal */}
         {showGoalModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg">
+            <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg" style={{ fontSize: "clamp(11px, 1.1vw, 16px)" }}>
               <h2 className="text-xl font-semibold mb-4">Study Goal</h2>
 
               <p className="text-base leading-relaxed">
@@ -1399,7 +1400,7 @@ function ExperimentContent() {
         {/* Intro Modal: blocks interaction until closed */}
         {showIntroModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg">
+            <div className="bg-white max-w-lg w-full p-6 rounded-xl relative shadow-lg" style={{ fontSize: "clamp(11px, 1.1vw, 16px)" }}>
               <button
                 onClick={() => {
                   setShowIntroModal(false);
@@ -1428,8 +1429,9 @@ function ExperimentContent() {
         {/* Main Area */}
         <div className="flex-1 overflow-hidden"
           style={{
-            paddingLeft: taskOpen ? "20%" : "64px",
-            paddingRight: `${scrapWidth}%`,
+            paddingLeft: taskOpen ? "16rem" : "3rem",
+            paddingRight: `max(${scrapWidth}%, 13.75rem)`,
+            fontSize: "clamp(11px, 1.1vw, 16px)",
           }}
         >
         <div className="h-full flex">
@@ -1459,8 +1461,8 @@ function ExperimentContent() {
                   </div>
 
                   {/* search bar */}
-                  <form 
-                    onSubmit={handleSearch} 
+                  <form
+                    onSubmit={handleSearch}
                     className="flex w-full max-w-xl"
                   >
                     <input
@@ -1548,7 +1550,7 @@ function ExperimentContent() {
                             </div>
 
                             <div className="min-w-0">
-                              <h3 className="font-semibold text-blue-700">
+                              <h3 className="font-semibold text-base text-blue-700">
                                 {r.title}
                               </h3>
 
@@ -1738,7 +1740,7 @@ function ExperimentContent() {
                 onSubmit={isRAG ? handleRAGSubmit : handleGenSubmit}
                 className="bg-white py-4 flex justify-center"
               >
-                <div className="w-full max-w-xl flex items-center gap-2">
+                <div className="w-full max-w-xl flex items-center gap-2 px-0">
                   <input
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
@@ -1755,6 +1757,7 @@ function ExperimentContent() {
                     disabled={isGenerating || showGoalModal || showIntroModal || !searchQuery.trim()}
                     className="
                       ml-2 px-4 py-2 rounded-full
+                      text-sm
                       bg-blue-600 text-white
                       disabled:opacity-50
                     "
@@ -1774,7 +1777,7 @@ function ExperimentContent() {
         <div
           ref={scrapPanelRef}
           className={`absolute top-0 right-0 h-full border-1 border-gray-300 flex flex-col z-40 ${scrapFocused ? "bg-gray-0" : "bg-gray-100"}`}
-          style={{ width: `${scrapWidth}%`, minWidth: 220, maxWidth: 600 }}
+          style={{ width: `${scrapWidth}%`, minWidth: "13.75rem", maxWidth: "37.5rem", fontSize: "clamp(10px, 1vw, 14px)" }}
           onDrop={handleDrop}
           onDragOver={(e) => e.preventDefault()}
         >
@@ -1860,9 +1863,9 @@ function ExperimentContent() {
             onClick={addNote}
             className="
                 w-full mt-4 py-2
-                border-2 border-dashed
+                border border-dashed
                 rounded-lg
-                text-sm
+                text-xs
                 text-gray-600
                 hover:bg-gray-100
                 transition
@@ -1878,7 +1881,7 @@ function ExperimentContent() {
               onClick={handleNext}
               disabled={!canProceed}
               className={`
-                w-full py-2.5 rounded-md font-semibold transition 
+                w-full py-2.5 rounded-md text-sm font-semibold transition
                 ${canProceed
                   ? "bg-blue-600 text-white hover:bg-blue-700"
                   : "bg-gray-300 text-gray-500 cursor-not-allowed"}

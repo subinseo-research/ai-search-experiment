@@ -58,7 +58,7 @@ function LikertRow({
       className={`border-b pb-8 space-y-4 transition-all
         ${highlight ? "animate-flash border-2 border-red-500 rounded-lg p-4" : ""}`}
     >
-      <p className="font-medium text-[18px]">
+      <p className="font-medium text-lg">
         {index}. {question}
       </p>
 
@@ -84,19 +84,30 @@ function LikertRow({
 
 function LikertMatrix({ items, labels, columnNumbers = null, innerScroll = false, responses, onChange, highlightKeys = new Set(), itemRefs = {} }) {
   const n = labels.length;
-  const colMinPx = n <= 7 ? 48 : 36;
+  const colMinPx = n <= 7 ? 40 : 28;
   const colColors = getColColors(n);
   const gridStyle = {
     display: "grid",
-    gridTemplateColumns: `minmax(350px, 5fr) repeat(${n}, minmax(${colMinPx}px, 1fr))`,
-    columnGap: "6px",
+    gridTemplateColumns: `minmax(min(350px, 28%), 5fr) repeat(${n}, minmax(${colMinPx}px, 1fr))`,
+    columnGap: "4px",
     alignItems: "center",
   };
+
+  const headerRef = useRef(null);
+  const [headerHeight, setHeaderHeight] = useState(0);
+  useEffect(() => {
+    const el = headerRef.current;
+    if (!el || innerScroll) return;
+    const ro = new ResizeObserver(() => setHeaderHeight(el.offsetHeight));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [innerScroll]);
 
   return (
     <div className={`w-full overflow-x-hidden ${innerScroll ? "flex flex-col flex-1 min-h-0" : ""}`}>
       {/* Header row */}
       <div
+        ref={headerRef}
         className={`bg-white z-30 pt-2 pb-3 border-b border-gray-200 ${innerScroll ? "flex-shrink-0 overflow-y-scroll" : "sticky top-[54px]"}`}
         style={innerScroll ? { scrollbarColor: "transparent transparent" } : undefined}
       >
@@ -107,7 +118,7 @@ function LikertMatrix({ items, labels, columnNumbers = null, innerScroll = false
             {labels.map((h, i) => (
               <div
                 key={i}
-                className="flex items-end justify-center text-center text-[12px] text-gray-600 font-semibold min-h-[28px] leading-tight px-1"
+                className="flex items-end justify-center text-center text-xs text-gray-600 font-semibold min-h-[28px] leading-tight px-1"
               >
                 {h}
               </div>
@@ -125,9 +136,9 @@ function LikertMatrix({ items, labels, columnNumbers = null, innerScroll = false
               className="flex items-center justify-center text-center font-medium text-gray-700 h-[40px] rounded-lg leading-tight px-1"
             >
               {columnNumbers ? (
-                <span className="text-[13px]">{columnNumbers[i]}</span>
+                <span className="text-[0.8125rem]">{columnNumbers[i]}</span>
               ) : (
-                h && <span className="text-[14px]">{h}</span>
+                h && <span className="text-sm">{h}</span>
               )}
             </div>
           ))}
@@ -135,7 +146,10 @@ function LikertMatrix({ items, labels, columnNumbers = null, innerScroll = false
       </div>
 
       {/* Items */}
-      <div className={`divide-y divide-gray-200 ${innerScroll ? "overflow-y-scroll flex-1 min-h-0 pb-6" : columnNumbers ? "pt-20" : "pt-14"}`}>
+      <div
+        className={`divide-y divide-gray-200 ${innerScroll ? "overflow-y-scroll flex-1 min-h-0 pb-6" : ""}`}
+        style={!innerScroll ? { paddingTop: headerHeight } : undefined}
+      >
         {items.map((q, idx) => {
           const key = typeof q === "string" ? q : q.key;
           const value = responses[key];
@@ -253,7 +267,7 @@ function BipolarMatrix({ items, responses, onChange, highlightKeys = new Set(), 
           >
             {/* Row A */}
             <div style={gridStyle}>
-              <div className="pr-6 text-lg text-gray-800 leading-snug">
+              <div className="pr-6 text-sm lg:text-lg text-gray-800 leading-snug">
                 <span className="font-medium">{idx + 1}.</span>{" "}
                 {item.text}
               </div>
@@ -293,7 +307,7 @@ function BipolarMatrix({ items, responses, onChange, highlightKeys = new Set(), 
             {/* Row B */}
             <div style={gridStyle} className="mt-2">
               <div /> 
-              <div className="text-center text-[15px] text-gray-600">
+              <div className="text-center text-[0.9375rem] text-gray-600">
                 {item.left}
               </div>
               <div />
@@ -301,7 +315,7 @@ function BipolarMatrix({ items, responses, onChange, highlightKeys = new Set(), 
               <div />
               <div />
               <div />
-              <div className="text-center text-[15px] text-gray-600">
+              <div className="text-center text-[0.9375rem] text-gray-600">
                 {item.right}
               </div>
             </div>
@@ -661,7 +675,10 @@ function PostSurvey() {
       <div className="flex h-full overflow-hidden">
         {/* Survey */}
         <div ref={scrollContainerRef} className={`flex-1 min-w-0 ${section === "selfEfficacy" ? "overflow-hidden flex flex-col" : "overflow-y-auto"}`}>
-          <div className={`w-full bg-white px-6 lg:px-10 pt-2 ${section === "selfEfficacy" ? "flex flex-col flex-1 min-h-0" : "pb-10"}`}>
+          <div
+            className={`w-full bg-white px-6 lg:px-10 pt-2 ${section === "selfEfficacy" ? "flex flex-col flex-1 min-h-0" : "pb-10"}`}
+            style={{ fontSize: "clamp(11px, 1.1vw, 16px)" }}
+          >
             <h2 className="text-xl font-semibold mb-10 text-center">
               {pages[page - 1].title}
             </h2>
@@ -737,7 +754,7 @@ function PostSurvey() {
 
             {page === 5 && (
               <>
-                <p className="text-[18px] text-gray-700 mb-8 leading-relaxed">
+                <p className="text-lg text-gray-700 mb-8 leading-relaxed">
                   Now, you are almost done!👏🏻 <br />
                   The following two questions are very important parts of our studies. There is no right or wrong answer, so please feel free to share your thoughts openly. <br/>
                   You may want to refer to the scrapbook content shown on the right.
@@ -749,7 +766,7 @@ function PostSurvey() {
               <div className="space-y-10 mt-2">
                 {/* OEQ1 */}
                 <div className="space-y-3">
-                  <p className="font-medium text-[18px]">
+                  <p className="font-medium text-lg">
                     1. Based on the information you found during your search, what advice would you give your friend about {" "}
                     {taskType}?
                   </p>
@@ -765,7 +782,7 @@ function PostSurvey() {
 
                 {/* OEQ2 */}
                 <div className="space-y-3">
-                  <p className="font-medium text-[18px]">
+                  <p className="font-medium text-lg">
                     2. Did you encounter any interesting or valuable information that led to new insights or unexpected connections? If so, please describe it.
                   </p>
                   <textarea
@@ -786,7 +803,7 @@ function PostSurvey() {
         {/* Scrapbook */}
         <div className="w-[22%] min-w-[200px] max-w-[320px] bg-gray-50 border-l flex flex-col flex-shrink-0">
           <div className="p-4 border-b">
-            <h2 className="font-semibold">Your Scrapbook</h2>
+            <h2 className="font-semibold text-base">Your Scrapbook</h2>
             <p className="text-xs text-gray-500">
               Saved during the search session (read-only)
             </p>

@@ -184,22 +184,21 @@ export default function PreSurvey() {
             h-full
             bg-gray-100 border-r border-gray-300
             transition-all flex-shrink-0
-            ${panelOpen ? "w-[20%]" : "w-[64px]"}
+            ${panelOpen ? "w-[16rem]" : "w-[3rem]"}
             overflow-hidden overflow-y-auto
          `}
         >
-          
-          <div className="px-4 pt-2">
-            <button
-              onClick={() => setPanelOpen((v) => !v)}
-              className="mb-4 w-10 h-10 rounded border bg-white shadow"
-            >
-              {panelOpen ? "←" : "→"}
-            </button>
+          <button
+            onClick={() => setPanelOpen((v) => !v)}
+            className="w-full py-1.5 bg-gray-300 hover:bg-gray-400 text-white text-xs font-bold tracking-widest transition"
+          >
+            {panelOpen ? "<<<" : ">>>"}
+          </button>
 
+          <div className="px-3 pt-2">
             {panelOpen && (
-              <div className="p-4 mt-2">
-                <div className="p-4 rounded border border-gray-300 text-base space-y-4">
+              <div className="mt-2">
+                <div className="p-3 rounded border border-gray-300 text-sm space-y-4 break-words select-none">
                   <div>
                     <strong>Search Case</strong>
                     <p className="mt-1 whitespace-pre-wrap">{searchCase}</p>
@@ -247,7 +246,7 @@ export default function PreSurvey() {
                             : ""
                         }`}
                     >
-                      <p className="font-medium text-[18px]">
+                      <p className="font-medium text-lg">
                         {idx + 1}. {renderedQuestion}
                       </p>
 
