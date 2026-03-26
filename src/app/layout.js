@@ -12,7 +12,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Online Search Experiment",
+  title: "Online Search Study",
   description: "Conducted by SubinSeo",
 };
 
