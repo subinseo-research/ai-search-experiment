@@ -36,6 +36,11 @@ export async function POST(req) {
       use_search_other_name: body.use_search_other_name ?? null,
     };
 
+    // Remove null/undefined fields — Airtable rejects unknown or null fields
+    const cleanFields = Object.fromEntries(
+      Object.entries(fields).filter(([, v]) => v !== null && v !== undefined)
+    );
+
     const airtableRes = await fetch(
       `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/Demographic`,
       {
@@ -44,7 +49,7 @@ export async function POST(req) {
           Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ fields }),
+        body: JSON.stringify({ fields: cleanFields }),
       }
     );
 
