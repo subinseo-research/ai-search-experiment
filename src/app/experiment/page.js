@@ -806,7 +806,7 @@ function ExperimentContent() {
     setIsGenerating(true);
 
     try {
-      const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=20`);
+      const res = await fetch(`/api/SearchEngine?q=${encodeURIComponent(q)}&requestedTotal=40`);
       const data = await res.json();
 
       const isHomepageUrl = (url) => {
@@ -819,9 +819,19 @@ function ExperimentContent() {
         }
       };
 
+      const isProductUrl = (url) => {
+        try {
+          const { pathname } = new URL(url);
+          return /\/products?\//i.test(pathname);
+        } catch {
+          return false;
+        }
+      };
+
       const results =
         (data.items || [])
-          .filter((item) => !isHomepageUrl(item.link))
+          .filter((item) => !isHomepageUrl(item.link) && !isProductUrl(item.link))
+          .slice(0, 20)
           .map((item, idx) => ({
             id: `search-${idx}`,
             title: item.title,
@@ -896,17 +906,39 @@ function ExperimentContent() {
 
     // Fetch top N web results as sources (same as WebSearch)
     const searchRes = await fetch(
-      `/api/SearchEngine?q=${encodeURIComponent(searchQuery_expanded)}&requestedTotal=20`
+      `/api/SearchEngine?q=${encodeURIComponent(searchQuery_expanded)}&requestedTotal=40`
     );
     const searchData = await searchRes.json();
 
+    const isHomepageUrl = (url) => {
+      try {
+        const { pathname } = new URL(url);
+        const segments = pathname.split("/").filter(Boolean);
+        return segments.length <= 1;
+      } catch {
+        return false;
+      }
+    };
+
+    const isProductUrl = (url) => {
+      try {
+        const { pathname } = new URL(url);
+        return /\/products?\//i.test(pathname);
+      } catch {
+        return false;
+      }
+    };
+
     const sources =
-      searchData.items?.map((item, i) => ({
-        id: i + 1,
-        title: item.title,
-        url: item.link,
-        snippet: item.snippet,
-      })) || [];
+      (searchData.items || [])
+        .filter((item) => !isHomepageUrl(item.link) && !isProductUrl(item.link))
+        .slice(0, 20)
+        .map((item, i) => ({
+          id: i + 1,
+          title: item.title,
+          url: item.link,
+          snippet: item.snippet,
+        }));
 
 
     // Append user + loading assistant
