@@ -15,7 +15,7 @@ export default function TaskPage() {
      ========================= */
   const TASKS = ["Nanotechnology", "GMO", "Cultivated Meat"];
   const SYSTEMS = ["WebSearch", "RAGSearch", "GenSearch"];
-  const MAX_PER_CELL = 55; 
+  const MAX_PER_CELL = 3;
 
   /* =========================
      Highlight helper
