@@ -487,7 +487,7 @@ function PostSurvey() {
     },
     {
       key: "reliability",
-      text: "The dependability of the output information",
+      text: "The reliability (performing consistently) of the output information",
       left: "inferior",
       right: "superior",
     },
