@@ -15,7 +15,7 @@ export default function TaskPage() {
      ========================= */
   const TASKS = ["Nanotechnology", "GMO", "Cultivated Meat"];
   const SYSTEMS = ["WebSearch", "RAGSearch", "GenSearch"];
-  const MAX_PER_CELL = 3;
+  const MAX_PER_SYSTEM = 25; // 총 75명 = 시스템 3개 × 25명
 
   /* =========================
      Highlight helper
@@ -43,49 +43,34 @@ export default function TaskPage() {
   };
 
   /* =========================
-     Cell count helpers
+     Cell assignment (server-based)
+     Counts come from Airtable Demographic records —
+     only participants who completed demographic are counted.
      ========================= */
-  function getCellCounts() {
-    const counts =
-      JSON.parse(localStorage.getItem("factorial_counts")) || {};
-
-    TASKS.forEach((t) => {
-      SYSTEMS.forEach((s) => {
-        const key = `${t}__${s}`;
-        if (counts[key] === undefined) counts[key] = 0;
-      });
-    });
-
-    return counts;
-  }
-
-  function incrementCell(task, system) {
-    const counts = getCellCounts();
-    const key = `${task}__${system}`;
-    counts[key] += 1;
-    localStorage.setItem("factorial_counts", JSON.stringify(counts));
-  }
-
-  function pickBalancedCell() {
-    const counts = getCellCounts();
+  function pickBalancedCell(cellCounts, sysCounts) {
+    // 시스템별 25명 미만인 시스템의 cell만 후보에 포함
     const available = [];
-    for (const task of TASKS) {
-      for (const system of SYSTEMS) {
+    for (const system of SYSTEMS) {
+      if ((sysCounts[system] || 0) >= MAX_PER_SYSTEM) continue;
+      for (const task of TASKS) {
         const key = `${task}__${system}`;
-        const n = counts[key] ?? 0;
-        if (n < MAX_PER_CELL) available.push({ task, system, n });
-        }
+        const n = cellCounts[key] || 0;
+        available.push({ task, system, n });
       }
+    }
+
     if (available.length === 0) {
+      // 모든 시스템 25명 도달 (75명 완료) → overflow
       const pool = TASKS.flatMap((t) => SYSTEMS.map((s) => ({ task: t, system: s })));
       const picked = pool[Math.floor(Math.random() * pool.length)];
       return { ...picked, overflow: true };
     }
-  const minCount = Math.min(...available.map((x) => x.n));
-  const minPool = available.filter((x) => x.n === minCount);
-  const picked = minPool[Math.floor(Math.random() * minPool.length)];
-  return { task: picked.task, system: picked.system, overflow: false };
-}
+
+    const minCount = Math.min(...available.map((x) => x.n));
+    const minPool = available.filter((x) => x.n === minCount);
+    const picked = minPool[Math.floor(Math.random() * minPool.length)];
+    return { task: picked.task, system: picked.system, overflow: false };
+  }
 
   /* =========================
      1. Load participant_id
@@ -147,22 +132,50 @@ export default function TaskPage() {
       }
     }
 
-    /* ===== Balanced factorial assignment ===== */
-    const { task, system, overflow } = pickBalancedCell();
-    const scenario = scenarios.find((s) => s.condition === task);
+    /* ===== Balanced factorial assignment (server-based counts) ===== */
+    const applyAssignment = (task, system, overflow, recordId, scenario) => {
+      if (recordId) localStorage.setItem("assignment_record_id", recordId);
+      localStorage.setItem("task_type", task);
+      localStorage.setItem("system_type", system);
+      localStorage.setItem("search_case", scenario.searchCase);
+      localStorage.setItem("search_task", scenario.searchTask);
+      localStorage.setItem("is_overflow", overflow ? "1" : "0");
+      setAssignedScenario(scenario);
+      setLoading(false);
+    };
 
-    localStorage.setItem("task_type", task);
-    localStorage.setItem("system_type", system);
-    localStorage.setItem("search_case", scenario.searchCase);
-    localStorage.setItem("search_task", scenario.searchTask);
+    fetch("/api/assignment-counts")
+      .then((res) => res.json())
+      .then(({ cellCounts, sysCounts }) => {
+        const picked = pickBalancedCell(cellCounts || {}, sysCounts || {});
 
-    localStorage.setItem("is_overflow", overflow ? "1" : "0");
-    if (!overflow) {
-      incrementCell(task, system);
-    }
-
-    setAssignedScenario(scenario);
-    setLoading(false);
+        // Reserve slot in Airtable (idempotent: returns existing if already reserved)
+        return fetch("/api/assignment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            participant_id: participantId,
+            task_type: picked.task,
+            system_type: picked.system,
+          }),
+        })
+          .then((r) => r.json())
+          .then(({ recordId, task_type, system_type, existing }) => {
+            // If Airtable already had a record for this participant, honour it
+            const finalTask = existing ? task_type : picked.task;
+            const finalSystem = existing ? system_type : picked.system;
+            const scenario = scenarios.find((s) => s.condition === finalTask);
+            applyAssignment(finalTask, finalSystem, picked.overflow, recordId, scenario);
+          });
+      })
+      .catch((err) => {
+        console.error("assignment error:", err);
+        // 서버 조회 실패 시 완전 랜덤 배정으로 fallback
+        const task = TASKS[Math.floor(Math.random() * TASKS.length)];
+        const system = SYSTEMS[Math.floor(Math.random() * SYSTEMS.length)];
+        const scenario = scenarios.find((s) => s.condition === task);
+        applyAssignment(task, system, true, null, scenario);
+      });
   }, [participantId]);
 
   const handleContinue = () => {

@@ -16,7 +16,7 @@ export default function ConsentPage() {
   const [consentPage, setConsentPage] = useState(1);
   const [checked, setChecked] = useState(false);
   const [participantId, setParticipantId] = useState(null);
-  // const [prolificId, setProlificId] = useState("");
+  const [prolificId, setProlificId] = useState("");
   const [selectedDevice, setSelectedDevice] = useState(null);
   const [deviceSubmitting, setDeviceSubmitting] = useState(false);
 
@@ -30,10 +30,10 @@ export default function ConsentPage() {
     }
   }, []);
 
-  const isContinueDisabled = !checked; // || !prolificId.trim();
+  const isContinueDisabled = !checked || !prolificId.trim();
 
   const handleContinue = () => {
-    if (!participantId || !checked /* || !prolificId.trim() */) return;
+    if (!participantId || !checked || !prolificId.trim()) return;
     setConsentPage(2);
   };
 
@@ -59,7 +59,7 @@ export default function ConsentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participant_id: participantId,
-          // prolific_id: prolificId.trim(),
+          prolific_id: prolificId.trim(),
           consent: "no",
         }),
       });
@@ -81,7 +81,7 @@ export default function ConsentPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           participant_id: participantId,
-          // prolific_id: prolificId.trim(),
+          prolific_id: prolificId.trim(),
           consent: "yes",
           device: isFail ? "fail" : "pass",
         }),
@@ -221,7 +221,6 @@ export default function ConsentPage() {
             </span>
           </label>
 
-        {/* Prolific ID 수집 비활성화
         <section className="mt-8 mb-8 space-y-3">
           <p className="font-medium">Please enter your prolific ID (Required for your compensation).</p>
           <input
@@ -234,7 +233,6 @@ export default function ConsentPage() {
             spellCheck={false}
           />
         </section>
-        */}
 
         {/* ===== Action Buttons ===== */}
         <div className="mt-6 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">

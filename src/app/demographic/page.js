@@ -219,6 +219,9 @@ export default function DemographicSurvey() {
 
     try {
       const fields = buildAirtablePayloadFields();
+      fields.task_type = localStorage.getItem("task_type") ?? undefined;
+      fields.system_type = localStorage.getItem("system_type") ?? undefined;
+
       const res = await fetch("/api/airtable/demographic", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -228,6 +231,16 @@ export default function DemographicSurvey() {
       if (!res.ok) {
         const text = await res.text().catch(() => "");
         throw new Error(text || "Save failed");
+      }
+
+      // Mark assignment as completed (for balanced cell counting)
+      const recordId = localStorage.getItem("assignment_record_id");
+      if (recordId) {
+        await fetch("/api/assignment", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ recordId }),
+        }).catch((e) => console.error("assignment status update error:", e));
       }
 
       localStorage.removeItem("demographic_form");

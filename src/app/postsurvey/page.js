@@ -487,33 +487,33 @@ function PostSurvey() {
     },
     {
       key: "reliability",
-      text: "The reliability (performing consistently) of the output information",
-      left: "inferior",
-      right: "superior",
+      text: "The information provided by the system was (____).",
+      left: "inconsistent",
+      right: "consistent",
     },
     {
       key: "relevancy",
-      text: " The degree of match between what you want and what is provided by the system",
-      left: "irrelevant",
-      right: "relevant",
+      text: "The information (____) what I was looking for.",
+      left: "unmatched",
+      right: "matched",
     },
     {
       key: "accuracy",
-      text: "The correctness of the output information",
-      left: "low",
-      right: "high",
+      text: "The information provided was (____).",
+      left: "inaccurate",
+      right: "accurate",
     },
     {
       key: "precision",
-      text: "The focus of output information from what your search query intended to find",
-      left: "low",
-      right: "high",
+      text: "The search results contained (____) unnecessary information.", 
+      left: "much",
+      right: "little",
     },
     {
       key: "completeness",
-      text: "The comprehensiveness of the output information content",
-      left: "inadequate",
-      right: "adequate",
+      text: "The information provided was (____) to understand the topic.",
+      left: "not enough",
+      right: "enough",
     },
   ];
 
@@ -690,10 +690,17 @@ function PostSurvey() {
               </p>
             )}
 
-            {(page === 2 || page === 3) && (
+            {(page === 2 ) && (
               <p className="text-lg text-gray-700 mb-8 leading-relaxed">
-                On the scales below, we will ask your feelings about the output information you just read and your overall search experience.<br />
-                Please read the following items and evaluate your feelings according to each specific adjective.
+                On the scales below, we will ask your satisfaction about the output information you just read and your overall search experience.<br />
+                Please read the following statements and fill in the blank by rating your experience on each scale. 
+              </p>
+            )}
+
+            {(page === 3 ) && (
+              <p className="text-lg text-gray-700 mb-8 leading-relaxed">
+                On the scales below, we will ask your satisfaction about the output information you just read and your overall search experience.<br />
+                Please read the following statements and rate your experience on each scale. 
               </p>
             )}
 

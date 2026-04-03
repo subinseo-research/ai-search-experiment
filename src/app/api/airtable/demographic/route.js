@@ -6,6 +6,8 @@ export async function POST(req) {
 
     const fields = {
       participant_id: body.participant_id ?? null,
+      task_type: body.task_type ?? null,
+      system_type: body.system_type ?? null,
 
       // basic demographics
       age:
