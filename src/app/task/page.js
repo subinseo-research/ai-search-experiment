@@ -128,6 +128,25 @@ export default function TaskPage() {
         localStorage.setItem("search_task", existingScenario.searchTask);
         setAssignedScenario(existingScenario);
         setLoading(false);
+
+        // Ensure pending record exists in Airtable (may be missing if participant revisits)
+        if (!localStorage.getItem("assignment_record_id")) {
+          fetch("/api/assignment", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              participant_id: participantId,
+              task_type: savedTask,
+              system_type: savedSystem,
+            }),
+          })
+            .then((r) => r.json())
+            .then(({ recordId }) => {
+              if (recordId) localStorage.setItem("assignment_record_id", recordId);
+            })
+            .catch((e) => console.error("assignment reserve error:", e));
+        }
+
         return;
       }
     }

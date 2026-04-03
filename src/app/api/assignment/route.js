@@ -43,6 +43,7 @@ export async function POST(req) {
       headers: HEADERS(),
       body: JSON.stringify({
         fields: { participant_id, task_type, system_type, status: "pending" },
+        typecast: true,
       }),
     });
     if (!res.ok) throw new Error(await res.text());
@@ -71,7 +72,7 @@ export async function PATCH(req) {
     const res = await fetch(`${BASE_URL()}/${recordId}`, {
       method: "PATCH",
       headers: HEADERS(),
-      body: JSON.stringify({ fields: { status: "completed" } }),
+      body: JSON.stringify({ fields: { status: "completed" }, typecast: true }),
     });
     if (!res.ok) throw new Error(await res.text());
 
