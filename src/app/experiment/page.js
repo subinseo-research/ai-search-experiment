@@ -942,10 +942,10 @@ function ExperimentContent() {
         }));
 
 
-    // Append user + loading assistant (store expanded query so future turns resolve pronouns correctly)
+    // Append user + loading assistant (store expanded query for context resolution; displayContent keeps original for UI)
     setChatHistory((prev) => [
       ...prev,
-      { role: "user", content: searchQuery_expanded, request_id, turn_index, message_id: prompt_message_id },
+      { role: "user", content: searchQuery_expanded, displayContent: userInput, request_id, turn_index, message_id: prompt_message_id },
       { role: "assistant", content: "", loading: true, system: "RAGSearch", request_id, turn_index },
     ]);
 
@@ -1087,7 +1087,7 @@ function ExperimentContent() {
 
     setChatHistory((prev) => [
       ...prev,
-      { role: "user", content: genExpandedQuery, request_id, turn_index, message_id: prompt_message_id },
+      { role: "user", content: genExpandedQuery, displayContent: userInput, request_id, turn_index, message_id: prompt_message_id },
       { role: "assistant", content: "", loading: true, system: "GenSearch", request_id, turn_index },
     ]);
 
@@ -1700,7 +1700,7 @@ function ExperimentContent() {
                         </div>
                       ) : (
                         <div className="select-none">
-                          <ReactMarkdown>{msg.content}</ReactMarkdown>
+                          <ReactMarkdown>{msg.displayContent ?? msg.content}</ReactMarkdown>
                         </div>
                       )}
 
