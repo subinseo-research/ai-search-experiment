@@ -484,6 +484,7 @@ function ExperimentContent() {
     setActiveSource(null);
   };
   const [proceedUnlocked, setProceedUnlocked] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (questionCount < REQUIRED_QUESTIONS || proceedUnlocked) return;
@@ -941,10 +942,10 @@ function ExperimentContent() {
         }));
 
 
-    // Append user + loading assistant
+    // Append user + loading assistant (store expanded query so future turns resolve pronouns correctly)
     setChatHistory((prev) => [
       ...prev,
-      { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
+      { role: "user", content: searchQuery_expanded, request_id, turn_index, message_id: prompt_message_id },
       { role: "assistant", content: "", loading: true, system: "RAGSearch", request_id, turn_index },
     ]);
 
@@ -955,7 +956,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm-rag", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question: userInput, sources, history: chatHistory }),
+        body: JSON.stringify({ question: searchQuery_expanded, sources, history: chatHistory }),
       });
 
       // Start with empty streaming message
@@ -1067,9 +1068,26 @@ function ExperimentContent() {
     });
 
     setQuestionCount((prev) => prev + 1);
+
+    // Expand follow-up queries so pronouns are resolved before storing in history
+    let genExpandedQuery = userInput;
+    if (chatHistory.length > 0) {
+      try {
+        const expandRes = await fetch("/api/expand-query", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ query: userInput, history: chatHistory }),
+        });
+        const expandData = await expandRes.json();
+        if (expandData.expandedQuery) genExpandedQuery = expandData.expandedQuery;
+      } catch {
+        // fallback to original query
+      }
+    }
+
     setChatHistory((prev) => [
       ...prev,
-      { role: "user", content: userInput, request_id, turn_index, message_id: prompt_message_id },
+      { role: "user", content: genExpandedQuery, request_id, turn_index, message_id: prompt_message_id },
       { role: "assistant", content: "", loading: true, system: "GenSearch", request_id, turn_index },
     ]);
 
@@ -1080,7 +1098,7 @@ function ExperimentContent() {
       const res = await fetch("/api/llm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ prompt: userInput, history: chatHistory }),
+        body: JSON.stringify({ prompt: genExpandedQuery, history: chatHistory }),
       });
 
       // Start streaming
@@ -1207,11 +1225,13 @@ function ExperimentContent() {
     };
 
   const handleNext = async () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
     try {
       await logFinalScrapbook(); //final scrap & notes log
 
       await logEvent({
-        log_type: "session_end",    //session end time log 
+        log_type: "session_end",    //session end time log
         log_data: {
           total_time_sec: seconds,
           total_questions: questionCount,
@@ -1911,7 +1931,7 @@ function ExperimentContent() {
           <div className="sticky bottom-0 p-4">
             <button
               onClick={handleNext}
-              disabled={!canProceed}
+              disabled={!canProceed || isSubmitting}
               className={`
                 w-full py-2.5 rounded-md text-sm font-semibold transition
                 ${canProceed
