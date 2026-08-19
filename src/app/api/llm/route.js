@@ -40,7 +40,7 @@ export async function POST(req) {
       async start(controller) {
         try {
           const response = await ai.models.generateContentStream({
-            model: "gemini-2.5-flash",
+            model: "gemini-3.6-flash",
             systemInstruction,
             contents,
             generationConfig: {

@@ -35,7 +35,7 @@ If the query is already self-contained, return it unchanged.
 Return ONLY the rewritten query string, nothing else.`;
 
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-3.6-flash",
       contents: prompt,
       generationConfig: { maxOutputTokens: 60, temperature: 0 },
     });
